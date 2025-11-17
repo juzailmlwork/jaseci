@@ -72,7 +72,7 @@ class JServer(ABC, Generic[T]):
     def get_endpoints(self) -> List[JEndPoint]
     def add_endpoint(self, endpoint: JEndPoint) -> None
     def execute(self) -> None
-    
+
     # Abstract methods that must be implemented
     @abstractmethod
     def _get(self, endpoint: JEndPoint) -> "JServer[T]"
@@ -135,80 +135,80 @@ class JNativeHttpServer(JServer[HTTPServer]):
         super().__init__(endpoints or [])
         self.routes: Dict[str, Dict[str, JEndPoint]] = {}
         self.server: Optional[HTTPServer] = None
-    
+
     def _register_route(self, method: HTTPMethod, endpoint: JEndPoint) -> None:
         """Register a route with the native HTTP server."""
         if endpoint.path not in self.routes:
             self.routes[endpoint.path] = {}
         self.routes[endpoint.path][method.value] = endpoint
-    
+
     def _get(self, endpoint: JEndPoint) -> "JNativeHttpServer":
         self._register_route(HTTPMethod.GET, endpoint)
         return self
-    
+
     def _post(self, endpoint: JEndPoint) -> "JNativeHttpServer":
         self._register_route(HTTPMethod.POST, endpoint)
         return self
-    
+
     def _put(self, endpoint: JEndPoint) -> "JNativeHttpServer":
         self._register_route(HTTPMethod.PUT, endpoint)
         return self
-    
+
     def _patch(self, endpoint: JEndPoint) -> "JNativeHttpServer":
         self._register_route(HTTPMethod.PATCH, endpoint)
         return self
-    
+
     def _delete(self, endpoint: JEndPoint) -> "JNativeHttpServer":
         self._register_route(HTTPMethod.DELETE, endpoint)
         return self
-    
+
     def create_server(self, host: str = "localhost", port: int = 8000) -> HTTPServer:
         """Create and configure the native HTTP server."""
         self.execute()
-        
+
         class RequestHandler(BaseHTTPRequestHandler):
             def __init__(self, routes, *args, **kwargs):
                 self.routes = routes
                 super().__init__(*args, **kwargs)
-            
+
             def do_GET(self):
                 self._handle_request('GET')
-            
+
             def do_POST(self):
                 self._handle_request('POST')
-            
+
             def do_PUT(self):
                 self._handle_request('PUT')
-            
+
             def do_PATCH(self):
                 self._handle_request('PATCH')
-            
+
             def do_DELETE(self):
                 self._handle_request('DELETE')
-            
+
             def _handle_request(self, method: str):
                 parsed_url = urlparse(self.path)
                 path = parsed_url.path
                 query_params = parse_qs(parsed_url.query)
-                
+
                 # Find matching endpoint
                 endpoint = self._find_endpoint(path, method)
                 if not endpoint:
                     self.send_error(404, "Not Found")
                     return
-                
+
                 try:
                     # Extract parameters
                     kwargs = {}
-                    
+
                     # Handle path parameters
                     path_params = self._extract_path_params(path, endpoint.path)
                     kwargs.update(path_params)
-                    
+
                     # Handle query parameters
                     for key, values in query_params.items():
                         kwargs[key] = values[0] if len(values) == 1 else values
-                    
+
                     # Handle body parameters for POST/PUT/PATCH
                     if method in ['POST', 'PUT', 'PATCH']:
                         content_length = int(self.headers.get('Content-Length', 0))
@@ -220,62 +220,62 @@ class JNativeHttpServer(JServer[HTTPServer]):
                             except json.JSONDecodeError:
                                 self.send_error(400, "Invalid JSON")
                                 return
-                    
+
                     # Call the endpoint callback
                     result = endpoint.callback(**kwargs)
-                    
+
                     # Send response
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
                     self.end_headers()
-                    
+
                     response_data = json.dumps(result if result is not None else {})
                     self.wfile.write(response_data.encode('utf-8'))
-                    
+
                 except Exception as e:
                     self.send_error(500, str(e))
-            
+
             def _find_endpoint(self, path: str, method: str) -> Optional[JEndPoint]:
                 # First try exact match
                 if path in self.routes and method in self.routes[path]:
                     return self.routes[path][method]
-                
+
                 # Try pattern matching for parameterized paths
                 for route_path, methods in self.routes.items():
                     if method in methods and self._path_matches(path, route_path):
                         return methods[method]
-                
+
                 return None
-            
+
             def _path_matches(self, request_path: str, route_path: str) -> bool:
                 # Convert route path with {param} to regex pattern
                 pattern = re.sub(r'\{[^}]+\}', r'([^/]+)', route_path)
                 pattern = f"^{pattern}$"
                 return bool(re.match(pattern, request_path))
-            
+
             def _extract_path_params(self, request_path: str, route_path: str) -> Dict[str, Any]:
                 params = {}
-                
+
                 # Extract parameter names from route path
                 param_names = re.findall(r'\{([^}]+)\}', route_path)
-                
+
                 # Convert route path to regex and extract values
                 pattern = re.sub(r'\{[^}]+\}', r'([^/]+)', route_path)
                 pattern = f"^{pattern}$"
                 match = re.match(pattern, request_path)
-                
+
                 if match and param_names:
                     for name, value in zip(param_names, match.groups()):
                         params[name] = value
-                
+
                 return params
-        
+
         # Create handler class with routes
         handler = lambda *args, **kwargs: RequestHandler(self.routes, *args, **kwargs)
-        
+
         self.server = HTTPServer((host, port), handler)
         return self.server
-    
+
     def serve_forever(self, host: str = "localhost", port: int = 8000) -> None:
         """Start the server and serve forever."""
         server = self.create_server(host, port)

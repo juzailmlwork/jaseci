@@ -546,7 +546,7 @@ def endpoint_wrapper({params}) -> Any:
         Get the underlying FastAPI application instance.
         """
         return self.app
-    
+
     def run_server(self, host: str = "localhost", port: int = 8000) -> None:
         """Run the FastAPI server using Uvicorn."""
         app = self.create_server()
