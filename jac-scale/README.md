@@ -147,7 +147,7 @@ The plugin automatically:
 - Implementing memory hierachy by overriding Memory class using Redis and Mongodb similar to shelf storage used in Jac core(jusail)
 - Converting walkers to api fastapi endpoints like server.py (walker)
 - Implementation of fastapi implementation similar to server.py in Jac core
-- Implementing execution contet in jac scale to support memory hierachy 
+- Implementing execution contet in jac scale to support memory hierachy
 
 ## Things todo
 
