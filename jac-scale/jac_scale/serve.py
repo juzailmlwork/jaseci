@@ -1,7 +1,9 @@
 from typing import Callable
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from jac_scale.jserver.jfastApi import JFastApiServer
-from jac_scale.jserver.jserver import APIParameter, HTTPMethod, JEndPoint
+from jac_scale.jserver.jserver import APIParameter, HTTPMethod, JEndPoint, ParameterType
 
 from jaclang.runtimelib.server import JacAPIServer as JServer
 from jaclang.runtimelib.server import JsonValue
@@ -18,6 +20,15 @@ class JacAPIServer(JServer):
     ) -> None:
         super().__init__(module_name, session_path, port, base_path)
         self.server_impl = JFastApiServer([])
+
+        # Configure CORS
+        self.server_impl.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Allows all origins
+            allow_credentials=True,
+            allow_methods=["*"],  # Allows all methods
+            allow_headers=["*"],  # Allows all headers
+        )
 
     def login(self, username: str, password: str) -> tuple[int, JsonValue]:
         res = self.auth_handler.login(username, password)
@@ -36,6 +47,7 @@ class JacAPIServer(JServer):
                         required=True,
                         default=None,
                         description="Username for login",
+                        type=ParameterType.BODY,
                     ),
                     APIParameter(
                         name="password",
@@ -43,6 +55,7 @@ class JacAPIServer(JServer):
                         required=True,
                         default=None,
                         description="Password for login",
+                        type=ParameterType.BODY,
                     ),
                 ],
                 response_model=None,
@@ -86,13 +99,22 @@ class JacAPIServer(JServer):
         )
 
     def create_walker_callback(
-        self, walker_name: str
+        self, walker_name: str, has_node_param: bool = False
     ) -> Callable[..., dict[str, JsonValue]]:
-        def callback(**kwargs: JsonValue) -> dict[str, JsonValue]:
-            print(f"Executing walker '{walker_name}' with params: {kwargs}")
-            return self.execution_manager.spawn_walker(
-                self.get_walkers()[walker_name], kwargs, "__guest__"
-            )
+        if has_node_param:
+
+            def callback(node: str, **kwargs: JsonValue) -> dict[str, JsonValue]:
+                kwargs["_jac_spawn_node"] = node
+                return self.execution_manager.spawn_walker(
+                    self.get_walkers()[walker_name], kwargs, "__guest__"
+                )
+
+        else:
+
+            def callback(**kwargs: JsonValue) -> dict[str, JsonValue]:
+                return self.execution_manager.spawn_walker(
+                    self.get_walkers()[walker_name], kwargs, "__guest__"
+                )
 
         return callback
 
@@ -107,19 +129,31 @@ class JacAPIServer(JServer):
 
         return callback
 
-    def create_walker_parameters(self, walker_name: str) -> list[APIParameter]:
+    def create_walker_parameters(
+        self, walker_name: str, invoke_on_root: bool
+    ) -> list[APIParameter]:
         parameters: list[APIParameter] = []
         walker_fields = self.introspector.introspect_walker(
             self.get_walkers()[walker_name]
         )["fields"]
+
         for field_name in walker_fields:
+
+            if field_name == "_jac_spawn_node" and invoke_on_root:
+                continue
+
             parameters.append(
                 APIParameter(
-                    name=field_name,
+                    name="node" if field_name == "_jac_spawn_node" else field_name,
                     data_type=walker_fields[field_name]["type"],
                     required=walker_fields[field_name]["required"],
                     default=walker_fields[field_name]["default"],
                     description=f"Field {field_name} for walker {walker_name}",
+                    type=(
+                        ParameterType.BODY
+                        if field_name != "_jac_spawn_node"
+                        else ParameterType.PATH
+                    ),
                 )
             )
         return parameters
@@ -152,8 +186,12 @@ class JacAPIServer(JServer):
                 JEndPoint(
                     method=HTTPMethod.POST,
                     path=f"/walker/{walker_name}/{{node}}",
-                    callback=self.create_walker_callback(walker_name),
-                    parameters=self.create_walker_parameters(walker_name),
+                    callback=self.create_walker_callback(
+                        walker_name, has_node_param=True
+                    ),
+                    parameters=self.create_walker_parameters(
+                        walker_name, invoke_on_root=False
+                    ),
                     response_model=None,
                     tags=["Walkers"],
                     summary="API Entry",
@@ -164,8 +202,12 @@ class JacAPIServer(JServer):
                 JEndPoint(
                     method=HTTPMethod.POST,
                     path=f"/walker/{walker_name}",
-                    callback=self.create_walker_callback(walker_name),
-                    parameters=None,
+                    callback=self.create_walker_callback(
+                        walker_name, has_node_param=False
+                    ),
+                    parameters=self.create_walker_parameters(
+                        walker_name, invoke_on_root=True
+                    ),
                     response_model=None,
                     tags=["Walkers"],
                     summary="API Root",
@@ -188,4 +230,6 @@ class JacAPIServer(JServer):
                 )
             )
 
+        if "__guest__" not in self.user_manager._users:
+            self.user_manager.create_user("__guest__", "__no_password__")
         self.server_impl.run_server()

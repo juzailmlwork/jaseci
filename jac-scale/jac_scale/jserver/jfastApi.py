@@ -284,8 +284,8 @@ class JFastApiServer(JServer[FastAPI]):
         # Handle body parameters - if multiple, create a single Body model
         body_model: Optional[Type[BaseModel]] = None
 
-        if len(body_params) > 1:
-            # Create a dynamic Pydantic model for multiple body parameters
+        if len(body_params) >= 1:
+            # Always create a dynamic Pydantic model for body parameters
             model_fields: Dict[str, Any] = {}
             for param in body_params:
                 param_name = param.name
@@ -302,42 +302,23 @@ class JFastApiServer(JServer[FastAPI]):
                     )
                 else:
                     default_value = param.default
-                    model_fields[param_name] = (
-                        Optional[param_type],
-                        Field(default_value, description=description),
-                    )
+                    # Don't use None as default, treat as optional without default
+                    if default_value is None:
+                        model_fields[param_name] = (
+                            Optional[param_type],
+                            Field(description=description),
+                        )
+                    else:
+                        model_fields[param_name] = (
+                            Optional[param_type],
+                            Field(default_value, description=description),
+                        )
 
             # Create the model
             if model_fields:
                 body_model = create_model("RequestBody", **model_fields)  # type: ignore[misc]
                 param_strs.append("body_data: RequestBody")
                 param_mapping["body_data"] = "body_data"
-        elif len(body_params) == 1:
-            # Single body parameter
-            param = body_params[0]
-            param_name = param.name
-            param_type = param.data_type
-            required = param.required
-            default_value = param.default
-            description = param.description
-
-            actual_type = self._get_python_type(param_type)
-            type_name = actual_type.__name__
-
-            if required:
-                param_str = (
-                    f"{param_name}: {type_name} = "
-                    f"Body(..., description='{description}')"
-                )
-            else:
-                param_str = (
-                    f"{param_name}: Optional[{type_name}] = "
-                    f"Body({repr(default_value)}, description='{description}')"
-                )
-
-            param_strs.append(param_str)
-            if param_name:
-                param_mapping[param_name] = param_name
 
         # Handle other parameter types (path, query, header)
         param_type_mapping = [
@@ -352,27 +333,22 @@ class JFastApiServer(JServer[FastAPI]):
                 if not param_name:
                     continue
 
-                param_type = param.data_type
+                param_type_str = param.data_type
                 required = param.required
                 default_value = param.default
                 description = param.description
 
                 # Convert string type to actual type
-                actual_type = self._get_python_type(param_type)
+                actual_type = self._get_python_type(param_type_str)
                 type_name = actual_type.__name__
 
                 # Create parameter definition
                 if param_type_enum == ParameterType.PATH:
-                    if required:
-                        param_str = (
-                            f"{param_name}: {type_name} = "
-                            f"Path(..., description='{description}')"
-                        )
-                    else:
-                        param_str = (
-                            f"{param_name}: Optional[{type_name}] = "
-                            f"Path({repr(default_value)}, description='{description}')"
-                        )
+                    # Path parameters cannot have defaults, so always required
+                    param_str = (
+                        f"{param_name}: {type_name} = "
+                        f"Path(..., description='{description}')"
+                    )
                 elif param_type_enum == ParameterType.QUERY:
                     if required:
                         param_str = (
@@ -380,10 +356,17 @@ class JFastApiServer(JServer[FastAPI]):
                             f"Query(..., description='{description}')"
                         )
                     else:
-                        param_str = (
-                            f"{param_name}: Optional[{type_name}] = "
-                            f"Query({repr(default_value)}, description='{description}')"
-                        )
+                        # Don't use None as default, treat as optional without default
+                        if default_value is None:
+                            param_str = (
+                                f"{param_name}: Optional[{type_name}] = "
+                                f"Query(description='{description}')"
+                            )
+                        else:
+                            param_str = (
+                                f"{param_name}: Optional[{type_name}] = "
+                                f"Query({repr(default_value)}, description='{description}')"
+                            )
                 elif param_type_enum == ParameterType.HEADER:
                     if required:
                         param_str = (
@@ -391,10 +374,17 @@ class JFastApiServer(JServer[FastAPI]):
                             f"Header(..., description='{description}')"
                         )
                     else:
-                        param_str = (
-                            f"{param_name}: Optional[{type_name}] = "
-                            f"Header({repr(default_value)}, description='{description}')"
-                        )
+                        # Don't use None as default, treat as optional without default
+                        if default_value is None:
+                            param_str = (
+                                f"{param_name}: Optional[{type_name}] = "
+                                f"Header(description='{description}')"
+                            )
+                        else:
+                            param_str = (
+                                f"{param_name}: Optional[{type_name}] = "
+                                f"Header({repr(default_value)}, description='{description}')"
+                            )
                 else:
                     continue
 
