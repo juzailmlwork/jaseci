@@ -180,9 +180,11 @@ class MongoDB(Memory[UUID, Anchor]):
     # COMMIT
     # -------------------
     def commit(self, anchor: TANCH | None = None) -> None:
+        print("I am inside mongodb commit")
         if anchor:
             if anchor in self.__gc__:
                 self._delete_anchor(anchor)
+                self.__gc__.remove(anchor)
             else:
                 self._save_anchor(anchor)
             return
@@ -273,12 +275,14 @@ class MongoDB(Memory[UUID, Anchor]):
     # CLOSE
     # -------------------
     def close(self) -> None:
-        self.commit()
+        print("I am in mongodb now")
+        # self.commit()
+        MongoDB.commit(self)
         super().close()
 
 
 @dataclass
-class ShelfStorage(Memory[UUID, Anchor]):
+class ShelfStorage(MongoDB):  # Memory):
     """Shelf Handler."""
 
     __shelf__: Shelf[Anchor] | None = None
@@ -295,9 +299,10 @@ class ShelfStorage(Memory[UUID, Anchor]):
                 if anchor in self.__gc__:
                     self.__shelf__.pop(str(anchor.id), None)
                     self.__mem__.pop(anchor.id, None)
-                    self.__gc__.remove(anchor)
+                    # self.__gc__.remove(anchor)
                 else:
                     self.sync_mem_to_db([anchor.id])
+                super().commit(anchor)
                 return
 
             for anc in self.__gc__:
@@ -315,10 +320,10 @@ class ShelfStorage(Memory[UUID, Anchor]):
     def close(self) -> None:
         """Close memory handler."""
         self.commit()
-
+        print("I am in shelf storage")
         if isinstance(self.__shelf__, Shelf):
             self.__shelf__.close()
-
+        print("I have closed the shelf")
         super().close()
 
     def sync_mem_to_db(self, keys: Iterable[UUID]) -> None:
@@ -382,15 +387,35 @@ class ShelfStorage(Memory[UUID, Anchor]):
             ids = [ids]
 
         if isinstance(self.__shelf__, Shelf):
+            # for id in ids:
+            #     anchor = self.__mem__.get(id)
+            #     #TODO: to get mongodb if objects are not found
+            #     if (
+            #         not anchor
+            #         and id not in self.__gc__
+            #         and (_anchor := self.__shelf__.get(str(id)))
+            #     ):
+            #         self.__mem__[id] = anchor = _anchor
+            #     if anchor and (not filter or filter(anchor)):
+            #         yield anchor
             for id in ids:
                 anchor = self.__mem__.get(id)
 
-                if (
-                    not anchor
-                    and id not in self.__gc__
-                    and (_anchor := self.__shelf__.get(str(id)))
-                ):
-                    self.__mem__[id] = anchor = _anchor
+                if not anchor and isinstance(self.__shelf__, Shelf):
+                    anchor = self.__shelf__.get(str(id))
+                    if anchor:
+                        self.__mem__[id] = anchor
+
+                if not anchor:
+                    for anchor_from_db in super().find([id], filter):
+                        anchor = anchor_from_db
+                        if anchor:
+                            # Save to memory and shelf
+                            self.__mem__[id] = anchor
+                            if isinstance(self.__shelf__, Shelf):
+                                self.__shelf__[str(id)] = anchor
+                        break
+
                 if anchor and (not filter or filter(anchor)):
                     yield anchor
         else:
