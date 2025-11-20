@@ -180,7 +180,7 @@ class MongoDB(Memory[UUID, Anchor]):
     # COMMIT
     # -------------------
     def commit(self, anchor: TANCH | None = None) -> None:
-        print("I am inside mongodb commit")
+        print("I am starting  mongodb commit")
         if anchor:
             if anchor in self.__gc__:
                 self._delete_anchor(anchor)
@@ -275,7 +275,6 @@ class MongoDB(Memory[UUID, Anchor]):
     # CLOSE
     # -------------------
     def close(self) -> None:
-        print("I am in mongodb now")
         # self.commit()
         MongoDB.commit(self)
         super().close()
@@ -319,8 +318,9 @@ class ShelfStorage(MongoDB):  # Memory):
 
     def close(self) -> None:
         """Close memory handler."""
+        print("I am  closing shelf storage")
         self.commit()
-        print("I am in shelf storage")
+        print("I am  commited shelf storage")
         if isinstance(self.__shelf__, Shelf):
             self.__shelf__.close()
         print("I have closed the shelf")
@@ -433,3 +433,155 @@ class ShelfStorage(MongoDB):  # Memory):
             self.__mem__[id] = data
 
         return data
+
+
+# from __future__ import annotations
+# from dataclasses import dataclass, field
+# from typing import Any, Callable, Iterable, Generator
+# from uuid import UUID
+# from pickle import dumps, loads
+
+import redis
+from .archetype import Anchor
+
+
+@dataclass
+class RedisDB(MongoDB):
+    """Redis-based Memory Handler inheriting MongoDB fallback."""
+
+    redis_url: str ="redis://:mypassword123@localhost:6379/0"#"redis://localhost:6379/0"
+    redis_client: redis.Redis | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        """Initialize Redis + MongoDB."""
+        super().__post_init__()
+
+        if self.redis_client is None:
+            self.redis_client = redis.from_url(self.redis_url)
+
+    # ------------------------------------------------------------
+    # Utility
+    # ------------------------------------------------------------
+    def _redis_key(self, id: UUID) -> str:
+        return f"anchor:{str(id)}"
+
+    def _load_anchor_from_redis(self, id: UUID) -> Anchor | None:
+        key = self._redis_key(id)
+        raw = self.redis_client.get(key)
+        if not raw:
+            return None
+        try:
+            return loads(raw)
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------
+    # FIND
+    # ------------------------------------------------------------
+    def find(
+        self,
+        ids: UUID | Iterable[UUID],
+        filter: Callable[[Anchor], bool] | None = None,
+    ) -> Generator[Anchor, None, None]:
+
+        if not isinstance(ids, Iterable):
+            ids = [ids]
+
+        for id in ids:
+            _id = self._to_uuid(id)
+
+            # 1) MEMORY CHECK
+            obj = self.__mem__.get(_id)
+            if obj:
+                if not filter or filter(obj):
+                    yield obj
+                continue
+
+            # 2) REDIS CHECK
+            obj = self._load_anchor_from_redis(_id)
+            if obj:
+                self.__mem__[_id] = obj
+                if not filter or filter(obj):
+                    yield obj
+                continue
+
+            # 3) MONGODB FALLBACK
+            for anchor in super().find([_id], filter):
+                self.__mem__[_id] = anchor
+                # Save to Redis also
+                self.redis_client.set(self._redis_key(_id), dumps(anchor))
+                yield anchor
+
+    # ------------------------------------------------------------
+    # FIND ONE / BY ID
+    # ------------------------------------------------------------
+    def find_by_id(self, id: UUID) -> Anchor | None:
+        _id = self._to_uuid(id)
+
+        # 1) MEMORY
+        obj = self.__mem__.get(_id)
+        if obj:
+            return obj
+
+        # 2) REDIS
+        obj = self._load_anchor_from_redis(_id)
+        if obj:
+            self.__mem__[_id] = obj
+            return obj
+
+        # 3) MONGODB
+        obj = super().find_by_id(_id)
+        if obj:
+            self.__mem__[_id] = obj
+            self.redis_client.set(self._redis_key(_id), dumps(obj))
+        return obj
+
+    # ------------------------------------------------------------
+    # SAVE / DELETE
+    # ------------------------------------------------------------
+    def _save_anchor(self, anchor: Anchor) -> None:
+        """Save to MongoDB AND Redis."""
+
+        self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
+
+
+    def _delete_anchor(self, anchor: Anchor) -> None:
+        """Delete from MongoDB AND Redis."""
+        self.redis_client.delete(self._redis_key(anchor.id))
+
+
+    # ------------------------------------------------------------
+    # COMMIT
+    # ------------------------------------------------------------
+    def commit(self, anchor: Anchor | None = None) -> None:
+        """Commit behaves like MongoDB but also syncs Redis."""
+        print("I am starting  redis commit")
+        if anchor:
+                if anchor in self.__gc__:
+                    self._delete_anchor(anchor)
+                    self.__mem__.pop(anchor.id, None)
+                    # self.__gc__.remove(anchor)
+                else:
+                    self._save_anchor([anchor])
+                return
+        
+        for anc in list(self.__gc__):
+            self._delete_anchor(anc)
+
+        for anc in list(self.__mem__.values()):
+            self._save_anchor(anc)
+
+        # Sync __mem__ → Redis after MongoDB commit
+        for anc in list(self.__mem__.values()):
+            try:
+                self.redis_client.set(self._redis_key(anc.id), dumps(anc))
+            except Exception:
+                pass
+
+    # ------------------------------------------------------------
+    # CLOSE
+    # ------------------------------------------------------------
+    def close(self) -> None:
+        """Close Redis + MongoDB memory."""
+        self.commit()
+        super().close()
