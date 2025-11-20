@@ -449,7 +449,9 @@ from .archetype import Anchor
 class RedisDB(MongoDB):
     """Redis-based Memory Handler inheriting MongoDB fallback."""
 
-    redis_url: str ="redis://:mypassword123@localhost:6379/0"#"redis://localhost:6379/0"
+    redis_url: str = (
+        "redis://:mypassword123@localhost:6379/0"  # "redis://localhost:6379/0"
+    )
     redis_client: redis.Redis | None = field(default=None)
 
     def __post_init__(self) -> None:
@@ -544,11 +546,9 @@ class RedisDB(MongoDB):
 
         self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
 
-
     def _delete_anchor(self, anchor: Anchor) -> None:
         """Delete from MongoDB AND Redis."""
         self.redis_client.delete(self._redis_key(anchor.id))
-
 
     # ------------------------------------------------------------
     # COMMIT
@@ -557,14 +557,14 @@ class RedisDB(MongoDB):
         """Commit behaves like MongoDB but also syncs Redis."""
         print("I am starting  redis commit")
         if anchor:
-                if anchor in self.__gc__:
-                    self._delete_anchor(anchor)
-                    self.__mem__.pop(anchor.id, None)
-                    # self.__gc__.remove(anchor)
-                else:
-                    self._save_anchor([anchor])
-                return
-        
+            if anchor in self.__gc__:
+                self._delete_anchor(anchor)
+                self.__mem__.pop(anchor.id, None)
+                # self.__gc__.remove(anchor)
+            else:
+                self._save_anchor([anchor])
+            return
+
         for anc in list(self.__gc__):
             self._delete_anchor(anc)
 
