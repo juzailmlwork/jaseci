@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pickle import dumps, loads
+import os
 from shelve import Shelf, open
 from typing import Any, Callable, Generator, Generic, Iterable, TypeVar, cast
 from uuid import UUID
 
-from pymongo import DeleteOne, MongoClient, UpdateOne
+from pymongo import MongoClient, UpdateOne
 
 from .archetype import Anchor, NodeAnchor, Root, TANCH
 
@@ -21,7 +22,7 @@ ID = TypeVar("ID")
 class Memory(Generic[ID, TANCH]):
     """Generic Memory Handler."""
 
-    __mem__: dict[ID, TANCH] = field(default_factory=dict)
+    __mem__: dict[ID | UUID, TANCH] = field(default_factory=dict)
     __gc__: set[TANCH] = field(default_factory=set)
 
     def close(self) -> None:
@@ -89,20 +90,40 @@ class Memory(Generic[ID, TANCH]):
     def commit(self, anchor: TANCH | None = None) -> None:
         """Commit all data from memory to datasource."""
 
+    def get_gc(self) -> list:
+        """Commit all data from memory to datasource."""
+        return list(self.__gc__)
+
+    def remove_from_gc(self, anchor) -> None:
+        """Commit all data from memory to datasource."""
+        self.__gc__.remove(anchor)
+
+    def get_mem(self) -> dict:
+        """Commit all data from memory to datasource."""
+        return self.__mem__
+
+    def remove_from_mem(self, anchor) -> None:
+        """Commit all data from memory to datasource."""
+        self.__mem__.pop(anchor)
+
 
 @dataclass
-class MongoDB(Memory[UUID, Anchor]):
-    """MongoDB handler storing Python objects (pickled) with behavior exactly like ShelfStorage."""
+class MongoDB:  # Memory[UUID, Anchor]):
+    """MongoDB handler."""
 
     client: MongoClient | None = field(default=None)
     db_name: str = "jac_db"
     collection_name: str = "anchors"
+    mongo_url = os.environ.get(
+        "MONGODB_URI",
+        "mongodb+srv://juzailmlwork_db_user:e5OTI7p2DkaaGHnL@cluster0.e8eqk4i.mongodb.net/?appName=Cluster0/",
+    )
 
     def __post_init__(self) -> None:
+        """Initialize Mongodb."""
         if self.client is None:
-            self.client = MongoClient(
-                "mongodb+srv://juzailmlwork_db_user:e5OTI7p2DkaaGHnL@cluster0.e8eqk4i.mongodb.net/?appName=Cluster0/"
-            )
+            self.client = MongoClient(self.mongo_url)
+
         self.db = self.client[self.db_name]
         self.collection = self.db[self.collection_name]
 
@@ -117,7 +138,7 @@ class MongoDB(Memory[UUID, Anchor]):
         except Exception:
             return None
 
-    def _save_anchor(self, anchor: Anchor) -> None:
+    def set(self, anchor: Anchor) -> None:
         """
         Save anchor to MongoDB, exactly like ShelfStorage:
         - Save all anchors (no empty NodeAnchor skipping)
@@ -181,70 +202,56 @@ class MongoDB(Memory[UUID, Anchor]):
             {"$set": {"data": data_blob, "type": type(final_anchor).__name__}},
             upsert=True,
         )
+        # print("uploaded anchor to item to mongodb ")
 
-        print("uploaded anchor to item to mongodb ")
-
-    def _delete_anchor(self, anchor: TANCH) -> None:
+    def remove(self, anchor: TANCH) -> None:
         _id = self._to_uuid(anchor.id)
         self.collection.delete_one({"_id": str(_id)})
-        self.__mem__.pop(_id, None)
-        self.__gc__.discard(anchor)
 
-    # -------------------
-    # FIND
-    # -------------------
-    def find(
-        self,
-        ids: UUID | Iterable[UUID],
-        filter: Callable | None = None,
-    ) -> Generator[Anchor, None, None]:
-        if not isinstance(ids, Iterable) or isinstance(ids, (str, bytes)):
-            ids = [ids]
+    # def find(
+    #     self,
+    #     ids: UUID | Iterable[UUID],
+    #     filter: Callable | None = None,
+    # ) -> Generator[Anchor, None, None]:
+    #     if not isinstance(ids, Iterable) or isinstance(ids, (str, bytes)):
+    #         ids = [ids]
 
-        for id in ids:
-            _id = self._to_uuid(id)
+    #     for id in ids:
+    #         _id = self._to_uuid(id)
 
-            # check memory first
-            obj = self.__mem__.get(_id)
-            if obj:
-                if not filter or filter(obj):
-                    yield obj
-                continue
+    #         # check memory first
+    #         obj = self.__mem__.get(_id)
+    #         if obj:
+    #             if not filter or filter(obj):
+    #                 yield obj
+    #             continue
 
-            # fetch from DB
-            db_doc = self.collection.find_one({"_id": str(_id)})
-            if db_doc:
-                anchor = self._load_anchor(db_doc)
-                if anchor is None:
-                    continue
-                self.__mem__[_id] = anchor
-                yield anchor
+    #         # fetch from DB
+    #         db_doc = self.collection.find_one({"_id": str(_id)})
+    #         if db_doc:
+    #             anchor = self._load_anchor(db_doc)
+    #             if anchor is None:
+    #                 continue
+    #             self.__mem__[_id] = anchor
+    #             yield anchor
 
-    # -------------------
-    # FIND ONE / BY ID
-    # -------------------
-    def find_one(
-        self,
-        ids: UUID | Iterable[UUID],
-        filter: Callable[[TANCH], TANCH] | None = None,
-    ) -> Anchor | None:
-        return next(self.find(ids, filter), None)
+    # def find_one(
+    #     self,
+    #     ids: UUID | Iterable[UUID],
+    #     filter: Callable[[TANCH], TANCH] | None = None,
+    # ) -> Anchor | None:
+    #     return next(self.find(ids, filter), None)
 
-    def find_by_id(self, id: UUID) -> Anchor | None:
-        _id = self._to_uuid(id)
-        obj = self.__mem__.get(_id)
-        if obj:
-            return obj
+    # def find_by_id(self, id: UUID) -> Anchor | None:
+    #     _id = self._to_uuid(id)
+    #     db_obj = self.collection.find_one({"_id": str(_id)})
+    #     if db_obj:
+    #         anchor = self._load_anchor(db_obj)
+    #         if anchor:
+    #             return anchor
+    #     return None
 
-        db_obj = self.collection.find_one({"_id": str(_id)})
-        if db_obj:
-            anchor = self._load_anchor(db_obj)
-            if anchor:
-                self.__mem__[_id] = anchor
-                return anchor
-        return None
-
-    def commit_bulk(self) -> None:
+    def commit_bulk(self, anchors) -> None:
         """
         Faster bulk commit:
         - Deletes anchors in GC
@@ -256,20 +263,7 @@ class MongoDB(Memory[UUID, Anchor]):
 
         ops: list = []
 
-        # ---------------------
-        # Process deletions
-        # ---------------------
-        for anc in list(self.__gc__):
-            _id = self._to_uuid(anc.id)
-            ops.append(DeleteOne({"_id": str(_id)}))
-            self.__mem__.pop(_id, None)
-            self.__gc__.remove(anc)
-
-        # ---------------------
-        # Process updates
-        # ---------------------
-        print("number of keys in memory are", len(self.__mem__))
-        for anc in list(self.__mem__.values()):
+        for anc in anchors:
             _id = self._to_uuid(anc.id)
 
             try:
@@ -287,7 +281,7 @@ class MongoDB(Memory[UUID, Anchor]):
             db_doc = self.collection.find_one({"_id": str(_id)})
             stored_anchor = self._load_anchor(db_doc) if db_doc else None
 
-            # ---- Edge merging logic just like in _save_anchor ----
+            # ---- Edge merging logic ----
             if (
                 stored_anchor
                 and isinstance(stored_anchor, NodeAnchor)
@@ -330,37 +324,25 @@ class MongoDB(Memory[UUID, Anchor]):
             print(f"Performing bulk write with {len(ops)} operations...")
             self.collection.bulk_write(ops)
 
-    def commit(self, anchor: TANCH | None = None) -> None:
+    def commit(self, anchor: TANCH | None = None, keys: Iterable[Anchor] = []) -> None:
         if anchor:
-            print("MongoDB: committing single anchor")
-            if anchor in self.__gc__:
-                self._delete_anchor(anchor)
-                self.__gc__.remove(anchor)
-            else:
-                self._save_anchor(anchor)
+            self.set(anchor)
             return
-
-        print("MongoDB: committing all anchors using bulk write")
-        self.commit_bulk()
-
-    def close(self) -> None:
-        print("I am inside Mongodb closing")
-        MongoDB.commit(self)
-        super().close()
+        if keys:
+            self.commit_bulk(keys)
 
 
 @dataclass
-class RedisDB(Memory[UUID, Anchor]):
-    """Redis-based Memory Handler inheriting MongoDB fallback."""
+class RedisDB:  # Memory[UUID, Anchor]):
+    """Redis-based Memory Handler."""
 
-    redis_url: str = (
-        "redis://:mypassword123@localhost:6379/0"  # "redis://localhost:6379/0"
+    redis_url: str = os.environ.get(
+        "MONGODB_URI", "redis://:mypassword123@localhost:6379/0"
     )
     redis_client: redis.Redis | None = field(default=None)
 
     def __post_init__(self) -> None:
-        """Initialize Redis + MongoDB."""
-        super().__init__()
+        """Initialize Redis."""
 
         if self.redis_client is None:
             self.redis_client = redis.from_url(self.redis_url)
@@ -374,6 +356,8 @@ class RedisDB(Memory[UUID, Anchor]):
         return id
 
     def _load_anchor_from_redis(self, id: UUID) -> Anchor | None:
+        if self.redis_client is None:
+            return None
         key = self._redis_key(id)
         raw = self.redis_client.get(key)
         if not raw:
@@ -383,80 +367,57 @@ class RedisDB(Memory[UUID, Anchor]):
         except Exception:
             return None
 
-    def _save_anchor(self, anchor: Anchor) -> None:
+    def set(self, anchor: Anchor) -> None:
         """Save to MongoDB AND Redis."""
+        if self.redis_client is None:
+            return
         self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
 
-    def _delete_anchor(self, anchor: Anchor) -> None:
+    def remove(self, anchor: Anchor) -> None:
         """Delete from MongoDB AND Redis."""
+        if self.redis_client is None:
+            return None
         self.redis_client.delete(self._redis_key(anchor.id))
 
-    def find(
-        self,
-        ids: UUID | Iterable[UUID],
-        filter: Callable[[Anchor], bool] | None = None,
-    ) -> Generator[Anchor, None, None]:
+    # def find(
+    #     self,
+    #     ids: UUID | Iterable[UUID],
+    #     filter: Callable[[Anchor], bool] | None = None,
+    # ) -> Generator[Anchor, None, None]:
 
-        if not isinstance(ids, Iterable):
-            ids = [ids]
+    #     if not isinstance(ids, Iterable):
+    #         ids = [ids]
 
-        for id in ids:
-            _id = self._to_uuid(id)
-            anchor = self.__mem__.get(_id)
-            if (
-                not anchor
-                and id not in self.__gc__
-                and (_anchor := self._load_anchor_from_redis(_id))
-            ):
-                self.__mem__[id] = anchor = _anchor
+    #     for id in ids:
+    #         _id = self._to_uuid(id)
+    #         anchor = self.__mem__.get(_id)
+    #         if (
+    #             not anchor
+    #             and id not in self.__gc__
+    #             and (_anchor := self._load_anchor_from_redis(_id))
+    #         ):
+    #             self.__mem__[id] = anchor = _anchor
 
-            if anchor and (not filter or filter(anchor)):
-                yield anchor
+    #         if anchor and (not filter or filter(anchor)):
+    #             yield anchor
 
-            else:
-                yield from super().find(ids, filter)
+    #         else:
+    #             yield from super().find(ids, filter)
 
     def find_by_id(self, id: UUID) -> Anchor | None:
         _id = self._to_uuid(id)
-
-        data = self.__mem__.get(_id)
-        if not data:
-            data = self._load_anchor_from_redis(_id)
-            if data:
-                self.__mem__[_id] = data
+        data = self._load_anchor_from_redis(_id)
         return data
 
-    def commit(self, anchor: Anchor | None = None) -> None:
+    def commit(self, anchor: Anchor | None = None, keys: Iterable[Anchor] = []) -> None:
         """Commit behaves like MongoDB but also syncs Redis."""
 
         if anchor:
-            print("I am starting  redis commit for individual anchor")
-            if anchor in self.__gc__:
-                self._delete_anchor(anchor)
-                self.__mem__.pop(anchor.id, None)
-                # self.__gc__.remove(anchor)
-            else:
-                self._save_anchor(anchor)
+            self.set(anchor)
             return
-        print("I am starting  redis commit for all anchors")
-        for anc in list(self.__gc__):
-            self._delete_anchor(anc)
-
-        for anc in list(self.__mem__.values()):
-            self._save_anchor(anc)
-
-        # Sync __mem__ → Redis after MongoDB commit
-        for anc in list(self.__mem__.values()):
-            try:
-                self.redis_client.set(self._redis_key(anc.id), dumps(anc))
-            except Exception:
-                pass
-
-    def close(self) -> None:
-        """Close Redis + MongoDB memory."""
-        print("I am closing redis memory")
-        self.commit()
-        super().close()
+        if keys:
+            for anc in keys:
+                self.set(anc)
 
 
 @dataclass
@@ -594,49 +555,61 @@ class ShelfStorage(Memory[UUID, Anchor]):
 
 @dataclass
 class MultiHierarchyMemory:
-    mem: Memory[UUID, Anchor]
 
     def __init__(self):
-        redis = RedisDB()
-        mongo = MongoDB()
+        self.mem = Memory()
+        self.redis = RedisDB()
+        self.mongo = MongoDB()
 
     # ---- DOWNSTREAM (READS) ----
-    def find(self, id: UUID) -> Anchor | None:
+    def find_by_id(self, id: UUID) -> Anchor | None:
         # 1. Memory
-        if obj := self.mem.get_local(id):
-            return obj
-
+        if anchor := self.mem.find_by_id(id):
+            return anchor
         # 2. Redis
-        if obj := self.redis.load_from_redis(id):
-            self.mem.set_local(id, obj)
-            return obj
-
+        if anchor := self.redis.find_by_id(id):
+            self.mem.set(anchor)
+            return anchor
         # 3. MongoDB
-        if obj := self.mongo.load_from_mongo(id):
-            self.redis.save_to_redis(obj)
-            self.mem.set_local(id, obj)
-            return obj
+        if anchor := self.mongo.find_by_id(id):
+            self.mem.set(anchor)
+            self.redis.set(anchor)
+            return anchor
 
         return None
 
     # ---- UPSTREAM (WRITES) ----
-    def commit(self, anchor: Anchor):
-        # 1. Memory
-        self.mem.set_local(anchor.id, anchor)
+    def commit(self, anchor: Anchor | None = None):
+        gc = self.mem.get_gc()
+        memory = self.mem.get_mem()
+        if anchor:
+            if anchor in gc:
+                self.delete(anchor)
+                self.mem.remove_from_gc(anchor)
+            else:
+                self.redis.set(anchor)
+                self.mongo.set(anchor)
+            return
 
-        # 2. Redis
-        self.redis.save_to_redis(anchor)
+        for anchor in gc:
+            self.delete(anchor)
+            self.mem.remove_from_gc(anchor)
 
-        # 3. MongoDB
-        self.mongo.save_to_mongo(anchor)
+        anchors = set(memory.values())
+        self.sync(anchors)
 
-    # ---- DELETIONS ----
-    def delete(self, id: UUID):
-        # Remove from memory
-        self.mem.mark_delete(id)
+    def close(self):
+        self.commit()
+        self.mem.close()
 
-        # Remove from redis
-        self.redis.redis_client.delete(f"anchor:{id}")
+    def sync(self, anchors):
+        self.redis.commit(keys=anchors)
+        self.mongo.commit(keys=anchors)
 
-        # Remove from mongo
-        self.mongo.client.db.anchors.delete_one({"_id": str(id)})
+    def delete(self, anchor: Anchor):
+        self.mem.remove(anchor)
+        self.redis.remove(anchor)
+        self.mongo.remove(anchor)
+
+    def set(self, anchor: TANCH):
+        self.mem.set(anchor)
