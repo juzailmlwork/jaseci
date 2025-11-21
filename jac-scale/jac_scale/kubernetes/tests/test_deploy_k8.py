@@ -208,9 +208,6 @@ def test_deploy_k8_with_mongodb_and_redis_different_namespace():
     core_v1.delete_namespaced_service("littlex-mongodb-service", namespace)
 
 
-import pytest
-
-
 def test_deploy_and_cleanup_k8_resources():
     """Test deploy_k8() with MongoDB and Redis, then cleanup_k8_resources()."""
 
