@@ -35,7 +35,7 @@ def test_deploy_k8_only_littlex():
     )
 
     # Run deploy
-    deploy_k8(code_folder=".")
+    deploy_k8(code_folder=".", build=True)
 
     # Wait for deployment to be created
     time.sleep(30)
@@ -85,7 +85,7 @@ def test_deploy_k8_with_mongodb_and_redis():
     )
 
     # Run deploy
-    deploy_k8(code_folder=".")
+    deploy_k8(code_folder=".", build=True)
 
     # Wait for resources to be ready
     time.sleep(20)
@@ -161,7 +161,7 @@ def test_deploy_k8_with_mongodb_and_redis_different_namespace():
     )
 
     # Run deploy
-    deploy_k8(code_folder=".")
+    deploy_k8(code_folder=".", build=True)
 
     # Wait for resources to be ready
     time.sleep(30)
@@ -230,7 +230,7 @@ def test_deploy_and_cleanup_k8_resources():
     )
 
     # Deploy resources
-    deploy_k8(code_folder=".")
+    deploy_k8(code_folder=".", build=True)
 
     # Wait for resources to be ready
     time.sleep(20)

@@ -35,12 +35,10 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
     # -------------------
     # Kubernetes setup
     # -------------------
-
     # Load the kubeconfig from default location (~/.kube/config)
     config.load_kube_config()
     apps_v1 = client.AppsV1Api()
     core_v1 = client.CoreV1Api()
-
     check_k8_status()
     ensure_namespace_exists(namespace)
     env_list = load_env_variables(code_folder)
@@ -48,7 +46,6 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
     # Define MongoDB deployment/service (if needed)
     # -------------------
     init_containers: List[Dict[str, Any]] = []
-
     if mongodb_enabled:
         mongodb_name = f"{app_name}-mongodb"
         mongodb_service_name = f"{mongodb_name}-service"
@@ -88,7 +85,6 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
         "ports": [{"containerPort": container_port}],
         "env": env_list,
     }
-
     if not build:
         # container_config["command"] = ["sleep", "infinity"]
         build_container = {
@@ -134,10 +130,9 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             "ports": [{"containerPort": container_port}],
             "env": env_list,
         }
-
-    create_tarball(code_folder, "jaseci-code.tar.gz")
-    create_or_update_configmap(namespace, "jaseci-code", "jaseci-code.tar.gz")
-    os.remove("jaseci-code.tar.gz")
+        create_tarball(code_folder, "jaseci-code.tar.gz")
+        create_or_update_configmap(namespace, "jaseci-code", "jaseci-code.tar.gz")
+        os.remove("jaseci-code.tar.gz")
 
     # -------------------
     # Define Service for Jaseci-app
