@@ -313,7 +313,6 @@ class RedisDB:  # Memory[UUID, Anchor]):
             return None
         self.redis_client.delete(self._redis_key(anchor.id))
 
-
     def find_by_id(self, id: UUID) -> Anchor | None:
         _id = self._to_uuid(id)
         data = self._load_anchor_from_redis(_id)
