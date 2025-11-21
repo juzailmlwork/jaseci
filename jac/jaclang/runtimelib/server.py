@@ -22,11 +22,7 @@ from jaclang.runtimelib.constructs import (
     Root,
     WalkerArchetype,
 )
-from jaclang.runtimelib.machine import (
-    ExecutionContext,
-    JacMachine as Jac,
-    JacResponseBuilder,
-)
+from jaclang.runtimelib.machine import JacMachine as Jac, JacResponseBuilder
 
 # Type Aliases
 JsonValue: TypeAlias = (
@@ -141,7 +137,7 @@ class UserManager:
         if username in self._users:
             return {"error": "User already exists"}
 
-        ctx = ExecutionContext(session=self.session_path)
+        ctx = Jac.CreateJContext(session=self.session_path)
         Jac.set_context(ctx)
 
         try:
@@ -152,7 +148,7 @@ class UserManager:
             root_id = root_anchor.id.hex
         finally:
             ctx.mem.close()
-            Jac.set_context(ExecutionContext())
+            Jac.set_context(Jac.CreateJContext())
 
         token = secrets.token_urlsafe(32)
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -213,7 +209,7 @@ class ExecutionManager:
         if not root_id:
             return {"error": "User not found"}
 
-        ctx = ExecutionContext(session=self.session_path, root=root_id)
+        ctx = Jac.CreateJContext(session=self.session_path, root=root_id)
         Jac.set_context(ctx)
 
         try:
@@ -227,7 +223,7 @@ class ExecutionManager:
             return {"error": str(e)}
         finally:
             ctx.mem.close()
-            Jac.set_context(ExecutionContext())
+            Jac.set_context(Jac.CreateJContext())
 
     def spawn_walker(
         self, walker_cls: type[WalkerArchetype], fields: dict[str, Any], username: str
@@ -238,7 +234,7 @@ class ExecutionManager:
             return {"error": "User not found"}
 
         target_node_id = fields.pop("_jac_spawn_node", None)
-        ctx = ExecutionContext(session=self.session_path, root=root_id)
+        ctx = Jac.CreateJContext(session=self.session_path, root=root_id)
         Jac.set_context(ctx)
 
         try:
@@ -264,7 +260,7 @@ class ExecutionManager:
             return {"error": str(e), "traceback": traceback.format_exc()}
         finally:
             ctx.mem.close()
-            Jac.set_context(ExecutionContext())
+            Jac.set_context(Jac.CreateJContext())
 
 
 # Module Introspector
