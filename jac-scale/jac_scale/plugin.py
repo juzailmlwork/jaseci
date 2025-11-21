@@ -91,6 +91,7 @@ class JacCmd:
 
             # Process file and session
             from jaclang.cli.cli import proc_file_sess
+
             base, mod, mach = proc_file_sess(filename, session)
             lng = filename.split(".")[-1]
             Jac.set_base_path(base)
