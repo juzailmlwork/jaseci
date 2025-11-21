@@ -270,7 +270,7 @@ class RedisDB:  # Memory[UUID, Anchor]):
     """Redis-based Memory Handler."""
 
     redis_url: str = os.environ.get(
-        "MONGODB_URI", "redis://:mypassword123@localhost:6379/0"
+        "REDIS_URL", "redis://:mypassword123@localhost:6379/0"
     )
     redis_client: redis.Redis | None = field(default=None)
 
