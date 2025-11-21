@@ -90,7 +90,7 @@ class MongoDB:  # Memory[UUID, Anchor]):
     collection_name: str = "anchors"
     mongo_url = os.environ.get(
         "MONGODB_URI",
-        "mongodb://localhost:27017",
+        "mongodb://root:rootpassword123@localhost:27017/"
     )
 
     def __post_init__(self) -> None:
