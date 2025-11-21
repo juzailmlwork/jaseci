@@ -9,7 +9,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from jaclang.cli.cli import proc_file_sess
-from jaclang.cli.cmdreg import CommandPriority,cmd_registry
+from jaclang.cli.cmdreg import CommandPriority, cmd_registry
 from jaclang.runtimelib.machine import ExecutionContext
 from jaclang.runtimelib.machine import JacMachine as Jac
 from jaclang.runtimelib.machine import hookimpl, plugin_manager
@@ -56,7 +56,6 @@ class JacCmd:
             dotenv_path = os.path.join(code_folder, ".env")
             load_dotenv(dotenv_path)
             cleanup_k8_resources()
-
 
         @cmd_registry.register(priority=CommandPriority.PLUGIN, source="jac-scale")
         def serve(
@@ -139,7 +138,9 @@ class JacCmd:
                     mach.close()
                     return
                 except Exception as e:
-                    print(f"Error generating endpoint documentation: {e}", file=sys.stderr)
+                    print(
+                        f"Error generating endpoint documentation: {e}", file=sys.stderr
+                    )
                     mach.close()
                     exit(1)
 
