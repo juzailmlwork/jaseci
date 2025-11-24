@@ -534,7 +534,8 @@ def endpoint_wrapper({params}) -> Any:
         """
         return self.app
 
-    def run_server(self, host: str = "localhost", port: int = 8000) -> None:
+    def run_server(self, host: str = "0.0.0.0", port: int = 8000) -> None:
         """Run the FastAPI server using Uvicorn."""
         app = self.create_server()
+        print("the host is",host,flush=True)
         uvicorn.run(app, host=host, port=port)
