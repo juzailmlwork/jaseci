@@ -17,6 +17,18 @@ from kubernetes.config.config_exception import ConfigException
 import urllib3
 
 
+def debug_print(statement: str, debug_only: bool = False) -> None:
+    """
+    Print a statement only if debug_only is True.
+
+    Args:
+        statement (str): The message to print.
+        debug_only (bool): If True, print the statement; otherwise, do nothing.
+    """
+    if debug_only:
+        print(statement)
+
+
 def load_env_variables(code_folder: str) -> list:
     """Load env variables in .env to aws beanstalk environment."""
     env_file = os.path.join(code_folder, ".env")

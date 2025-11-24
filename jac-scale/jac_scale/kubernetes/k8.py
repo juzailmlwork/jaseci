@@ -207,18 +207,11 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
 
         try:
             apps_v1.read_namespaced_stateful_set(name=mongodb_name, namespace=namespace)
-            print(
-                f"MongoDB StatefulSet '{mongodb_name}' already exists, skipping creation."
-            )
         except ApiException as e:
             if e.status == 404:
-                print(
-                    f"MongoDB StatefulSet '{mongodb_name}' not found. Creating new one..."
-                )
                 apps_v1.create_namespaced_stateful_set(
                     namespace=namespace, body=mongodb_deployment
                 )
-                print(f"MongoDB StatefulSet '{mongodb_name}' created.")
             else:
                 raise
 
@@ -226,22 +219,13 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             core_v1.read_namespaced_service(
                 name=mongodb_service_name, namespace=namespace
             )
-            print(
-                f"MongoDB Service '{mongodb_service_name}' already exists, skipping creation."
-            )
         except ApiException as e:
             if e.status == 404:
-                print(
-                    f"MongoDB Service '{mongodb_service_name}' not found. Creating new one..."
-                )
                 core_v1.create_namespaced_service(
                     namespace=namespace, body=mongodb_service
                 )
-                print(f"MongoDB Service '{mongodb_service_name}' created.")
             else:
                 raise
-
-        print(f"MongoDB deployed and ready (service: '{mongodb_service_name}')")
 
     # -------------------
     # Deploy Redis (if enabled)
@@ -251,14 +235,11 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
 
         try:
             apps_v1.read_namespaced_deployment(name=redis_name, namespace=namespace)
-            print(f"Redis Deployment '{redis_name}' already exists, skipping creation.")
         except ApiException as e:
             if e.status == 404:
-                print(f"Redis Deployment '{redis_name}' not found. Creating new one...")
                 apps_v1.create_namespaced_deployment(
                     namespace=namespace, body=redis_deployment
                 )
-                print(f"Redis Deployment '{redis_name}' created.")
             else:
                 raise
 
@@ -266,22 +247,14 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             core_v1.read_namespaced_service(
                 name=redis_service_name, namespace=namespace
             )
-            print(
-                f"Redis Service '{redis_service_name}' already exists, skipping creation."
-            )
         except ApiException as e:
             if e.status == 404:
-                print(
-                    f"Redis Service '{redis_service_name}' not found. Creating new one..."
-                )
+
                 core_v1.create_namespaced_service(
                     namespace=namespace, body=redis_service
                 )
-                print(f"Redis Service '{redis_service_name}' created.")
             else:
                 raise
-
-        print(f"Redis deployed and ready (service: '{redis_service_name}')")
 
     print("Deploying Jaseci-app app...")
     apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
