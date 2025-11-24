@@ -30,22 +30,13 @@ class MultiHierarchyMemory:
         self.mongo = MongoDB()
         self.shelf = ShelfDB()
 
-    def redis_is_available(self) -> bool:
-        """Check whether Redis connection is alive and reachable."""
-        try:
-            if self.redis is None:
-                return False
-            return self.redis.ping()
-        except Exception:
-            return False
-
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
         print("I am using find by id", id, flush=True)
         # 1. Memory
         if anchor := self.mem.find_by_id(id):
             return anchor
-        if self.redis_is_available():
+        if self.redis.redis_is_available():
             # 2. Redis
             if anchor := self.redis.find_by_id(id):
                 self.mem.set(anchor)
@@ -73,7 +64,7 @@ class MultiHierarchyMemory:
                 self.delete(anchor)
                 self.mem.remove_from_gc(anchor)
             else:
-                if self.redis_is_available():
+                if self.redis.redis_is_available():
                     self.redis.set(anchor)
                     self.mongo.set(anchor)
                 else:
@@ -102,7 +93,7 @@ class MultiHierarchyMemory:
 
     def delete(self, anchor: Anchor):
         self.mem.remove(anchor)
-        if self.redis_is_available():
+        if self.redis.redis_is_available():
             self.redis.remove(anchor)
             self.mongo.remove(anchor)
         else:
@@ -311,6 +302,15 @@ class RedisDB:  # Memory[UUID, Anchor]):
         if self.redis_client is None:
             self.redis_client = redis.from_url(self.redis_url)
 
+    def redis_is_available(self) -> bool:
+        """Check whether Redis connection is alive and reachable."""
+        try:
+            if self.redis_client is None:
+                return False
+            return self.redis_client.ping()
+        except Exception:
+            return False
+        
     def _redis_key(self, id: UUID) -> str:
         return f"anchor:{str(id)}"
 
