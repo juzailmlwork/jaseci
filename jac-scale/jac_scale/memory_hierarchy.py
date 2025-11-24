@@ -30,7 +30,7 @@ class MultiHierarchyMemory:
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
         # 1. Memory
-        print("I am inside id and",id)
+        print("I am inside id and", id)
         if anchor := self.mem.find_by_id(id):
             return anchor
         # 2. Redis
