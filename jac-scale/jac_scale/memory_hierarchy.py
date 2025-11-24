@@ -29,6 +29,7 @@ class MultiHierarchyMemory:
 
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
+        print("I am using find by id",id)
         # 1. Memory
         if anchor := self.mem.find_by_id(id):
             return anchor
@@ -48,7 +49,9 @@ class MultiHierarchyMemory:
     def commit(self, anchor: Anchor | None = None):
         gc = self.mem.get_gc()
         memory = self.mem.get_mem()
+        
         if anchor:
+            print("I am commiting anchor with id",anchor.id)
             if anchor in gc:
                 self.delete(anchor)
                 self.mem.remove_from_gc(anchor)
@@ -56,7 +59,7 @@ class MultiHierarchyMemory:
                 self.redis.set(anchor)
                 self.mongo.set(anchor)
             return
-
+        print("commiting all anchors")
         for anchor in gc:
             self.delete(anchor)
             self.mem.remove_from_gc(anchor)
@@ -302,8 +305,10 @@ class RedisDB:  # Memory[UUID, Anchor]):
 
     def set(self, anchor: Anchor) -> None:
         """Save to MongoDB AND Redis."""
+        print("going inside redis")
         if self.redis_client is None:
             return
+        print("came out of redis")
         self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
 
     def remove(self, anchor: Anchor) -> None:
