@@ -86,7 +86,7 @@ class MultiHierarchyMemory:
         self.mem.close()
 
     def sync(self, anchors):
-        if self.redis_is_available():
+        if self.redis.redis_is_available():
             self.redis.commit(keys=anchors)
             self.mongo.commit(keys=anchors)
         else:
@@ -307,9 +307,7 @@ class RedisDB:  # Memory[UUID, Anchor]):
         """Check whether Redis connection is alive and reachable."""
         try:
             if self.redis_client is None:
-                print("my name is rana")
                 return False
-            print("my name is rahna")
             print("the status of redis is",self.redis_client.ping())
             return self.redis_client.ping()
         except Exception:
