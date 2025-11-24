@@ -48,7 +48,12 @@ def redis_db(app_name: str, env_vars: list) -> Tuple[dict, dict]:
             "type": "NodePort",
             "selector": {"app": redis_name},
             "ports": [
-                {"protocol": "TCP", "port": redis_port, "targetPort": redis_port,  "nodePort": 32001}
+                {
+                    "protocol": "TCP",
+                    "port": redis_port,
+                    "targetPort": redis_port,
+                    "nodePort": 32001,
+                }
             ],
         },
     }
