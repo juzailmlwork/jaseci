@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pickle import dumps, loads
 import os
-from typing import Any, Iterable, TypeVar
+import shelve
+from threading import RLock
+from typing import Any,Optional, Iterable, TypeVar
 from uuid import UUID
 
 from pymongo import MongoClient, UpdateOne
@@ -26,6 +28,16 @@ class MultiHierarchyMemory:
         self.mem = Memory()
         self.redis = RedisDB()
         self.mongo = MongoDB()
+        self.shelf = ShelfDB()
+
+    def redis_is_available(self) -> bool:
+        """Check whether Redis connection is alive and reachable."""
+        try:
+            if self.redis is None:
+                return False
+            return self.redis.ping()
+        except Exception:
+            return False
 
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
@@ -33,15 +45,20 @@ class MultiHierarchyMemory:
         # 1. Memory
         if anchor := self.mem.find_by_id(id):
             return anchor
-        # 2. Redis
-        if anchor := self.redis.find_by_id(id):
-            self.mem.set(anchor)
-            return anchor
-        # 3. MongoDB
-        if anchor := self.mongo.find_by_id(id):
-            self.mem.set(anchor)
-            self.redis.set(anchor)
-            return anchor
+        if self.redis_is_available():
+            # 2. Redis
+            if anchor := self.redis.find_by_id(id):
+                self.mem.set(anchor)
+                return anchor
+            # 3. MongoDB
+            if anchor := self.mongo.find_by_id(id):
+                self.mem.set(anchor)
+                self.redis.set(anchor)
+                return anchor
+        else:
+            if anchor := self.shelf.find_by_id(id):
+                self.mem.set(anchor)
+                return anchor
 
         return None
 
@@ -56,9 +73,14 @@ class MultiHierarchyMemory:
                 self.delete(anchor)
                 self.mem.remove_from_gc(anchor)
             else:
-                self.redis.set(anchor)
-                self.mongo.set(anchor)
+                if self.redis_is_available():
+                    self.redis.set(anchor)
+                    self.mongo.set(anchor)
+                else:
+                    print("I am using shelf storage")
+                    self.shelf.set(anchor)
             return
+
         print("commiting all anchors", flush=True)
         for anchor in gc:
             self.delete(anchor)
@@ -72,13 +94,19 @@ class MultiHierarchyMemory:
         self.mem.close()
 
     def sync(self, anchors):
-        self.redis.commit(keys=anchors)
-        self.mongo.commit(keys=anchors)
+        if self.redis_is_available():
+            self.redis.commit(keys=anchors)
+            self.mongo.commit(keys=anchors)
+        else:
+            self.shelf.commit(keys=anchors)
 
     def delete(self, anchor: Anchor):
         self.mem.remove(anchor)
-        self.redis.remove(anchor)
-        self.mongo.remove(anchor)
+        if self.redis_is_available():
+            self.redis.remove(anchor)
+            self.mongo.remove(anchor)
+        else:
+            self.shelf.commit(anchor)
 
     def set(self, anchor: TANCH):
         self.mem.set(anchor)
@@ -329,3 +357,75 @@ class RedisDB:  # Memory[UUID, Anchor]):
         if keys:
             for anc in keys:
                 self.set(anc)
+
+
+
+
+
+@dataclass
+class ShelfDB:
+    """Shelf-based Memory Handler — file-backed key/value storage."""
+
+    shelf_path: str = field(default=os.environ.get("SHELF_DB_PATH", "anchor_store.db"))
+    _shelf: Optional[shelve.Shelf] = field(default=None, init=False)
+    _lock: RLock = field(default_factory=RLock, init=False)
+
+    def __post_init__(self):
+        """Lazy initialize shelf DB."""
+        self._open_shelf()
+
+    def _open_shelf(self):
+        if self._shelf is None:
+            # writeback=True caches objects for mutation support
+            self._shelf = shelve.open(self.shelf_path, writeback=False)
+
+    def close(self):
+        """Cleanly close shelf storage."""
+        if self._shelf is not None:
+            self._shelf.close()
+            self._shelf = None
+
+    def _redis_key(self, id: UUID) -> str:
+        """Match key format used in RedisDB for consistency."""
+        return f"anchor:{str(id)}"
+
+    def _to_uuid(self, id: UUID | str) -> UUID:
+        if not isinstance(id, UUID):
+            return UUID(str(id))
+        return id
+
+    def _load_anchor_from_shelf(self, id: UUID) -> Optional[Anchor]:
+        key = self._redis_key(id)
+        with self._lock:
+            if key not in self._shelf:
+                return None
+            return self._shelf[key]
+
+    def set(self, anchor: Anchor) -> None:
+        """Store anchor in shelf."""
+        key = self._redis_key(anchor.id)
+        with self._lock:
+            self._shelf[key] = anchor
+            self._shelf.sync()
+
+    def remove(self, anchor: Anchor) -> None:
+        """Delete anchor from shelf."""
+        key = self._redis_key(anchor.id)
+        with self._lock:
+            if key in self._shelf:
+                del self._shelf[key]
+                self._shelf.sync()
+
+    def find_by_id(self, id: UUID) -> Optional[Anchor]:
+        _id = self._to_uuid(id)
+        return self._load_anchor_from_shelf(_id)
+
+    def commit(
+        self, anchor: Optional[Anchor] = None, keys: Iterable[Anchor] = []
+    ) -> None:
+        """Commit behaves like Redis version — supports single or batch writes."""
+        if anchor:
+            self.set(anchor)
+            return
+        for anc in keys:
+            self.set(anc)
