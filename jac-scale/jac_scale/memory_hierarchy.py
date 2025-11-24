@@ -49,7 +49,7 @@ class MultiHierarchyMemory:
     def commit(self, anchor: Anchor | None = None):
         gc = self.mem.get_gc()
         memory = self.mem.get_mem()
-        
+
         if anchor:
             print("I am commiting anchor with id",anchor.id,flush=True)
             if anchor in gc:
