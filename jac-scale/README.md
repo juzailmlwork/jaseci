@@ -17,10 +17,10 @@
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `DOCKER_USERNAME` | DockerHub username for pushing the image |
-| `DOCKER_PASSWORD` | DockerHub password or access token |
-| `K8_NAMESPACE` | Kubernetes namespace to deploy the application | - |
-| `K8_NODE_PORT` | NodePort to expose the service | - |
+| `DOCKER_USERNAME` | DockerHub username for pushing the image | - |
+| `DOCKER_PASSWORD` | DockerHub password or access token | - |
+| `K8_NAMESPACE` | Kubernetes namespace to deploy the application | `default` |
+| `K8_NODE_PORT` | NodePort to expose the service | `30001` |
 | `K8_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `False` |
 | `K8_REDIS` | Whether Redis is needed (`True`/`False`) | `False` |
 
@@ -128,33 +128,7 @@ The plugin automatically:
 ## Future steps
 
 - Caching of [base image](jac_scale/kubernetes/templates/base.Dockerfile) for quick deployment
-- Enable autoscaling capability
-- Auto creation of dockerfile using base image if not found
-- Auto deletion of created k8 resources
-
-## Things completed
-
-- Deploy jac application using jac serve from jac core not jac-cloud
-- Running jac application by
-  1. by creating docker container and pushing to docker hub and then pull it and deploy it
-  2. build pods at runtime using kubectl copy by using base image python3.12
-- Auto spawning and connecting Databases like Redis and mongodb and connecting to jac deployment
-- Populating env variables to jac application pods
-- Files required for auto horizontal scaling
-
-## Things ongoing
-
-- Implementing memory hierachy by overriding Memory class using Redis and Mongodb similar to shelf storage used in Jac core(jusail)
-- Converting walkers to api fastapi endpoints like server.py (walker)
-- Implementation of fastapi implementation similar to server.py in Jac core
-- Implementing execution contet in jac scale to support memory hierachy
-
-## Things todo
-
-- Support JWT token in jac scale
-- Merging running fastapi application and also deploying jac application in k8
-- Current implementation uses parent folder of  file to deploy the jac application.It should be converted to identify only modules required to run jac application
 - Enable horizontal autoscaling
-
-## Testcases missed
-- Test cases to test docker image build.currently we are only testing the k8 deploy part
+- Auto creation of dockerfile using base image if not found
+- Support JWT token in jac scale
+- Current implementation uses parent folder of  file to deploy the jac application.It should be converted to identify only modules required to run jac application

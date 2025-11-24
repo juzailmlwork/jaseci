@@ -29,8 +29,8 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
     node_port = int(os.getenv("K8_NODE_PORT", "30001"))
     docker_username = os.getenv("DOCKER_USERNAME", "juzailmlwork")
     repository_name = f"{docker_username}/{image_name}"
-    mongodb_enabled = os.getenv("K8_MONGODB", "false").lower() == "true"
-    redis_enabled = os.getenv("K8_REDIS", "false").lower() == "true"
+    mongodb_enabled = os.getenv("K8_MONGODB", "true").lower() == "true"
+    redis_enabled = os.getenv("K8_REDIS", "true").lower() == "true"
     if not build:
         repository_name = "python:3.12-slim"
     # -------------------
