@@ -364,7 +364,7 @@ class ShelfDB:
     """Shelf-based Memory Handler — file-backed key/value storage."""
 
     shelf_path: str = field(default=os.environ.get("SHELF_DB_PATH", "anchor_store.db"))
-    _shelf: Optional[shelve.Shelf] = field(default=None, init=False)
+    _shelf: shelve.Shelf = field(init=False)
     _lock: RLock = field(default_factory=RLock, init=False)
 
     def __post_init__(self):
@@ -375,6 +375,11 @@ class ShelfDB:
         if self._shelf is None:
             # writeback=True caches objects for mutation support
             self._shelf = shelve.open(self.shelf_path, writeback=False)
+
+    def _ensure_shelf(self) -> shelve.Shelf:
+        if self._shelf is None:
+            raise RuntimeError("Shelf not initialized")
+        return self._shelf
 
     def close(self):
         """Cleanly close shelf storage."""
