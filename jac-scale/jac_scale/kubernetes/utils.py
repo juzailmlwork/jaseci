@@ -1,6 +1,9 @@
 import base64
 import os
+import requests
+from requests.exceptions import RequestException
 import tarfile
+import time
 from typing import Callable
 
 
@@ -180,13 +183,36 @@ def create_or_update_configmap(
             name=configmap_name, namespace=namespace, body=body
         )
 
-        # print(f"[✔] ConfigMap '{configmap_name}' updated")
-
     except ApiException as e:
         if e.status == 404:
-            # Create new ConfigMap if not found
-            # print("[i] ConfigMap does not exist — creating ...")
             v1.create_namespaced_config_map(namespace, body)
-            # print(f"[✔] ConfigMap '{configmap_name}' created")
         else:
             raise
+
+
+def check_deployment_status(
+    node_port: int,
+    path: str = "/docs",
+    initial_wait: int = 60,
+    interval: int = 30,
+    max_retries: int = 10,
+) -> bool:
+    """
+    Wait for a service on localhost at the given NodePort to become available.
+
+    """
+    url = f"http://localhost:{node_port}{path}"
+    time.sleep(initial_wait)
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return True
+        except RequestException:
+            pass
+
+        if attempt < max_retries:
+            time.sleep(interval)
+    else:
+        return False

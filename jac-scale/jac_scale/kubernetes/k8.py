@@ -10,6 +10,7 @@ from kubernetes.client.exceptions import ApiException
 from .database.mongo import mongo_db
 from .database.redis import redis_db
 from .utils import (
+    check_deployment_status,
     check_k8_status,
     create_or_update_configmap,
     create_tarball,
@@ -134,21 +135,6 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             "cd ../.. && "
             f"jac serve {file_name}",
         ]
-        #         command = [
-        #         "bash",
-        #         "-c",
-        #         """
-        #         set -e
-        #         export DEBIAN_FRONTEND=noninteractive
-        #         apt-get update && apt-get install -y git
-        #         git clone --branch release-fix-3066 --single-branch --depth 1 https://github.com/juzailmlwork/jaseci.git
-        #         cd jaseci/jac-scale
-        #         pip install -e .
-        #         pip install scikit-learn numpy
-        #         cd ../..
-        #         jac serve {file_name}
-        #         """
-        # ]
 
         container_config = {
             "name": app_name,
@@ -300,5 +286,8 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
     print("Deploying Jaseci-app app...")
     apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
     core_v1.create_namespaced_service(namespace=namespace, body=service)
-    time.sleep(60)
-    print(f"Deployment complete! Access Jaseci-app at http://localhost:{node_port}")
+
+    if check_deployment_status(node_port):
+        print(f"Deployment complete! Access Jaseci-app at http://localhost:{node_port}")
+    else:
+        print("Deployment failed or service not responding.")
