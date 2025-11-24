@@ -122,35 +122,33 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
         else:
             command = ["bash", "-c", f"pip install jaclang && jac serve {file_name}"]
         command = [
-    "bash",
-    "-c",
-    "export DEBIAN_FRONTEND=noninteractive && "
-    "apt-get update && apt-get install -y git && "
-    "git clone --branch release-fix-3066 --single-branch --depth 1 "
-    "https://github.com/juzailmlwork/jaseci.git && "
-    "cd jaseci/jac-scale && "
-    "pip install -e . && "
-    "pip install scikit-learn numpy && "
-    "cd ../.. && "
-    f"jac serve {file_name}"
-]
-#         command = [
-#         "bash",
-#         "-c",
-#         """
-#         set -e
-#         export DEBIAN_FRONTEND=noninteractive
-#         apt-get update && apt-get install -y git
-#         git clone --branch release-fix-3066 --single-branch --depth 1 https://github.com/juzailmlwork/jaseci.git
-#         cd jaseci/jac-scale
-#         pip install -e .
-#         pip install scikit-learn numpy
-#         cd ../..
-#         jac serve {file_name}
-#         """
-# ]
-
-
+            "bash",
+            "-c",
+            "export DEBIAN_FRONTEND=noninteractive && "
+            "apt-get update && apt-get install -y git && "
+            "git clone --branch release-fix-3066 --single-branch --depth 1 "
+            "https://github.com/juzailmlwork/jaseci.git && "
+            "cd jaseci/jac-scale && "
+            "pip install -e . && "
+            "pip install scikit-learn numpy && "
+            "cd ../.. && "
+            f"jac serve {file_name}",
+        ]
+        #         command = [
+        #         "bash",
+        #         "-c",
+        #         """
+        #         set -e
+        #         export DEBIAN_FRONTEND=noninteractive
+        #         apt-get update && apt-get install -y git
+        #         git clone --branch release-fix-3066 --single-branch --depth 1 https://github.com/juzailmlwork/jaseci.git
+        #         cd jaseci/jac-scale
+        #         pip install -e .
+        #         pip install scikit-learn numpy
+        #         cd ../..
+        #         jac serve {file_name}
+        #         """
+        # ]
 
         container_config = {
             "name": app_name,
