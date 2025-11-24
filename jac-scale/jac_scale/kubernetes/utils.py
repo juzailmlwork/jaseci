@@ -75,10 +75,10 @@ def delete_if_exists(
     """Deploy example."""
     try:
         delete_func(name, namespace)
-        print(f"Deleted existing {kind} '{name}'")
     except ApiException as e:
         if e.status == 404:
-            print(f"{kind} '{name}' not found, skipping delete.")
+            # print(f"{kind} '{name}' not found, skipping delete.")
+            pass
         else:
             raise
 

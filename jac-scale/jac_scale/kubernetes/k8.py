@@ -131,7 +131,6 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             "https://github.com/juzailmlwork/jaseci.git && "
             "cd jaseci/jac-scale && "
             "pip install -e . && "
-            "pip install scikit-learn numpy && "
             "cd ../.. && "
             f"{install_part}",
         ]
