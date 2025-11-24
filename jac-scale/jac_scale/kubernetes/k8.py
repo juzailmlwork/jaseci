@@ -115,13 +115,13 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
         ]
         init_containers.append(build_container)
         if "requirements.txt" in os.listdir(code_folder):
-            command = [
-                "bash",
-                "-c",
-                f"pip install -r /app/requirements.txt && jac serve {file_name}",
-            ]
+            print("requirements.txt exists")
+            install_part = (
+                "pip install -r /app/requirements.txt && jac serve {file_name}"
+            )
         else:
-            command = ["bash", "-c", f"pip install jaclang && jac serve {file_name}"]
+            install_part = "jac serve {file_name} "
+
         command = [
             "bash",
             "-c",
@@ -133,7 +133,7 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
             "pip install -e . && "
             "pip install scikit-learn numpy && "
             "cd ../.. && "
-            f"jac serve {file_name}",
+            f"{install_part}",
         ]
 
         container_config = {
