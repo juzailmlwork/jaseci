@@ -7,7 +7,7 @@ from pickle import dumps, loads
 import os
 import shelve
 from threading import RLock
-from typing import Any,Optional, Iterable, TypeVar
+from typing import Any, Optional, Iterable, TypeVar
 from uuid import UUID
 
 from pymongo import MongoClient, UpdateOne
@@ -357,9 +357,6 @@ class RedisDB:  # Memory[UUID, Anchor]):
         if keys:
             for anc in keys:
                 self.set(anc)
-
-
-
 
 
 @dataclass
