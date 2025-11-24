@@ -30,7 +30,6 @@ class MultiHierarchyMemory:
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
         # 1. Memory
-        print("I am inside id and", id)
         if anchor := self.mem.find_by_id(id):
             return anchor
         # 2. Redis
@@ -303,10 +302,8 @@ class RedisDB:  # Memory[UUID, Anchor]):
 
     def set(self, anchor: Anchor) -> None:
         """Save to MongoDB AND Redis."""
-        print("I am before starting redis")
         if self.redis_client is None:
             return
-        print("I am after starting redis")
         self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
 
     def remove(self, anchor: Anchor) -> None:
