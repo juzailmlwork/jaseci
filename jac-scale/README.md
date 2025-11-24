@@ -21,8 +21,8 @@
 | `DOCKER_PASSWORD` | DockerHub password or access token | - |
 | `K8_NAMESPACE` | Kubernetes namespace to deploy the application | `default` |
 | `K8_NODE_PORT` | NodePort to expose the service | `30001` |
-| `K8_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `False` |
-| `K8_REDIS` | Whether Redis is needed (`True`/`False`) | `False` |
+| `K8_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
+| `K8_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
 
 ## How to run jac scale
 
