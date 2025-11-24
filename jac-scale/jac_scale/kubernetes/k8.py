@@ -117,10 +117,10 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
         if "requirements.txt" in os.listdir(code_folder):
             print("requirements.txt exists")
             install_part = (
-                "pip install -r /app/requirements.txt && jac serve {file_name}"
+                f"pip install -r /app/requirements.txt && jac serve {file_name}"
             )
         else:
-            install_part = "jac serve {file_name} "
+            install_part = f"jac serve {file_name} "
 
         command = [
             "bash",
