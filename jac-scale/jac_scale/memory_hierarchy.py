@@ -28,7 +28,8 @@ class MultiHierarchyMemory:
         self.mem = Memory()
         self.redis = RedisDB()
         self.mongo = MongoDB()
-        self.shelf = ShelfDB()
+        if not self.redis.redis_is_available():
+            self.shelf = ShelfDB()
 
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:

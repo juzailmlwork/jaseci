@@ -177,7 +177,7 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
         "kind": "Deployment",
         "metadata": {"name": app_name, "labels": {"app": app_name}},
         "spec": {
-            "replicas": 3,
+            "replicas": 1,
             "selector": {"matchLabels": {"app": app_name}},
             "template": {
                 "metadata": {"labels": {"app": app_name}},
