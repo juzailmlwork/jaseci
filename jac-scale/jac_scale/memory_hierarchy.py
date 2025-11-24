@@ -305,10 +305,8 @@ class RedisDB:  # Memory[UUID, Anchor]):
 
     def set(self, anchor: Anchor) -> None:
         """Save to MongoDB AND Redis."""
-        print("going inside redis", flush=True)
         if self.redis_client is None:
             return
-        print("came out of redis", flush=True)
         self.redis_client.set(self._redis_key(anchor.id), dumps(anchor))
 
     def remove(self, anchor: Anchor) -> None:
