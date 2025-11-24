@@ -308,7 +308,6 @@ class RedisDB:  # Memory[UUID, Anchor]):
         try:
             if self.redis_client is None:
                 return False
-            print("the status of redis is",self.redis_client.ping())
             return self.redis_client.ping()
         except Exception:
             return False
