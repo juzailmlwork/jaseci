@@ -4,7 +4,15 @@
 
 `jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases.
 
+## Prerequisites
+- [minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/)
+- [Docker Desktop (with Kubernetes enabled)](https://docs.docker.com/desktop/)
+
 ## Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `APP_NAME` | Name of your JAC application |
 
 ### Required environment variables
 
