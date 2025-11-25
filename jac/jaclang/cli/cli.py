@@ -16,7 +16,7 @@ from jaclang.compiler.passes.main import PyastBuildPass
 from jaclang.compiler.program import JacProgram
 from jaclang.runtimelib.builtin import printgraph
 from jaclang.runtimelib.constructs import WalkerArchetype
-from jaclang.runtimelib.machine import ExecutionContext, JacMachine as Jac,JacUtils
+from jaclang.runtimelib.machine import ExecutionContext, JacMachine as Jac, JacUtils
 from jaclang.runtimelib.utils import read_file_with_encoding
 from jaclang.settings import settings
 from jaclang.utils.helpers import debugger as db
