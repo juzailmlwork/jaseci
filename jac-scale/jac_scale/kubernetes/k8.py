@@ -20,7 +20,7 @@ from .utils import (
 )
 
 
-def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) -> None:
+def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False, testing: bool = False) -> None:
     """Deploy jac application to k8."""
     app_name = os.getenv("APP_NAME", "jaseci")
     image_name = os.getenv("DOCKER_IMAGE_NAME", f"{app_name}:latest")
@@ -261,8 +261,12 @@ def deploy_k8(code_folder: str, file_name: str = "none", build: bool = False) ->
     print("Deploying Jaseci-app app...")
     apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
     core_v1.create_namespaced_service(namespace=namespace, body=service)
-
-    if check_deployment_status(node_port):
+    
+    if testing:
+        path="/walkers"
+    else:
+        path="/docs"
+    if check_deployment_status(node_port,path):
         print(f"Deployment complete! Access Jaseci-app at http://localhost:{node_port}")
     else:
         print("Deployment failed or service not responding.")

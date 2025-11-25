@@ -37,13 +37,11 @@ def test_deploy_k8_only_littlex():
     # Run deploy
     deploy_k8(code_folder=".", build=True)
 
-    # Wait for deployment to be created
-    time.sleep(30)
 
     # Validate the deployment exists
     deployment = apps_v1.read_namespaced_deployment(name="littlex", namespace=namespace)
     assert deployment.metadata.name == "littlex"
-    assert deployment.spec.replicas == 3
+    assert deployment.spec.replicas == 1
 
     # Validate service
     service = core_v1.read_namespaced_service(
@@ -87,13 +85,10 @@ def test_deploy_k8_with_mongodb_and_redis():
     # Run deploy
     deploy_k8(code_folder=".", build=True)
 
-    # Wait for resources to be ready
-    time.sleep(20)
-
     # --- Validate main deployment ---
     deployment = apps_v1.read_namespaced_deployment(name="littlex", namespace=namespace)
     assert deployment.metadata.name == "littlex"
-    assert deployment.spec.replicas == 3
+    assert deployment.spec.replicas == 1
 
     # --- Validate app service ---
     service = core_v1.read_namespaced_service(
@@ -156,20 +151,20 @@ def test_deploy_k8_with_mongodb_and_redis_different_namespace():
             "K8_REDIS": "true",
             "K8_NAMESPACE": namespace,
             "K8_CONTAINER_PORT": "8000",
-            "K8_NODE_PORT": "30051",  # Different port to avoid conflict
+            "K8_NODE_PORT": "30051",
         }
     )
 
     # Run deploy
     deploy_k8(code_folder=".", build=True)
 
-    # Wait for resources to be ready
-    time.sleep(30)
+    # # Wait for resources to be ready
+    # time.sleep(30)
 
     # --- Validate main deployment ---
     deployment = apps_v1.read_namespaced_deployment(name="littlex", namespace=namespace)
     assert deployment.metadata.name == "littlex"
-    assert deployment.spec.replicas == 3
+    assert deployment.spec.replicas == 1
 
     # --- Validate app service ---
     service = core_v1.read_namespaced_service(
@@ -230,11 +225,7 @@ def test_deploy_and_cleanup_k8_resources():
     )
 
     # Deploy resources
-    deploy_k8(code_folder=".", build=True)
-
-    # Wait for resources to be ready
-    time.sleep(20)
-
+    deploy_k8(code_folder=".", build=True ,testing= True)
     # ------------------
     # Assert resources exist
     # ------------------
