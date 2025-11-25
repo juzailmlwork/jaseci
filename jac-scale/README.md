@@ -6,19 +6,15 @@
 
 ## Prerequisites
 - [minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/)
+- [dockerhub Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/)
 kubernetes is needed only if you are planning to use jac scale command.if you only wanted to use jac serve kubernetes is not needed
-
-### Required environment variables
-
-| Parameter | Description |
-|-----------|-------------|
-| `APP_NAME` | Name of your JAC application |
 
 
 ### Optional environment variables
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
+| `APP_NAME` | Name of your JAC application | `jaseci` |
 | `DOCKER_USERNAME` | DockerHub username for pushing the image | - |
 | `DOCKER_PASSWORD` | DockerHub password or access token | - |
 | `K8_NAMESPACE` | Kubernetes namespace to deploy the application | `default` |
