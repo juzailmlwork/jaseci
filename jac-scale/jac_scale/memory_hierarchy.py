@@ -33,7 +33,7 @@ class MultiHierarchyMemory:
 
     # ---- DOWNSTREAM (READS) ----
     def find_by_id(self, id: UUID) -> Anchor | None:
-        print("I am using find by id", id, flush=True)
+        # print("I am using find by id", id, flush=True)
         # 1. Memory
         if anchor := self.mem.find_by_id(id):
             return anchor
@@ -60,7 +60,7 @@ class MultiHierarchyMemory:
         memory = self.mem.get_mem()
 
         if anchor:
-            print("I am commiting anchor with id", anchor.id, flush=True)
+            # print("I am commiting anchor with id", anchor.id, flush=True)
             if anchor in gc:
                 self.delete(anchor)
                 self.mem.remove_from_gc(anchor)
@@ -69,11 +69,11 @@ class MultiHierarchyMemory:
                     self.redis.set(anchor)
                     self.mongo.set(anchor)
                 else:
-                    print("I am using shelf storage")
+                    # print("I am using shelf storage")
                     self.shelf.set(anchor)
             return
 
-        print("commiting all anchors", flush=True)
+        # print("commiting all anchors", flush=True)
         for anchor in gc:
             self.delete(anchor)
             self.mem.remove_from_gc(anchor)
@@ -365,7 +365,8 @@ class ShelfDB:
     """Shelf-based Memory Handler — file-backed key/value storage."""
 
     shelf_path: str = field(default=os.environ.get("SHELF_DB_PATH", "anchor_store.db"))
-    _shelf: shelve.Shelf = field(init=False, default=None)
+    # _shelf: shelve.Shelf = field(init=False, default=None)
+    _shelf: Optional[shelve.Shelf] = field(init=False, default=None)
     _lock: RLock = field(default_factory=RLock, init=False)
 
     def __post_init__(self):
@@ -384,6 +385,7 @@ class ShelfDB:
 
     def close(self):
         """Cleanly close shelf storage."""
+        self._shelf = self._ensure_shelf()
         if self._shelf is not None:
             self._shelf.close()
             self._shelf = None
@@ -399,6 +401,7 @@ class ShelfDB:
 
     def _load_anchor_from_shelf(self, id: UUID) -> Optional[Anchor]:
         key = self._redis_key(id)
+        self._shelf = self._ensure_shelf()
         with self._lock:
             if key not in self._shelf:
                 return None
@@ -407,6 +410,7 @@ class ShelfDB:
     def set(self, anchor: Anchor) -> None:
         """Store anchor in shelf."""
         key = self._redis_key(anchor.id)
+        self._shelf = self._ensure_shelf()
         with self._lock:
             self._shelf[key] = anchor
             self._shelf.sync()
@@ -414,6 +418,7 @@ class ShelfDB:
     def remove(self, anchor: Anchor) -> None:
         """Delete anchor from shelf."""
         key = self._redis_key(anchor.id)
+        self._shelf = self._ensure_shelf()
         with self._lock:
             if key in self._shelf:
                 del self._shelf[key]
