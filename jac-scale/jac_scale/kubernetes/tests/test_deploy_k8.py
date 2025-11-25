@@ -37,7 +37,6 @@ def test_deploy_k8_only_littlex():
     # Run deploy
     deploy_k8(code_folder=".", build=True)
 
-
     # Validate the deployment exists
     deployment = apps_v1.read_namespaced_deployment(name="littlex", namespace=namespace)
     assert deployment.metadata.name == "littlex"
@@ -225,7 +224,7 @@ def test_deploy_and_cleanup_k8_resources():
     )
 
     # Deploy resources
-    deploy_k8(code_folder=".", build=True ,testing= True)
+    deploy_k8(code_folder=".", build=True, testing=True)
     # ------------------
     # Assert resources exist
     # ------------------
