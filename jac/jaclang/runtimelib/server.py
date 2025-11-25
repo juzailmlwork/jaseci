@@ -248,7 +248,7 @@ class ExecutionManager:
                 target_node = ctx.get_root()
 
             Jac.spawn(walker, target_node)
-            Jac.commit()
+            # Jac.commit()
 
             return {
                 "result": JacSerializer.serialize(walker),
