@@ -2,17 +2,11 @@
 
 ## Overview
 
-`jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases.
+`jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases.Also it supports converting walkers and functions as fastapi endpoints with swagger docs
 
 ## Prerequisites
 - [minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/)
-- [Docker Desktop (with Kubernetes enabled)](https://docs.docker.com/desktop/)
-
-## Parameters
-
-| Parameter | Description |
-|-----------|-------------|
-| `APP_NAME` | Name of your JAC application |
+kubernetes is needed only if you are planning to use jac scale command.if you only wanted to use jac serve kubernetes is not needed
 
 ### Required environment variables
 
@@ -31,6 +25,25 @@
 | `K8_NODE_PORT` | NodePort to expose the service | `30001` |
 | `K8_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
 | `K8_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
+| `MONGODB_URI` | URL of Mongodb database |  |
+| `REDIS_URL` | URL of Redis database  |  |
+
+## How to run jac serve
+To run jac application using FastApi you can use jac serve command. if jac serve didnt connect to Mongodb or Redis it will use ShelfStorage as persistance storage.
+Navigate to your JAC application folder:
+```bash
+cd /path/to/your/jac/app
+```
+
+Run the scale command:
+```bash
+jac serve <filename>
+```
+
+**Example:**
+```bash
+jac serve littlex.jac
+```
 
 ## How to run jac scale
 
