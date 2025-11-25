@@ -311,7 +311,7 @@ class RedisDB:  # Memory[UUID, Anchor]):
             return self.redis_client.ping()
         except Exception:
             return False
-        
+
     def _redis_key(self, id: UUID) -> str:
         return f"anchor:{str(id)}"
 
@@ -365,7 +365,7 @@ class ShelfDB:
     """Shelf-based Memory Handler — file-backed key/value storage."""
 
     shelf_path: str = field(default=os.environ.get("SHELF_DB_PATH", "anchor_store.db"))
-    _shelf: shelve.Shelf = field(init=False,default=None)
+    _shelf: shelve.Shelf = field(init=False, default=None)
     _lock: RLock = field(default_factory=RLock, init=False)
 
     def __post_init__(self):
