@@ -103,7 +103,7 @@ def proc_file_sess(
             file=sys.stderr,
         )
         exit(1)
-    mach = JacUtils.CreateJContext(session=session, root=root)
+    mach = JacUtils.create_j_context(session=session, root=root)
     Jac.set_context(mach)
     return base, mod, mach
 

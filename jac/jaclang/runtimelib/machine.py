@@ -107,7 +107,6 @@ class ExecutionContext:
         self.entry_node = self.root_state = (
             self._get_anchor(root) if root else self.system_root
         )
-        # Removed: print("ExecutionContext initialized")
 
     def _get_anchor(self, anchor_id: str) -> NodeAnchor:
         """Get anchor by ID or raise error."""
@@ -827,7 +826,7 @@ class JacBasics:
     def get_context() -> ExecutionContext:
         """Get current execution context."""
         if JacMachine.exec_ctx is None:
-            JacMachine.exec_ctx = JacMachineInterface.CreateJContext()
+            JacMachine.exec_ctx = JacMachineInterface.create_j_context()
         return JacMachine.exec_ctx
 
     @staticmethod
@@ -1606,7 +1605,7 @@ class JacUtils:
     """Jac Machine Utilities."""
 
     @staticmethod
-    def CreateJContext(
+    def create_j_context(
         session: Optional[str] = None, root: Optional[str] = None
     ) -> ExecutionContext:
         """Hook for initialization or custom greeting logic."""
@@ -1982,4 +1981,4 @@ class JacMachine(JacMachineInterface):
         JacMachine.pool = ThreadPoolExecutor()
         if JacMachine.exec_ctx is not None:
             JacMachine.exec_ctx.mem.close()
-        JacMachine.exec_ctx = JacMachineInterface.CreateJContext()
+        JacMachine.exec_ctx = JacMachineInterface.create_j_context()

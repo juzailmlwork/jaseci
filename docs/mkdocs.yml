@@ -187,7 +187,8 @@ nav:
     - Contributing: "internals/contrib.md"
     - Release Notes:
       - Jaclang: "communityhub/release_notes/jaclang.md"
-      - Jac-Cloud: "communityhub/release_notes/jac-cloud.md"
+      - Jac-Scale: "communityhub/release_notes/jac-scale.md"
+      - (Deprecated) Jac-Cloud: "communityhub/release_notes/jac-cloud.md"
       - byLLM: "communityhub/release_notes/byllm.md"
       - Jac-Client: "communityhub/release_notes/jac-client.md"
     - Breaking Changes: "communityhub/breaking_changes.md"

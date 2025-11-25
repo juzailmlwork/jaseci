@@ -137,7 +137,7 @@ class UserManager:
         if username in self._users:
             return {"error": "User already exists"}
 
-        ctx = Jac.CreateJContext(session=self.session_path)
+        ctx = Jac.create_j_context(session=self.session_path)
         Jac.set_context(ctx)
 
         try:
@@ -148,7 +148,7 @@ class UserManager:
             root_id = root_anchor.id.hex
         finally:
             ctx.mem.close()
-            Jac.set_context(Jac.CreateJContext())
+            Jac.set_context(Jac.create_j_context())
 
         token = secrets.token_urlsafe(32)
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -209,7 +209,7 @@ class ExecutionManager:
         if not root_id:
             return {"error": "User not found"}
 
-        ctx = Jac.CreateJContext(session=self.session_path, root=root_id)
+        ctx = Jac.create_j_context(session=self.session_path, root=root_id)
         Jac.set_context(ctx)
 
         try:
@@ -223,7 +223,7 @@ class ExecutionManager:
             return {"error": str(e)}
         finally:
             ctx.mem.close()
-            Jac.set_context(Jac.CreateJContext())
+            Jac.set_context(Jac.create_j_context())
 
     def spawn_walker(
         self, walker_cls: type[WalkerArchetype], fields: dict[str, Any], username: str
@@ -234,7 +234,7 @@ class ExecutionManager:
             return {"error": "User not found"}
 
         target_node_id = fields.pop("_jac_spawn_node", None)
-        ctx = Jac.CreateJContext(session=self.session_path, root=root_id)
+        ctx = Jac.create_j_context(session=self.session_path, root=root_id)
         Jac.set_context(ctx)
 
         try:
@@ -260,7 +260,7 @@ class ExecutionManager:
             return {"error": str(e), "traceback": traceback.format_exc()}
         finally:
             ctx.mem.close()
-            Jac.set_context(Jac.CreateJContext())
+            Jac.set_context(Jac.create_j_context())
 
 
 # Module Introspector

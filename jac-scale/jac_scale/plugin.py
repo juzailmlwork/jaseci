@@ -166,7 +166,7 @@ class JacScalePlugin:
 
     @staticmethod
     @hookimpl
-    def CreateJContext(
+    def create_j_context(
         session: Optional[str] = None, root: Optional[str] = None
     ) -> ExecutionContext:
         return JScaleExecutionContext(session=session, root=root)
