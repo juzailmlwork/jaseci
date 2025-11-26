@@ -2,15 +2,215 @@
 
 ## Overview
 
-`jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases.Also it supports converting walkers and functions as fastapi endpoints with swagger docs
+`jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases. It also supports converting walkers and functions as FastAPI endpoints with Swagger documentation.
 
 ## Prerequisites
-- [minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/)
-- [dockerhub Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/)
-kubernetes is needed only if you are planning to use jac scale command.if you only wanted to use jac serve kubernetes is not needed
 
+- [Minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/) (for Windows/Linux)
+- [Docker Desktop with Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/) (alternative for Windows - easier setup)
 
-### Optional environment variables
+**Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
+
+## Quick Start: Running the Travel Planner Demo Application
+
+Follow these steps to set up and test the Travel Planner JAC application:
+
+### 1. Clone the Jaseci Repository
+
+First, clone the main Jaseci repository which contains JAC and JAC-Scale:
+
+```bash
+git clone https://github.com/jaseci-labs/jaseci.git
+cd jaseci
+```
+
+### 2. Create Python Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### 3. Activate the Virtual Environment
+
+**Linux/Mac:**
+```bash
+source venv/bin/activate
+```
+
+**Windows:**
+```bash
+venv\Scripts\activate
+```
+
+### 4. Install JAC and JAC-Scale
+
+Install both packages in editable mode from the cloned repository:
+
+```bash
+pip install -e ./jac
+pip install -e ./jac-scale
+```
+
+### 5. Download the Demo Application
+
+Download the Travel Planner demo application from GitHub:
+
+**Option A: Using Git Clone (Recommended)**
+
+```bash
+# Clone the entire repository
+git clone https://github.com/jaseci-labs/Agentic-AI.git
+
+# Navigate to the Travel Planner backend
+cd Agentic-AI/Travel_planner/BE
+
+# Rename the folder to 'traveller' (optional but recommended)
+cd ../..
+mv Agentic-AI/Travel_planner/BE traveller
+cd traveller
+```
+
+**Option B: Download Specific Folder**
+
+If you only want the Travel Planner backend:
+
+```bash
+# Install GitHub CLI if not already installed
+# For Linux/Mac with Homebrew:
+brew install gh
+
+# For Windows with Chocolatey:
+choco install gh
+
+# Clone only the specific folder
+gh repo clone jaseci-labs/Agentic-AI
+cd Agentic-AI/Travel_planner/BE
+
+# Rename to 'traveller'
+cd ../..
+mv Agentic-AI/Travel_planner/BE traveller
+cd traveller
+```
+
+**Option C: Manual Download**
+
+1. Go to https://github.com/jaseci-labs/Agentic-AI/tree/main/Travel_planner/BE
+2. Click on the green "Code" button
+3. Select "Download ZIP"
+4. Extract the ZIP file
+5. Rename the `BE` folder to `traveller`
+6. Navigate into the folder:
+
+```bash
+cd traveller
+```
+
+### 6. Configure Environment Variables
+
+You should now be in the `traveller` folder. Create a `.env` file:
+
+```bash
+# Verify you're in the correct directory
+pwd  # Should show path ending in /traveller
+
+# Create .env file
+touch .env  # Linux/Mac
+# OR
+type nul > .env  # Windows CMD
+# OR
+New-Item .env  # Windows PowerShell
+```
+
+Add the following to your `.env` file:
+
+```env
+OPENAI_API_KEY=your-openai-api-key-here
+```
+
+### 7. Install Demo Application Requirements
+
+```bash
+pip install byllm python-dotenv
+```
+
+### 8. Run the Application with JAC Serve
+
+To run your application using FastAPI with ShelfStorage (no Kubernetes required):
+
+```bash
+jac serve main.jac
+```
+
+**What this does:**
+- Starts your JAC application as a FastAPI server
+- Uses ShelfStorage for persisting anchors (lightweight, file-based storage)
+- No database setup required
+- Ideal for development and testing
+
+### 9. Set Up Kubernetes (For JAC Scale)
+
+To use `jac scale`, you need Kubernetes installed on your machine.
+
+**Option A: Minikube (Windows/Linux/Mac)**
+- Follow the [Minikube installation guide](https://minikube.sigs.k8s.io/docs/start/)
+
+**Option B: Docker Desktop with Kubernetes (Windows - Recommended)**
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Enable Kubernetes in Docker Desktop settings (easier setup)
+
+### 9. Deploy with JAC Scale
+
+Once Kubernetes is running, deploy your application:
+
+```bash
+jac scale main.jac
+```
+
+**What this does:**
+- Deploys your JAC application to Kubernetes
+- Automatically provisions Redis and MongoDB as persistence storage
+- Creates necessary Kubernetes resources (Deployments, Services, StatefulSets)
+- Exposes your application via NodePort
+
+### 10. Build and Deploy with Docker (Optional)
+
+To build your application as a Docker container and deploy it:
+
+```bash
+jac scale main.jac -b
+```
+
+**Additional requirements for build mode:**
+
+1. Create a `Dockerfile` in your application directory
+2. Add Docker credentials to your `.env` file:
+
+```env
+DOCKER_USERNAME=your-dockerhub-username
+DOCKER_PASSWORD=your-dockerhub-password-or-token
+```
+
+**What this does:**
+- Builds a Docker image of your JAC application
+- Pushes the image to DockerHub
+- Deploys the image to Kubernetes
+
+### 11. Clean Up Kubernetes Resources
+
+When you're done testing, remove all created Kubernetes resources:
+
+```bash
+jac destroy main.jac
+```
+
+**What this does:**
+- Deletes all Kubernetes deployments, services, and StatefulSets
+- Removes persistent volumes and claims
+- Cleans up the namespace (if custom namespace was used)
+
+## Configuration Options
+
+### Optional Environment Variables
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -21,82 +221,53 @@ kubernetes is needed only if you are planning to use jac scale command.if you on
 | `K8_NODE_PORT` | NodePort to expose the service | `30001` |
 | `K8_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
 | `K8_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
-| `MONGODB_URI` | URL of Mongodb database |  |
-| `REDIS_URL` | URL of Redis database  |  |
+| `MONGODB_URI` | URL of MongoDB database | - |
+| `REDIS_URL` | URL of Redis database | - |
 
-## How to run jac serve
-To run jac application using FastApi you can use jac serve command. if jac serve didnt connect to Mongodb or Redis it will use ShelfStorage as persistance storage.
-Navigate to your JAC application folder:
-```bash
-cd /path/to/your/jac/app
-```
-
-Run the scale command:
-```bash
-jac serve <filename>
-```
-
-**Example:**
-```bash
-jac serve littlex.jac
-```
-
-## How to run jac scale
-
-Navigate to your JAC application folder:
-```bash
-cd /path/to/your/jac/app
-```
-
-Run the scale command:
-```bash
-jac scale <filename>
-```
-
-**Example:**
-```bash
-jac scale littlex.jac
-```
 ## Deployment Modes
 
 ### Mode 1: Deploy Without Building (Default)
-Deploys your JAC application to Kubernetes without building docker image.
+
+Deploys your JAC application to Kubernetes without building a Docker image.
 
 ```bash
-jac scale littlex.jac
+jac scale main.jac
 ```
 
 **Use this when:**
 - You want faster deployments without rebuilding
 - You're testing configuration changes
+- You're in development mode
 
 ### Mode 2: Build, Push, and Deploy
-Builds a new Docker image, pushes it to Docker Hub, then deploys to Kubernetes.
+
+Builds a new Docker image, pushes it to DockerHub, then deploys to Kubernetes.
 
 ```bash
-jac scale littlex.jac -b
+jac scale main.jac -b
 ```
 
 **Requirements for Build Mode:**
 - A `Dockerfile` in your application directory
 - Environment variables set:
-  - `DOCKER_USERNAME` - Your Docker Hub username
-  - `DOCKER_PASSWORD` - Your Docker Hub password/access token
+  - `DOCKER_USERNAME` - Your DockerHub username
+  - `DOCKER_PASSWORD` - Your DockerHub password/access token
 
 **Use this when:**
-- In production settings.
-- Build and host docker image.
+- Deploying to production
+- You want to version and host your Docker image
+- Sharing your application with others
 
 ## Architecture
 
-### k8 pods structure
+### Kubernetes Pod Structure
 ![k8 pod structure](diagrams/kubernetes-architecture.png)
 
 ## Important Notes
 
 ### Implementation
 
-- The entire `jac scale` plugin is implemented using **Python and Kubernetes python client libraries**
+- The entire `jac scale` plugin is implemented using **Python and Kubernetes Python client libraries**
 - **No custom Kubernetes controllers** are used → easier to deploy and maintain
 
 ### Database Provisioning
@@ -113,39 +284,70 @@ jac scale littlex.jac -b
   - Only the application's final Docker layer is pushed and pulled
   - Only deployments are updated (databases remain unchanged)
 
-## Steps followed by jac scale
+## Deployment Process
+
+When you run `jac scale`, the following steps are executed:
 
 ### 1. Create JAC Application Docker Image
 
 - Build the application image from the source directory
 - Tag the image with DockerHub repository
 
-### 2. Push Docker Image to DockerHub
+### 2. Push Docker Image to DockerHub (Build Mode Only)
 
 - Authenticate using `DOCKER_USERNAME` and `DOCKER_PASSWORD`
 - Push the image to DockerHub
 - Subsequent pushes are faster since only the final image layer is pushed
 
+### 3. Deploy to Kubernetes
 
-### 3. Deploy application in k8
-
-The plugin automatically:
-
-- Creates Kubernetes Deployments for the JAC application
-- Spawns necessary databases (MongoDB, PostgreSQL, Redis) as StatefulSets if requested
-- Configures networking and service exposure
+- Create or update Kubernetes namespace
+- Deploy Redis and MongoDB (first run only)
+- Create application deployment
+- Create services and expose via NodePort
 
 ## Troubleshooting
 
-- Ensure you have proper Kubernetes cluster access configured
-- Verify DockerHub credentials are correct
-- Check that the specified namespace exists or will be created
-- For database connection issues, verify StatefulSets are running: `kubectl get statefulsets -n <namespace>`
+### Common Issues
 
-## Future steps
+**Kubernetes cluster not accessible:**
+- Ensure Kubernetes is running: `kubectl cluster-info`
+- Check your kubeconfig: `kubectl config view`
 
-- Caching of [base image](jac_scale/kubernetes/templates/base.Dockerfile) for quick deployment
-- Enable horizontal autoscaling
-- Auto creation of dockerfile using base image if not found
-- Support JWT token in jac scale
-- Current implementation uses parent folder of  file to deploy the jac application.It should be converted to identify only modules required to run jac application
+**DockerHub authentication fails:**
+- Verify your `DOCKER_USERNAME` and `DOCKER_PASSWORD` are correct
+- Ensure you're using an access token (not password) if 2FA is enabled
+
+**Namespace doesn't exist:**
+- The plugin creates namespaces automatically
+- If using a custom namespace, ensure proper permissions
+
+**Database connection issues:**
+- Verify StatefulSets are running: `kubectl get statefulsets -n <namespace>`
+- Check pod logs: `kubectl logs <pod-name> -n <namespace>`
+- Ensure persistent volumes are bound: `kubectl get pvc -n <namespace>`
+
+**Application not accessible:**
+- Check service exposure: `kubectl get svc -n <namespace>`
+- Verify NodePort is not blocked by firewall
+- For Minikube, use: `minikube service <service-name> -n <namespace>`
+
+**Build failures:**
+- Ensure Dockerfile exists in your application directory
+- Check Docker daemon is running
+- Verify sufficient disk space for image building
+
+### Getting Help
+
+If you encounter issues:
+1. Check pod status: `kubectl get pods -n <namespace>`
+2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
+3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
+
+## Next Steps
+
+After successfully running the demo:
+- Explore the FastAPI Swagger documentation at `http://localhost:<port>/docs`
+- Modify the JAC application and redeploy
+- Experiment with different configuration options
+- Try deploying to a production Kubernetes cluster
