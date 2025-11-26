@@ -58,14 +58,13 @@ Download the Travel Planner demo application from GitHub:
 **Option A: Using Git Clone (Recommended)**
 
 ```bash
+# Navigate back to parent directory or choose a location
+cd ..
+
 # Clone the entire repository
 git clone https://github.com/jaseci-labs/Agentic-AI.git
 
-# Navigate to the Travel Planner backend
-cd Agentic-AI/Travel_planner/BE
-
-# Rename the folder to 'traveller' (optional but recommended)
-cd ../..
+# Navigate to the Travel Planner backend and rename
 mv Agentic-AI/Travel_planner/BE traveller
 cd traveller
 ```
@@ -75,6 +74,9 @@ cd traveller
 If you only want the Travel Planner backend:
 
 ```bash
+# Navigate back to parent directory
+cd ..
+
 # Install GitHub CLI if not already installed
 # For Linux/Mac with Homebrew:
 brew install gh
@@ -84,10 +86,6 @@ choco install gh
 
 # Clone only the specific folder
 gh repo clone jaseci-labs/Agentic-AI
-cd Agentic-AI/Travel_planner/BE
-
-# Rename to 'traveller'
-cd ../..
 mv Agentic-AI/Travel_planner/BE traveller
 cd traveller
 ```
@@ -147,6 +145,10 @@ jac serve main.jac
 - No database setup required
 - Ideal for development and testing
 
+**Access your application:**
+- Application: http://localhost:8000
+- Swagger Documentation: http://localhost:8000/docs
+
 ### 9. Set Up Kubernetes (For JAC Scale)
 
 To use `jac scale`, you need Kubernetes installed on your machine.
@@ -158,9 +160,13 @@ To use `jac scale`, you need Kubernetes installed on your machine.
 - Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - Enable Kubernetes in Docker Desktop settings (easier setup)
 
-### 9. Deploy with JAC Scale
+### 10. Deploy with JAC Scale
 
-Once Kubernetes is running, deploy your application:
+Once Kubernetes is running, you have two deployment methods:
+
+#### Method A: Deploy Without Building (Faster)
+
+Deploy your application to Kubernetes without building a Docker image:
 
 ```bash
 jac scale main.jac
@@ -172,28 +178,50 @@ jac scale main.jac
 - Creates necessary Kubernetes resources (Deployments, Services, StatefulSets)
 - Exposes your application via NodePort
 
-### 10. Build and Deploy with Docker (Optional)
+**Access your application:**
+- Application: http://localhost:30001
+- Swagger Documentation: http://localhost:30001/docs
 
-To build your application as a Docker container and deploy it:
+**Use this when:**
+- You want faster deployments without rebuilding
+- You're testing configuration changes
+- You're in development mode
 
-```bash
-jac scale main.jac -b
-```
+#### Method B: Build, Push, and Deploy (Production)
 
-**Additional requirements for build mode:**
+Build your application as a Docker container and deploy it:
 
-1. Create a `Dockerfile` in your application directory
+**Prerequisites:**
+1. Create a `Dockerfile` in your `traveller` directory
 2. Add Docker credentials to your `.env` file:
 
 ```env
+OPENAI_API_KEY=your-openai-api-key-here
 DOCKER_USERNAME=your-dockerhub-username
 DOCKER_PASSWORD=your-dockerhub-password-or-token
+```
+
+**Deploy with build:**
+
+```bash
+jac scale main.jac -b
 ```
 
 **What this does:**
 - Builds a Docker image of your JAC application
 - Pushes the image to DockerHub
 - Deploys the image to Kubernetes
+- Sets up Redis and MongoDB for persistence
+
+**Access your application:**
+- Application: http://localhost:30001
+- Swagger Documentation: http://localhost:30001/docs
+
+**Use this when:**
+- Deploying to production
+- You want to version and host your Docker image
+- Sharing your application with others
+- Creating reproducible deployments
 
 ### 11. Clean Up Kubernetes Resources
 
@@ -347,7 +375,8 @@ If you encounter issues:
 ## Next Steps
 
 After successfully running the demo:
-- Explore the FastAPI Swagger documentation at `http://localhost:<port>/docs`
+- **For JAC Serve**: Access your application at http://localhost:8000 and explore the Swagger documentation at http://localhost:8000/docs
+- **For JAC Scale**: Access your application at http://localhost:30001 and explore the Swagger documentation at http://localhost:30001/docs
 - Modify the JAC application and redeploy
 - Experiment with different configuration options
 - Try deploying to a production Kubernetes cluster
