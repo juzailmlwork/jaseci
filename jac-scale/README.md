@@ -2,12 +2,30 @@
 
 ## Overview
 
-`jac scale` is a Kubernetes deployment plugin for JAC applications. It automates the deployment process by building Docker images, pushing them to DockerHub, and creating Kubernetes resources for your application and required databases. It also supports converting walkers and functions as FastAPI endpoints with Swagger documentation.
+`jac scale` is a comprehensive deployment and scaling solution for JAC applications that provides three powerful capabilities:
+
+### 1. Multi-Layer Memory Architecture
+- **Caching Layer**: Redis for high-speed data access and session management
+- **Persistence Storage**: MongoDB for reliable, long-term data storage
+- **Optimized Performance**: Intelligent caching strategy to minimize database load and maximize response times
+
+### 2. FastAPI Integration with Swagger Documentation
+- Automatically converts JAC walkers and functions into RESTful FastAPI endpoints
+- Built-in Swagger/OpenAPI documentation for easy API exploration and testing
+- Interactive API interface accessible at `/docs` endpoint
+
+### 3. Kubernetes Deployment & Auto-Scaling
+- **Easy Deployment**: One-command deployment to Kubernetes clusters
+- **Auto-Scaling**: Scale your application based on demand
+- **Database Auto-Provisioning**: Automatically spawns and configures Redis and MongoDB instances
+- **Production-Ready**: Built-in health checks, persistent storage, and service discovery
+
+Whether you're developing locally with `jac serve` or deploying to production with `jac scale`, you get the same powerful features with the flexibility to choose your deployment strategy.
 
 ## Prerequisites
-
-- [Minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/) (for Windows/Linux)
-- [Docker Desktop with Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/) (alternative for Windows - easier setup)
+- kubenetes(K8) installed 
+    - [Minikube Kubernetes](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download/) (for Windows/Linux)
+    - [Docker Desktop with Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/) (alternative for Windows - easier setup)
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
 
