@@ -304,10 +304,6 @@ jac scale main.jac -b
 - You want to version and host your Docker image
 - Sharing your application with others
 
-## Architecture
-
-### Kubernetes Pod Structure
-![k8 pod structure](diagrams/kubernetes-architecture.png)
 
 ## Important Notes
 
