@@ -348,6 +348,11 @@ When you run `jac scale`, the following steps are executed:
 - Create application deployment
 - Create services and expose via NodePort
 
+## Architecture
+
+### k8 pods structure
+![k8 pod structure](assets/jac-scale-architecture.svg)
+
 ## Troubleshooting
 
 ### Common Issues
