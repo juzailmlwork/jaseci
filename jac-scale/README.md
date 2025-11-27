@@ -305,7 +305,7 @@ jac create_jac_app todo
 Then lets copy the todo fully implemented jac code available inside jac-scale/examples/todo to our newly created /todo folder
 
 ```bash
-mv jac-scale/examples/todo/app.jac todo/app.jac
+cp jac-scale/examples/todo/app.jac todo/app.jac
 cd todo
 ```
 
