@@ -359,7 +359,7 @@ jac scale app.jac
 
 #### Method B: Build, Push, and Deploy (Production)
 
-To Build your application as a Docker container and deploy it you can run
+To Build your application as a Docker container and deploy it you can run 
 
 ```bash
 jac scale app.jac -b
@@ -381,7 +381,7 @@ jac scale app.jac -b
 When you're done testing, remove all created Kubernetes resources:
 
 ```bash
-jac destroy main.jac
+jac destroy app.jac
 ```
 
 **What this does:**
