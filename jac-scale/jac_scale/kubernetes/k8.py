@@ -134,6 +134,7 @@ def deploy_k8(
             "apt-get update && apt-get install -y git && "
             "git clone --depth 1 https://github.com/juzailmlwork/jaseci.git && "
             "cd jaseci && "
+            "pip install pluggy"
             "pip install -e ./jac && "
             "pip install -e ./jac-scale && "
             "pip install -e ./jac-client && "
