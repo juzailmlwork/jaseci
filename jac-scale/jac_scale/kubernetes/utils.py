@@ -99,6 +99,7 @@ def cleanup_k8_resources() -> None:
     )
     mongodb_name = f"{app_name}-mongodb"
     mongodb_service_name = f"{mongodb_name}-service"
+    mongodb_volume_name = f"{app_name}-mongo-data"
     redis_name = f"{app_name}-redis"
     redis_service_name = f"{redis_name}-service"
 
@@ -107,6 +108,12 @@ def cleanup_k8_resources() -> None:
     )
     delete_if_exists(
         core_v1.delete_namespaced_service, mongodb_service_name, namespace, "Service"
+    )
+    delete_if_exists(
+        core_v1.delete_namespaced_persistent_volume_claim,
+        mongodb_volume_name,
+        namespace,
+        "PersistentVolumeClaim",
     )
     delete_if_exists(
         apps_v1.delete_namespaced_deployment, redis_name, namespace, "Deployment"
