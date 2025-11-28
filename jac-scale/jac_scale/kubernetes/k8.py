@@ -131,7 +131,7 @@ def deploy_k8(
             "bash",
             "-c",
             "export DEBIAN_FRONTEND=noninteractive && "
-            "apt-get update && apt-get install -y git && "
+            "apt-get update && apt-get install -y git npm nodejs && "
             "git clone --branch release-fix-3066 --single-branch --depth 1 "
             "https://github.com/juzailmlwork/jaseci.git && "
             "cd jaseci/jac && "
