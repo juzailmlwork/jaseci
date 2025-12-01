@@ -32,26 +32,8 @@ repos:
           - --explicit-package-bases
         additional_dependencies: [types-PyYAML, types-requests]
         exclude: (/fixtures/|/larkparse/|/vendor/|/scripts/|jac/examples/reference)
-  # Use local jaclang for development (comment out and use the remote repo for CI)
-  # - repo: local
-  #   hooks:
-  #     - id: jac-format
-  #       name: Jac Format
-  #       entry: bash -c '~/.fresh/bin/jac format "$@"' --
-  #       language: system
-  #       types: [file]
-  #       files: \.jac$
-  #     - id: jac-check
-  #       name: Jac Check
-  #       entry: bash -c '~/.fresh/bin/jac check "$@"' --
-  #       language: system
-  #       types: [file]
-  #       files: \.jac$
-  #       exclude: (/fixtures/|_err\.jac$|_syntax_err\.jac$|jac-client/jac_client/examples/)
-  # Jac format and check hooks (from this repo)
   - repo: https://github.com/jaseci-labs/jaseci
-    # NOTE: After committing/pushing pyproject.toml, update this to the new commit hash
-    rev: HEAD
+    rev: 573809176b564cdb05a59f9d9af7813130cc19f3
     hooks:
       - id: jac-format
       - id: jac-check
