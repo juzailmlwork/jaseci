@@ -11,7 +11,7 @@ import from queue { Queue, Empty }
 import from typing { Callable, Optional }
 
 import jaclang.compiler.unitree as uni;
-import from jaclang { JacMachineInterface as Jac }
+import from jaclang { JacRuntimeInterface as Jac }
 import from jaclang.compiler.constant { SymbolType }
 import from jaclang.compiler.program { JacProgram }
 import from jaclang.compiler.type_system.type_utils { get_completion_items }
@@ -399,9 +399,10 @@ class JacLangServer(JacProgram , LanguageServer) {
     def formatted_jac(self: JacLangServer, file_path: str) -> list[lspt.TextEdit] {
         try {
             document = self.workspace.get_text_document(file_path);
-            formatted_text = JacProgram.jac_str_formatter(
+            prog = JacProgram.jac_str_formatter(
                 source_str=document.source, file_path=document.path
             );
+            formatted_text = prog.mod.main.gen.jac if not prog.errors_had else document.source;
         } except Exception as e {
             self.log_error(f"'Error during formatting: '{e}");
             formatted_text = document.source;

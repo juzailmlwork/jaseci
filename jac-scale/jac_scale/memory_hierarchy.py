@@ -21,9 +21,10 @@ ID = TypeVar("ID")
 
 
 @dataclass
-class MultiHierarchyMemory:
-    def __init__(self):
-        self.mem = Memory()
+class MultiHierarchyMemory(Memory[UUID, Anchor]):
+    def __init__(self) -> None:
+        super().__init__()
+        self.mem = Memory[UUID, Anchor]()
         self.redis = RedisDB()
         self.mongo = MongoDB()
         if not self.redis.redis_is_available():
@@ -91,7 +92,7 @@ class MultiHierarchyMemory:
             self.shelf.commit(keys=anchors)
 
     def delete(self, anchor: Anchor):
-        self.mem.remove(anchor)
+        self.mem.remove(anchor.id)
         if self.redis.redis_is_available():
             self.redis.remove(anchor)
             self.mongo.remove(anchor)
@@ -140,7 +141,7 @@ class MongoDB:  # Memory[UUID, Anchor]):
         - Respect write and connect access
         """
         from jaclang.runtimelib.archetype import NodeAnchor
-        from jaclang.runtimelib.machine import JacMachineInterface as Jac
+        from jaclang.runtimelib.runtime import JacRuntimeInterface as Jac
 
         _id = self._to_uuid(anchor.id)
         try:
@@ -216,7 +217,7 @@ class MongoDB:  # Memory[UUID, Anchor]):
         - Uses MongoDB bulk_write for speed
         """
         from jaclang.runtimelib.archetype import NodeAnchor
-        from jaclang.runtimelib.machine import JacMachineInterface as Jac
+        from jaclang.runtimelib.runtime import JacRuntimeInterface as Jac
 
         ops: list = []
 

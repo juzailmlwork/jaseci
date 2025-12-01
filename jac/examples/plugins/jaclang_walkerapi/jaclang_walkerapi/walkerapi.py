@@ -1,5 +1,5 @@
 from jaclang.runtimelib.default import hookimpl
-from jaclang.runtimelib.machine import Archetype, WalkerArchetype, ObjectSpatialFunction
+from jaclang.runtimelib.runtime import Archetype, WalkerArchetype, ObjectSpatialFunction
 
 from dataclasses import dataclass
 from functools import wraps
@@ -7,7 +7,7 @@ from typing import Type
 from collections.abc import Callable
 
 
-class JacMachine:
+class JacRuntime:
     @staticmethod
     @hookimpl
     def make_walker(
@@ -18,8 +18,6 @@ class JacMachine:
         def decorator(cls: type[Archetype]) -> type[Archetype]:
             """Decorate class."""
             cls = dataclass(eq=False)(cls)
-            for i in on_entry + on_exit:
-                i.resolve(cls)
             arch_cls = WalkerArchetype
             if not issubclass(cls, arch_cls):
                 cls = type(cls.__name__, (cls, arch_cls), {})
