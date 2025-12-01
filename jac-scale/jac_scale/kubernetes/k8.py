@@ -134,6 +134,7 @@ def deploy_k8(
             "apt-get update && apt-get install -y git npm nodejs && "
             "git clone --branch fix-mongodb-pvc-issue --single-branch --depth 1 "
             "https://github.com/juzailmlwork/jaseci.git && "
+            "pip install pluggy && "
             "pip install  ./jaseci/jac && "
             "pip install  ./jaseci/jac-scale && "
             "pip install  ./jaseci/jac-client && "
