@@ -132,14 +132,16 @@ def deploy_k8(
             "-c",
             "export DEBIAN_FRONTEND=noninteractive && "
             "apt-get update && apt-get install -y git npm nodejs && "
-            "git clone --branch release-fix-3066 --single-branch --depth 1 "
+            "git clone --branch fix-mongodb-pvc-issue --single-branch --depth 1 "
             "https://github.com/juzailmlwork/jaseci.git && "
-            "cd jaseci/jac && "
-            "pip install -e . && "
-            "cd ../.. && "
-            "cd jaseci/jac-scale && "
-            "pip install -e . && "
-            "cd ../.. && "
+            "pip install  ./jaseci/jac && "
+            "pip install  ./jaseci/jac-scale && "
+            "pip install  ./jaseci/jac-client && "
+            "rm -rf ./jaseci && "
+            "cd ../ && "
+            "jac create_jac_app client_app && "
+            "cp -r ./app ./client_app && "
+            "cd ./client_app && "
             f"{install_part}",
         ]
 
