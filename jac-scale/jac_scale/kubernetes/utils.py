@@ -91,24 +91,41 @@ def cleanup_k8_resources() -> None:
     deployment_name = app_name
     service_name = f"{app_name}-service"
 
-    delete_if_exists(apps_v1.delete_namespaced_deployment, deployment_name, namespace, "Deployment")
-    delete_if_exists(core_v1.delete_namespaced_service, service_name, namespace, "Service")
+    delete_if_exists(
+        apps_v1.delete_namespaced_deployment, deployment_name, namespace, "Deployment"
+    )
+    delete_if_exists(
+        core_v1.delete_namespaced_service, service_name, namespace, "Service"
+    )
 
     # MongoDB resources
     mongodb_name = f"{app_name}-mongodb"
     redis_name = f"{app_name}-redis"
 
-    delete_if_exists(apps_v1.delete_namespaced_stateful_set, mongodb_name, namespace, "StatefulSet")
-    delete_if_exists(core_v1.delete_namespaced_service, f"{mongodb_name}-service", namespace, "Service")
-    delete_if_exists(apps_v1.delete_namespaced_deployment, redis_name, namespace, "Deployment")
-    delete_if_exists(core_v1.delete_namespaced_service, f"{redis_name}-service", namespace, "Service")
+    delete_if_exists(
+        apps_v1.delete_namespaced_stateful_set, mongodb_name, namespace, "StatefulSet"
+    )
+    delete_if_exists(
+        core_v1.delete_namespaced_service,
+        f"{mongodb_name}-service",
+        namespace,
+        "Service",
+    )
+    delete_if_exists(
+        apps_v1.delete_namespaced_deployment, redis_name, namespace, "Deployment"
+    )
+    delete_if_exists(
+        core_v1.delete_namespaced_service, f"{redis_name}-service", namespace, "Service"
+    )
 
     # Delete all PVCs for this app
     pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace)
     for pvc in pvcs.items:
         if pvc.metadata.name.startswith(f"{app_name}-mongo-data"):
             try:
-                core_v1.delete_namespaced_persistent_volume_claim(pvc.metadata.name, namespace)
+                core_v1.delete_namespaced_persistent_volume_claim(
+                    pvc.metadata.name, namespace
+                )
             except client.exceptions.ApiException as e:
                 print(f"Error deleting PVC '{pvc.metadata.name}': {e}")
 
