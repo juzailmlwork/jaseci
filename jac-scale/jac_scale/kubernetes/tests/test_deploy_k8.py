@@ -1,12 +1,13 @@
 import os
+import time
 
-# import time
+import requests
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
-# from kubernetes.client.exceptions import ApiException
 from ..k8 import deploy_k8
+from ..utils import cleanup_k8_resources
 
-# from ..utils import cleanup_k8_resources
 # import pytest
 
 
@@ -85,8 +86,12 @@ def test_deploy_todo_app():
         }
     )
 
+    # Resolve the absolute path to the todo app folder
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    todo_app_path = os.path.join(test_dir, "../../../examples/todo")
+
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
-    deploy_k8(code_folder="../../../examples/todo", file_name="app.jac", build=False)
+    deploy_k8(code_folder=todo_app_path, file_name="app.jac", build=False)
 
     # Wait a moment for services to stabilize
     time.sleep(5)
