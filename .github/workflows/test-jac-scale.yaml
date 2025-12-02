@@ -32,6 +32,7 @@ jobs:
           pip install -e jac
           pip install -e jac-scale
           pip install pytest
+          pip install -e jac-client
 
       # - name: Install Docker (needed for Kind)
       #   uses: docker/setup-docker@v2
