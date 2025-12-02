@@ -133,14 +133,25 @@ def test_deploy_todo_app():
     )
     assert redis_service.spec.ports[0].port == 6379
 
-    # Send HTTP request to the app
+    # Send POST request to create a todo
     try:
-        url = f"http://localhost:{node_port}/docs"
+        url = f"http://localhost:{node_port}/walker/create-todo"
+        payload = {"text": "first-task"}
+        response = requests.post(url, json=payload, timeout=10)
+        assert response.status_code == 200
+        print(f"✓ Successfully created todo at {url}")
+        print(f"  Response: {response.json()}")
+    except requests.exceptions.RequestException as e:
+        print(f"Warning: Could not reach POST {url}: {e}")
+
+    # Send GET request to retrieve the page
+    try:
+        url = f"http://localhost:{node_port}/page/app"
         response = requests.get(url, timeout=10)
         assert response.status_code == 200
-        print(f"✓ Successfully reached app at {url}")
+        print(f"✓ Successfully reached app page at {url}")
     except requests.exceptions.RequestException as e:
-        print(f"Warning: Could not reach app at http://localhost:{node_port}/docs: {e}")
+        print(f"Warning: Could not reach GET {url}: {e}")
 
     # Cleanup resources
     cleanup_k8_resources()
@@ -184,79 +195,6 @@ def test_deploy_todo_app():
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     print("✓ Cleanup verification complete - all resources properly deleted")
-
-
-# def test_deploy_k8_with_mongodb_and_redis():
-#     """
-#     Integration test that runs deploy_k8() with MongoDB and Redis enabled
-#     against a live Kubernetes cluster.
-#     Use only in a test namespace.
-#     """
-
-#     # Load kubeconfig and initialize client
-#     config.load_kube_config()
-#     apps_v1 = client.AppsV1Api()
-#     core_v1 = client.CoreV1Api()
-
-#     namespace = os.getenv("K8_NAMESPACE", "default")
-
-#     # Set environment for MongoDB + Redis test
-#     os.environ.update(
-#         {
-#             "APP_NAME": "littlex",
-#             "DOCKER_IMAGE_NAME": "littlex:latest",
-#             "DOCKER_USERNAME": "juzailmlwork",
-#             "K8_MONGODB": "true",
-#             "K8_REDIS": "true",
-#             "K8_NAMESPACE": namespace,
-#             "K8_CONTAINER_PORT": "8000",
-#             "K8_NODE_PORT": "30051",  # Different port to avoid conflict
-#         }
-#     )
-
-#     # Run deploy
-#     deploy_k8(code_folder=".", build=True)
-
-#     # --- Validate main deployment ---
-#     deployment = apps_v1.read_namespaced_deployment(name="littlex", namespace=namespace)
-#     assert deployment.metadata.name == "littlex"
-#     assert deployment.spec.replicas == 1
-
-#     # --- Validate app service ---
-#     service = core_v1.read_namespaced_service(
-#         name="littlex-service", namespace=namespace
-#     )
-#     assert service.spec.type == "NodePort"
-
-#     # --- Validate MongoDB StatefulSet and Service ---
-#     mongodb_stateful = apps_v1.read_namespaced_stateful_set(
-#         name="littlex-mongodb", namespace=namespace
-#     )
-#     assert mongodb_stateful.spec.service_name == "littlex-mongodb-service"
-
-#     mongodb_service = core_v1.read_namespaced_service(
-#         name="littlex-mongodb-service", namespace=namespace
-#     )
-#     assert mongodb_service.spec.ports[0].port == 27017
-
-#     # --- Validate Redis Deployment and Service ---
-#     redis_deploy = apps_v1.read_namespaced_deployment(
-#         name="littlex-redis", namespace=namespace
-#     )
-#     assert redis_deploy.metadata.name == "littlex-redis"
-
-#     redis_service = core_v1.read_namespaced_service(
-#         name="littlex-redis-service", namespace=namespace
-#     )
-#     assert redis_service.spec.ports[0].port == 6379
-
-#     # Cleanup after test (optional)
-#     apps_v1.delete_namespaced_deployment("littlex", namespace)
-#     apps_v1.delete_namespaced_deployment("littlex-redis", namespace)
-#     apps_v1.delete_namespaced_stateful_set("littlex-mongodb", namespace)
-#     core_v1.delete_namespaced_service("littlex-service", namespace)
-#     core_v1.delete_namespaced_service("littlex-redis-service", namespace)
-#     core_v1.delete_namespaced_service("littlex-mongodb-service", namespace)
 
 
 # def test_deploy_k8_with_mongodb_and_redis_different_namespace():
