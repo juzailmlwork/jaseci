@@ -86,7 +86,7 @@ def test_deploy_todo_app():
     )
 
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
-    deploy_k8(code_folder="../../examples/todo", file_name="app.jac", build=False)
+    deploy_k8(code_folder="../../../examples/todo", file_name="app.jac", build=False)
 
     # Wait a moment for services to stabilize
     time.sleep(5)
