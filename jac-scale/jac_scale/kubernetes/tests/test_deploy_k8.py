@@ -55,6 +55,7 @@ from ..k8 import deploy_k8
 #     apps_v1.delete_namespaced_deployment("littlex", namespace)
 #     core_v1.delete_namespaced_service("littlex-service", namespace)
 
+
 def test_deploy_todo_app():
     """
     This test runs deploy_k8() with build=False to deploy the todo app
@@ -148,46 +149,37 @@ def test_deploy_todo_app():
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service(
-            "todo-app-service", namespace=namespace
-        )
+        core_v1.read_namespaced_service("todo-app-service", namespace=namespace)
         assert False, "Service should have been deleted"
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        apps_v1.read_namespaced_stateful_set(
-            "todo-app-mongodb", namespace=namespace
-        )
+        apps_v1.read_namespaced_stateful_set("todo-app-mongodb", namespace=namespace)
         assert False, "MongoDB StatefulSet should have been deleted"
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service(
-            "todo-app-mongodb-service", namespace=namespace
-        )
+        core_v1.read_namespaced_service("todo-app-mongodb-service", namespace=namespace)
         assert False, "MongoDB Service should have been deleted"
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        apps_v1.read_namespaced_deployment(
-            "todo-app-redis", namespace=namespace
-        )
+        apps_v1.read_namespaced_deployment("todo-app-redis", namespace=namespace)
         assert False, "Redis Deployment should have been deleted"
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service(
-            "todo-app-redis-service", namespace=namespace
-        )
+        core_v1.read_namespaced_service("todo-app-redis-service", namespace=namespace)
         assert False, "Redis Service should have been deleted"
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     print("✓ Cleanup verification complete - all resources properly deleted")
+
 
 # def test_deploy_k8_with_mongodb_and_redis():
 #     """
