@@ -70,7 +70,7 @@ def test_deploy_todo_app():
     apps_v1 = client.AppsV1Api()
     core_v1 = client.CoreV1Api()
 
-    namespace = os.getenv("K8_NAMESPACE", "default")
+    namespace = os.getenv("K8_NAMESPACE", "todo-app")
 
     # Set environment
     os.environ.update(
@@ -160,37 +160,37 @@ def test_deploy_todo_app():
     # Verify cleanup - resources should no longer exist
     try:
         apps_v1.read_namespaced_deployment("todo-app", namespace=namespace)
-        assert False, "Deployment should have been deleted"
+        raise AssertionError("Deployment should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
         core_v1.read_namespaced_service("todo-app-service", namespace=namespace)
-        assert False, "Service should have been deleted"
+        raise AssertionError("Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
         apps_v1.read_namespaced_stateful_set("todo-app-mongodb", namespace=namespace)
-        assert False, "MongoDB StatefulSet should have been deleted"
+        raise AssertionError("MongoDB StatefulSet should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
         core_v1.read_namespaced_service("todo-app-mongodb-service", namespace=namespace)
-        assert False, "MongoDB Service should have been deleted"
+        raise AssertionError("MongoDB Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
         apps_v1.read_namespaced_deployment("todo-app-redis", namespace=namespace)
-        assert False, "Redis Deployment should have been deleted"
+        raise AssertionError("Redis Deployment should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
         core_v1.read_namespaced_service("todo-app-redis-service", namespace=namespace)
-        assert False, "Redis Service should have been deleted"
+        raise AssertionError("Redis Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
