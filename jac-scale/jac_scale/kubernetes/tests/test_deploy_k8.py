@@ -8,6 +8,7 @@ from kubernetes.client.exceptions import ApiException
 from ..k8 import deploy_k8
 from ..utils import cleanup_k8_resources
 
+
 def test_deploy_todo_app():
     """
     This test runs deploy_k8() with build=False to deploy the todo app
@@ -148,7 +149,6 @@ def test_deploy_todo_app():
     print("✓ Cleanup verification complete - all resources properly deleted")
 
 
-
 # def test_deploy_k8_only_littlex():
 #     """
 #     This test runs deploy_k8() against a live Kubernetes cluster.
@@ -193,9 +193,3 @@ def test_deploy_todo_app():
 #     # Cleanup (optional)
 #     apps_v1.delete_namespaced_deployment("littlex", namespace)
 #     core_v1.delete_namespaced_service("littlex-service", namespace)
-
-
-
-
-
-
