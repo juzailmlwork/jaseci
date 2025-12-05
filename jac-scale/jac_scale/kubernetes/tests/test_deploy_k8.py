@@ -31,7 +31,6 @@ def test_deploy_todo_app():
             "K8_MONGODB": "true",
             "K8_REDIS": "true",
             "K8_NAMESPACE": namespace,
-            "K8_CONTAINER_PORT": "8000",
             "K8_NODE_PORT": "30001",
         }
     )
