@@ -243,7 +243,9 @@ def test_server_user_creation(server_fixture):
 
     # Create user
     result = server_fixture.request(
-        "POST", "/user/register", {"email": "alice@example.com", "password": "secret123"}
+        "POST",
+        "/user/register",
+        {"email": "alice@example.com", "password": "secret123"},
     )
 
     assert "email" in result
@@ -498,7 +500,9 @@ def test_server_invalid_function(server_fixture):
 
     # Create user
     create_result = server_fixture.request(
-        "POST", "/user/register", {"email": "invaliduser@example.com", "password": "pass"}
+        "POST",
+        "/user/register",
+        {"email": "invaliduser@example.com", "password": "pass"},
     )
     token = create_result["token"]
 
@@ -516,7 +520,9 @@ def test_server_invalid_walker(server_fixture):
 
     # Create user
     create_result = server_fixture.request(
-        "POST", "/user/register", {"email": "invalidwalk@example.com", "password": "pass"}
+        "POST",
+        "/user/register",
+        {"email": "invalidwalk@example.com", "password": "pass"},
     )
     token = create_result["token"]
 
@@ -862,7 +868,9 @@ def test_default_page_is_csr(server_fixture):
 
     # Create user
     create_result = server_fixture.request(
-        "POST", "/user/register", {"email": "csrdefaultuser@example.com", "password": "pass"}
+        "POST",
+        "/user/register",
+        {"email": "csrdefaultuser@example.com", "password": "pass"},
     )
     token = create_result["token"]
 
@@ -1061,7 +1069,9 @@ def test_protected_function_with_auth(access_server_fixture):
 
     # Create user and get token
     create_result = access_server_fixture.request(
-        "POST", "/user/register", {"email": "authuser@example.com", "password": "pass123"}
+        "POST",
+        "/user/register",
+        {"email": "authuser@example.com", "password": "pass123"},
     )
     token = create_result["token"]
 
@@ -1096,7 +1106,9 @@ def test_private_function_with_auth(access_server_fixture):
 
     # Create user and get token
     create_result = access_server_fixture.request(
-        "POST", "/user/register", {"email": "privuser@example.com", "password": "pass456"}
+        "POST",
+        "/user/register",
+        {"email": "privuser@example.com", "password": "pass456"},
     )
     token = create_result["token"]
 
@@ -1144,7 +1156,9 @@ def test_protected_walker_with_auth(access_server_fixture):
 
     # Create user and get token
     create_result = access_server_fixture.request(
-        "POST", "/user/register", {"email": "walkuser@example.com", "password": "pass789"}
+        "POST",
+        "/user/register",
+        {"email": "walkuser@example.com", "password": "pass789"},
     )
     token = create_result["token"]
 
@@ -1179,7 +1193,9 @@ def test_private_walker_with_auth(access_server_fixture):
 
     # Create user and get token
     create_result = access_server_fixture.request(
-        "POST", "/user/register", {"email": "privwalk@example.com", "password": "pass000"}
+        "POST",
+        "/user/register",
+        {"email": "privwalk@example.com", "password": "pass000"},
     )
     token = create_result["token"]
 
@@ -1211,7 +1227,9 @@ def test_mixed_access_levels(access_server_fixture):
 
     # Create authenticated user
     create_result = access_server_fixture.request(
-        "POST", "/user/register", {"email": "mixeduser@example.com", "password": "mixedpass"}
+        "POST",
+        "/user/register",
+        {"email": "mixeduser@example.com", "password": "mixedpass"},
     )
     token = create_result["token"]
 
