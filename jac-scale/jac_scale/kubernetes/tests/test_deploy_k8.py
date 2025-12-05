@@ -31,7 +31,7 @@ def test_deploy_todo_app():
             "K8_MONGODB": "true",
             "K8_REDIS": "true",
             "K8_NAMESPACE": namespace,
-            "K8_NODE_PORT": "30001",
+            "K8_NODE_PORT": "30051",
         }
     )
 
@@ -58,7 +58,7 @@ def test_deploy_todo_app():
     )
     assert service.spec.type == "NodePort"
     node_port = service.spec.ports[0].node_port
-
+    print(f"✓ Service is exposed on NodePort: {node_port}")
     # Validate MongoDB StatefulSet and Service
     mongodb_stateful = apps_v1.read_namespaced_stateful_set(
         name="todo-app-mongodb", namespace=namespace
@@ -84,7 +84,7 @@ def test_deploy_todo_app():
 
     # Send POST request to create a todo
     try:
-        url = f"http://localhost:{node_port}/walker/create-todo"
+        url = f"http://localhost:{node_port}/walker/create_todo"
         payload = {"text": "first-task"}
         response = requests.post(url, json=payload, timeout=10)
         assert response.status_code == 200
