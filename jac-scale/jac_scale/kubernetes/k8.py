@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
@@ -28,7 +28,7 @@ def ensure_pvc_exists(
     namespace: str,
     pvc_name: str,
     storage_size: str,
-    storage_class: Optional[str] = None,
+    storage_class: str | None = None,
     access_mode: str = "ReadWriteOnce",
 ) -> None:
     """Create a PersistentVolumeClaim if it does not already exist."""
@@ -104,7 +104,7 @@ def wait_for_pod_deletion(
     raise TimeoutError(f"Timed out waiting for pod '{pod_name}' deletion.")
 
 
-def run_kubectl_command(args: list[str], cwd: Optional[Path] = None) -> None:
+def run_kubectl_command(args: list[str], cwd: Path | None = None) -> None:
     """Execute a kubectl command and surface useful error details."""
     if shutil.which("kubectl") is None:
         raise RuntimeError("kubectl is required to sync code to the PVC.")
@@ -218,6 +218,7 @@ def sync_code_to_pvc(
         except ApiException as exc:
             if exc.status != 404:
                 raise
+
 
 def deploy_k8(
     code_folder: str,
