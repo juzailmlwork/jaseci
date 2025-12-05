@@ -28,8 +28,6 @@ def test_deploy_todo_app():
     os.environ.update(
         {
             "APP_NAME": "todo-app",
-            "DOCKER_IMAGE_NAME": "todo-app:latest",
-            "DOCKER_USERNAME": "juzailmlwork",
             "K8_MONGODB": "true",
             "K8_REDIS": "true",
             "K8_NAMESPACE": namespace,
