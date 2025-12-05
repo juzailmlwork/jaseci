@@ -5,8 +5,8 @@ import requests
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-from ..k8 import deploy_k8
-from ..utils import cleanup_k8_resources
+from ..kubernetes.k8 import deploy_k8
+from ..kubernetes.utils import cleanup_k8_resources
 
 
 def test_deploy_todo_app():
@@ -37,7 +37,7 @@ def test_deploy_todo_app():
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    todo_app_path = os.path.join(test_dir, "../../../examples/todo")
+    todo_app_path = os.path.join(test_dir, "../../examples/todo")
 
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
     deploy_k8(code_folder=todo_app_path, file_name="app.jac", build=False)
