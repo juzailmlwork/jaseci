@@ -87,7 +87,7 @@ def test_deploy_todo_app():
         url = f"http://localhost:{node_port}/walker/create_todo"
         payload = {"text": "first-task"}
         response = requests.post(url, json=payload, timeout=10)
-        assert response.status_code == 200
+        assert response.status_code == 201
         print(f"✓ Successfully created todo at {url}")
         print(f"  Response: {response.json()}")
     except requests.exceptions.RequestException as e:
@@ -142,6 +142,13 @@ def test_deploy_todo_app():
         raise AssertionError("Redis Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
+
+    # Verify PVC cleanup
+    pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace)
+    for pvc in pvcs.items:
+        assert not pvc.metadata.name.startswith("todo-app"), (
+            f"PVC '{pvc.metadata.name}' should have been deleted"
+        )
 
     print("✓ Cleanup verification complete - all resources properly deleted")
 

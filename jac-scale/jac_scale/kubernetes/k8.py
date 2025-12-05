@@ -291,14 +291,11 @@ def deploy_k8(
         "env": env_list,
     }
     if not build:
-        pvc_name = os.getenv("K8_CODE_PVC_NAME", f"{app_name}-code-pvc")
-        pvc_size = os.getenv("K8_CODE_PVC_SIZE", "5Gi")
-        storage_class = os.getenv("K8_CODE_STORAGE_CLASS") or os.getenv(
-            "K8_STORAGE_CLASS"
-        )
-        sync_image = os.getenv("K8_CODE_SYNC_IMAGE", "busybox:1.36")
+        pvc_name = f"{app_name}-code-pvc"
+        pvc_size = "5Gi"
+        sync_image = "busybox:1.36"
 
-        ensure_pvc_exists(core_v1, namespace, pvc_name, pvc_size, storage_class)
+        ensure_pvc_exists(core_v1, namespace, pvc_name, pvc_size)
         print(f"Syncing application code to PVC '{pvc_name}'...")
         sync_code_to_pvc(
             core_v1,
