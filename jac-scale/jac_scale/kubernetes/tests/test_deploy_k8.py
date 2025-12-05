@@ -22,7 +22,7 @@ def test_deploy_todo_app():
     apps_v1 = client.AppsV1Api()
     core_v1 = client.CoreV1Api()
 
-    namespace = os.getenv("K8_NAMESPACE", "todo-app")
+    namespace = "todo-app"
 
     # Set environment
     os.environ.update(
@@ -96,7 +96,7 @@ def test_deploy_todo_app():
     except requests.exceptions.RequestException as e:
         print(f"Warning: Could not reach POST {url}: {e}")
 
-    # Send GET request to retrieve the page
+    # Send GET request to retrieve the clientpage of todo app
     try:
         url = f"http://localhost:{node_port}/page/app"
         response = requests.get(url, timeout=10)
