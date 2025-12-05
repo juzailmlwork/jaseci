@@ -39,7 +39,7 @@ def ensure_pvc_exists(
         if exc.status != 404:
             raise
 
-    pvc_body = {
+    pvc_body: dict[str, Any] = {
         "apiVersion": "v1",
         "kind": "PersistentVolumeClaim",
         "metadata": {"name": pvc_name},
@@ -170,9 +170,8 @@ def sync_code_to_pvc(
 
     wait_for_pod_phase(core_v1, namespace, sync_pod_name, {"Running"})
 
-    temp_tar = tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False)
-    temp_tar_path = Path(temp_tar.name)
-    temp_tar.close()
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as temp_tar:
+        temp_tar_path = Path(temp_tar.name)
     try:
         create_tarball(code_folder, str(temp_tar_path))
 
@@ -344,7 +343,7 @@ def deploy_k8(
             "-c",
             "export DEBIAN_FRONTEND=noninteractive && "
             "apt-get update && apt-get install -y git npm nodejs && "
-            "git clone --branch fix-mongodb-pvc-issue --single-branch --depth 1 "
+            "git clone --branch jac-scale-fixes-accoemondate-jac-gpt --single-branch --depth 1 "
             "https://github.com/juzailmlwork/jaseci.git && "
             "cd ./jaseci && "
             "git submodule update --init --recursive && "
