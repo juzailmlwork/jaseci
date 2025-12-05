@@ -34,7 +34,7 @@ def test_deploy_todo_app():
             "K8_REDIS": "true",
             "K8_NAMESPACE": namespace,
             "K8_CONTAINER_PORT": "8000",
-            "K8_NODE_PORT": "30051",
+            "K8_NODE_PORT": "30001",
         }
     )
 
