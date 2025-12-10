@@ -120,7 +120,21 @@ def deploy_k8(
         command = [
             'bash',
             '-c',
-            f'export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y git npm nodejs && rm -rf ./jaseci || true && git clone --branch jac_scale_examples --single-branch --depth 1 https://github.com/mgtm98/jaseci.git && cd ./jaseci && git submodule update --init --recursive && cd ../ && pip install pluggy && pip install ./jaseci/jac && pip install -e  ./jaseci/jac-scale && pip install ./jaseci/jac-client && cd ../ && jac create_jac_app client_app && cp -r ./app/* ./client_app && cd ./client_app && {install_part}'
+            f"""export DEBIAN_FRONTEND=noninteractive && 
+            apt-get update && 
+            apt-get install -y git npm nodejs && 
+            rm -rf ./jaseci || true && 
+            git clone --branch jac_scale_examples --single-branch --depth 1 https://github.com/mgtm98/jaseci.git && 
+            cd ./jaseci && 
+            git submodule update --init --recursive && 
+            cd ../ && pip install pluggy && 
+            pip install ./jaseci/jac && pip install -e  ./jaseci/jac-scale && 
+            pip install ./jaseci/jac-client && 
+            cd ../ && 
+            jac create_jac_app client_app && 
+            cp -r ./app/* ./client_app && 
+            cd ./client_app && 
+            {install_part}"""
         ];
         container_config = {
             'name': app_name,
