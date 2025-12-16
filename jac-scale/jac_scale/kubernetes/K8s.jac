@@ -120,7 +120,7 @@ def deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch --depth 1 https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && npm install &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 2ec104d32ab28f3f81386d8fbee4ea6e782273de &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && npm install &&{install_part}"
         ];
         container_config = {
             'name': app_name,
