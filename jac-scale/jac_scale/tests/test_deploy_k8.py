@@ -104,7 +104,7 @@ def test_deploy_todo_app():
 
     # Cleanup resources
     cleanup_k8_resources()
-    time.sleep(5)  # Wait for deletion to propagate
+    time.sleep(60)  # Wait for deletion to propagate
 
     # Verify cleanup - resources should no longer exist
     try:
