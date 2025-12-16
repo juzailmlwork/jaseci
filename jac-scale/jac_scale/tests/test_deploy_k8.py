@@ -151,4 +151,3 @@ def test_deploy_todo_app():
         )
 
     print("✓ Cleanup verification complete - all resources properly deleted")
-
