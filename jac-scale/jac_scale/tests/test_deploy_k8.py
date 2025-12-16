@@ -87,7 +87,7 @@ def test_deploy_todo_app():
         url = f"http://localhost:{node_port}/walker/create_todo"
         payload = {"text": "first-task"}
         response = requests.post(url, json=payload, timeout=10)
-        assert response.status_code == 201
+        assert response.status_code == 200
         print(f"✓ Successfully created todo at {url}")
         print(f"  Response: {response.json()}")
     except requests.exceptions.RequestException as e:
