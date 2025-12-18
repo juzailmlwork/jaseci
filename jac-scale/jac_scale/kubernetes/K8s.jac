@@ -90,7 +90,11 @@ def deploy_K8s(
     }
     volumes = [];
     probe_config = {
-        'httpGet': {'path': health_check_path, 'port': container_port, 'scheme': 'HTTP'},
+        'httpGet': {
+            'path': health_check_path,
+            'port': container_port,
+            'scheme': 'HTTP'
+        },
         'initialDelaySeconds': readiness_initial_delay,
         'periodSeconds': readiness_period
     };
