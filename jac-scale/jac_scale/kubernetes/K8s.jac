@@ -31,6 +31,14 @@ def deploy_K8s(
     node_port = int(os.getenv('K8s_NODE_PORT', '30001'));
     docker_username = os.getenv('DOCKER_USERNAME', 'juzailmlwork');
     repository_name = f"{docker_username}/{image_name}";
+    cpu_request = os.getenv('K8s_CPU_REQUEST', '250m');
+    cpu_limit = os.getenv('K8s_CPU_LIMIT', '500m');
+    memory_request = os.getenv('K8s_MEMORY_REQUEST', '256Mi');
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT', '512Mi');
+    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '10'));
+    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '10'));
+    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '30'));
+    liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '30'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
     if not build {
@@ -46,6 +54,8 @@ def deploy_K8s(
     is_aws = cluster_env == 'aws';
     service_type = 'LoadBalancer' if is_aws else 'NodePort';
     init_containers: list[dict[(str, Any)]] = [];
+    default_health_path = '/walkers' if testing else '/docs';
+    health_check_path = os.getenv('K8s_HEALTHCHECK_PATH', default_health_path);
     if mongodb_enabled {
         mongodb_name = f"{app_name}-mongodb";
         mongodb_service_name = f"{mongodb_name}-service";
@@ -79,11 +89,25 @@ def deploy_K8s(
         );
     }
     volumes = [];
+    probe_config = {
+        'httpGet': {'path': health_check_path, 'port': container_port, 'scheme': 'HTTP'},
+        'initialDelaySeconds': readiness_initial_delay,
+        'periodSeconds': readiness_period
+    };
+    liveness_probe = dict(probe_config);
+    liveness_probe['initialDelaySeconds'] = liveness_initial_delay;
+    liveness_probe['periodSeconds'] = liveness_period;
     container_config = {
         'name': app_name,
         'image': repository_name,
         'ports': [{'containerPort': container_port}],
-        'env': env_list
+        'env': env_list,
+        'resources': {
+            'requests': {'cpu': cpu_request, 'memory': memory_request},
+            'limits': {'cpu': cpu_limit, 'memory': memory_limit}
+        },
+        'readinessProbe': probe_config,
+        'livenessProbe': liveness_probe
     };
     if not build {
         pvc_name = f"{app_name}-code-pvc";
@@ -129,7 +153,13 @@ def deploy_K8s(
             'workingDir': '/app',
             'volumeMounts': [{'name': 'app-code', 'mountPath': '/app'}],
             'ports': [{'containerPort': container_port}],
-            'env': env_list
+            'env': env_list,
+            'resources': {
+                'requests': {'cpu': cpu_request, 'memory': memory_request},
+                'limits': {'cpu': cpu_limit, 'memory': memory_limit}
+            },
+            'readinessProbe': probe_config,
+            'livenessProbe': liveness_probe
         };
     }
     service_port = 80 if is_aws else container_port;
@@ -150,7 +180,8 @@ def deploy_K8s(
     if is_aws {
         service_metadata['annotations'] = {
             'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
-            'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
+            'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
+            'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path
         };
     }
     service = {
@@ -240,7 +271,7 @@ def deploy_K8s(
     print('Deploying Jaseci-app app...');
     apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment);
     core_v1.create_namespaced_service(namespace=namespace, body=service);
-    path = '/walkers' if testing else '/docs';
+    path = health_check_path;
     if is_aws {
         time.sleep(60);
         nlb_url = None;
