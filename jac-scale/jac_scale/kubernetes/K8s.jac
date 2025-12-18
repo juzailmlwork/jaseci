@@ -31,14 +31,15 @@ def deploy_K8s(
     node_port = int(os.getenv('K8s_NODE_PORT', '30001'));
     docker_username = os.getenv('DOCKER_USERNAME', 'juzailmlwork');
     repository_name = f"{docker_username}/{image_name}";
-    cpu_request = os.getenv('K8s_CPU_REQUEST', '250m');
-    cpu_limit = os.getenv('K8s_CPU_LIMIT', '500m');
-    memory_request = os.getenv('K8s_MEMORY_REQUEST', '256Mi');
-    memory_limit = os.getenv('K8s_MEMORY_LIMIT', '512Mi');
-    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '10'));
-    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '10'));
-    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '30'));
+    cpu_request = os.getenv('K8s_CPU_REQUEST');
+    cpu_limit = os.getenv('K8s_CPU_LIMIT');
+    memory_request = os.getenv('K8s_MEMORY_REQUEST');
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT');
+    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
+    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
+    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
     liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '30'));
+    liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
     if not build {
@@ -101,18 +102,39 @@ def deploy_K8s(
     liveness_probe = dict(probe_config);
     liveness_probe['initialDelaySeconds'] = liveness_initial_delay;
     liveness_probe['periodSeconds'] = liveness_period;
+    liveness_probe['failureThreshold'] = liveness_failure_threshold;
+    resource_requests: dict[(str, str)] = {};
+    if cpu_request {
+        resource_requests['cpu'] = cpu_request;
+    }
+    if memory_request {
+        resource_requests['memory'] = memory_request;
+    }
+    resource_limits: dict[(str, str)] = {};
+    if cpu_limit {
+        resource_limits['cpu'] = cpu_limit;
+    }
+    if memory_limit {
+        resource_limits['memory'] = memory_limit;
+    }
+    resources_config: dict[(str, Any)] = {};
+    if resource_requests {
+        resources_config['requests'] = resource_requests;
+    }
+    if resource_limits {
+        resources_config['limits'] = resource_limits;
+    }
     container_config = {
         'name': app_name,
         'image': repository_name,
         'ports': [{'containerPort': container_port}],
         'env': env_list,
-        'resources': {
-            'requests': {'cpu': cpu_request, 'memory': memory_request},
-            'limits': {'cpu': cpu_limit, 'memory': memory_limit}
-        },
         'readinessProbe': probe_config,
         'livenessProbe': liveness_probe
     };
+    if resources_config {
+        container_config['resources'] = resources_config;
+    }
     if not build {
         pvc_name = f"{app_name}-code-pvc";
         pvc_size = '5Gi';
@@ -158,13 +180,12 @@ def deploy_K8s(
             'volumeMounts': [{'name': 'app-code', 'mountPath': '/app'}],
             'ports': [{'containerPort': container_port}],
             'env': env_list,
-            'resources': {
-                'requests': {'cpu': cpu_request, 'memory': memory_request},
-                'limits': {'cpu': cpu_limit, 'memory': memory_limit}
-            },
             'readinessProbe': probe_config,
             'livenessProbe': liveness_probe
         };
+        if resources_config {
+            container_config['resources'] = resources_config;
+        }
     }
     service_port = 80 if is_aws else container_port;
     port_config: dict[(str, Any)] = {
