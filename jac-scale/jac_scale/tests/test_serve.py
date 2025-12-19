@@ -80,6 +80,7 @@ class TestJacScaleServe:
         """Start the jac-scale server in a subprocess."""
         # Build the command to start the server
         import os
+
         print("JWT_SECRET in test:", os.getenv("JWT_SECRET"))
         cmd = [
             "jac",
