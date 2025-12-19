@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Backend tests
         run: |
-          pytest -v jac-scale/jac_scale/tests/test_serve.py
+          pytest -vv -s jac-scale/jac_scale/tests/test_serve.py
 
       - name: Run jac-client examples
         run: |
