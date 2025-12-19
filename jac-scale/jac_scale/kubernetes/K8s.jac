@@ -35,8 +35,8 @@ def deploy_K8s(
     repository_name = f"{docker_username}/{image_name}";
     cpu_request = os.getenv('K8s_CPU_REQUEST');
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
-    memory_request = os.getenv('K8s_MEMORY_REQUEST',"128 mi");
-    memory_limit = os.getenv('K8s_MEMORY_LIMIT',"256 mi");
+    memory_request = os.getenv('K8s_MEMORY_REQUEST', "128 mi");
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT', "256 mi");
     readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
     readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
     liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
@@ -49,9 +49,7 @@ def deploy_K8s(
             cpu_request_value = parse_cpu_quantity(cpu_request);
             cpu_limit_value = parse_cpu_quantity(cpu_limit);
         } except ValueError as exc {
-            raise ValueError(
-                f"Invalid CPU quantity: {exc}"
-            ) ;
+            raise ValueError(f"Invalid CPU quantity: {exc}") ;
         }
         if (cpu_limit_value < cpu_request_value) {
             raise ValueError(
@@ -64,9 +62,7 @@ def deploy_K8s(
             memory_request_value = parse_memory_quantity(memory_request);
             memory_limit_value = parse_memory_quantity(memory_limit);
         } except ValueError as exc {
-            raise ValueError(
-                f"Invalid memory quantity: {exc}"
-            ) ;
+            raise ValueError(f"Invalid memory quantity: {exc}") ;
         }
         if (memory_limit_value < memory_request_value) {
             raise ValueError(
