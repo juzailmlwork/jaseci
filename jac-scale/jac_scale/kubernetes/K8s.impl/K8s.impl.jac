@@ -13,8 +13,43 @@ impl deploy_K8s(
     node_port = int(os.getenv('K8s_NODE_PORT', '30001'));
     docker_username = os.getenv('DOCKER_USERNAME', 'juzailmlwork');
     repository_name = f"{docker_username}/{image_name}";
+    cpu_request = os.getenv('K8s_CPU_REQUEST');
+    cpu_limit = os.getenv('K8s_CPU_LIMIT');
+    memory_request = os.getenv('K8s_MEMORY_REQUEST');
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT');
+    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
+    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
+    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
+    liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '30'));
+    liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
+    if (cpu_request and cpu_limit) {
+        try {
+            cpu_request_value = parse_cpu_quantity(cpu_request);
+            cpu_limit_value = parse_cpu_quantity(cpu_limit);
+        } except ValueError as exc {
+            raise ValueError(f"Invalid CPU quantity: {exc}") ;
+        }
+        if (cpu_limit_value < cpu_request_value) {
+            raise ValueError(
+                f"K8s_CPU_LIMIT ({cpu_limit}) must not be lower than K8s_CPU_REQUEST ({cpu_request})."
+            ) ;
+        }
+    }
+    if (memory_request and memory_limit) {
+        try {
+            memory_request_value = parse_memory_quantity(memory_request);
+            memory_limit_value = parse_memory_quantity(memory_limit);
+        } except ValueError as exc {
+            raise ValueError(f"Invalid memory quantity: {exc}") ;
+        }
+        if (memory_limit_value < memory_request_value) {
+            raise ValueError(
+                f"K8s_MEMORY_LIMIT ({memory_limit}) must not be lower than K8s_MEMORY_REQUEST ({memory_request})."
+            ) ;
+        }
+    }
     if not build {
         repository_name = 'python:3.12-slim';
     }
@@ -28,6 +63,8 @@ impl deploy_K8s(
     is_aws = cluster_env == 'aws';
     service_type = 'LoadBalancer' if is_aws else 'NodePort';
     init_containers: list[dict[(str, Any)]] = [];
+    default_health_path = '/docs';
+    health_check_path = os.getenv('K8s_HEALTHCHECK_PATH', default_health_path);
     if mongodb_enabled {
         mongodb_name = f"{app_name}-mongodb";
         mongodb_service_name = f"{mongodb_name}-service";
@@ -61,12 +98,51 @@ impl deploy_K8s(
         );
     }
     volumes = [];
+    probe_config = {
+        'httpGet': {
+            'path': health_check_path,
+            'port': container_port,
+            'scheme': 'HTTP'
+        },
+        'initialDelaySeconds': readiness_initial_delay,
+        'periodSeconds': readiness_period
+    };
+    liveness_probe = dict(probe_config);
+    liveness_probe['initialDelaySeconds'] = liveness_initial_delay;
+    liveness_probe['periodSeconds'] = liveness_period;
+    liveness_probe['failureThreshold'] = liveness_failure_threshold;
+    resource_requests: dict[(str, str)] = {};
+    if cpu_request {
+        resource_requests['cpu'] = cpu_request;
+    }
+    if memory_request {
+        resource_requests['memory'] = memory_request;
+    }
+    resource_limits: dict[(str, str)] = {};
+    if cpu_limit {
+        resource_limits['cpu'] = cpu_limit;
+    }
+    if memory_limit {
+        resource_limits['memory'] = memory_limit;
+    }
+    resources_config: dict[(str, Any)] = {};
+    if resource_requests {
+        resources_config['requests'] = resource_requests;
+    }
+    if resource_limits {
+        resources_config['limits'] = resource_limits;
+    }
     container_config = {
         'name': app_name,
         'image': repository_name,
         'ports': [{'containerPort': container_port}],
-        'env': env_list
+        'env': env_list,
+        'readinessProbe': probe_config,
+        'livenessProbe': liveness_probe
     };
+    if resources_config {
+        container_config['resources'] = resources_config;
+    }
     if not build {
         pvc_name = f"{app_name}-code-pvc";
         pvc_size = '5Gi';
@@ -102,7 +178,7 @@ impl deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 0e115907daa0cd10bab02d655a7c801e44a5e1df &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout c188f6b4c04ddb4593d230260254997209d62152 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,
@@ -111,8 +187,13 @@ impl deploy_K8s(
             'workingDir': '/app',
             'volumeMounts': [{'name': 'app-code', 'mountPath': '/app'}],
             'ports': [{'containerPort': container_port}],
-            'env': env_list
+            'env': env_list,
+            'readinessProbe': probe_config,
+            'livenessProbe': liveness_probe
         };
+        if resources_config {
+            container_config['resources'] = resources_config;
+        }
     }
     service_port = 80 if is_aws else container_port;
     port_config: dict[(str, Any)] = {
@@ -132,7 +213,8 @@ impl deploy_K8s(
     if is_aws {
         service_metadata['annotations'] = {
             'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
-            'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
+            'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
+            'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path
         };
     }
     service = {
@@ -222,7 +304,7 @@ impl deploy_K8s(
     print('Deploying Jaseci-app app...');
     apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment);
     core_v1.create_namespaced_service(namespace=namespace, body=service);
-    path = '/walkers' if testing else '/docs';
+    path = health_check_path;
     if is_aws {
         time.sleep(60);
         nlb_url = None;
