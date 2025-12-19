@@ -23,8 +23,7 @@ import from .utils {
 def deploy_K8s(
     code_folder: str,
     file_name: str = 'none',
-    build: bool = False,
-    testing: bool = False
+    build: bool = False
 ) -> None {
     app_name = os.getenv('APP_NAME', 'jaseci');
     image_name = os.getenv('DOCKER_IMAGE_NAME', f"{app_name}:latest");
@@ -198,7 +197,7 @@ def deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout b3766a22272050c900ec3cf9387dd558115554b6 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout c188f6b4c04ddb4593d230260254997209d62152 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,
