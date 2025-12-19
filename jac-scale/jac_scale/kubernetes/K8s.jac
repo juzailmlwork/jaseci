@@ -14,6 +14,8 @@ import from .utils {
     ensure_namespace_exists,
     ensure_pvc_exists,
     load_env_variables,
+    parse_cpu_quantity,
+    parse_memory_quantity,
     sync_code_to_pvc
 }
 
@@ -33,8 +35,8 @@ def deploy_K8s(
     repository_name = f"{docker_username}/{image_name}";
     cpu_request = os.getenv('K8s_CPU_REQUEST');
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
-    memory_request = os.getenv('K8s_MEMORY_REQUEST');
-    memory_limit = os.getenv('K8s_MEMORY_LIMIT');
+    memory_request = os.getenv('K8s_MEMORY_REQUEST',"128 mi");
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT',"256 mi");
     readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
     readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
     liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
@@ -42,6 +44,36 @@ def deploy_K8s(
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
+    if (cpu_request and cpu_limit) {
+        try {
+            cpu_request_value = parse_cpu_quantity(cpu_request);
+            cpu_limit_value = parse_cpu_quantity(cpu_limit);
+        } except ValueError as exc {
+            raise ValueError(
+                f"Invalid CPU quantity: {exc}"
+            ) ;
+        }
+        if (cpu_limit_value < cpu_request_value) {
+            raise ValueError(
+                f"K8s_CPU_LIMIT ({cpu_limit}) must not be lower than K8s_CPU_REQUEST ({cpu_request})."
+            ) ;
+        }
+    }
+    if (memory_request and memory_limit) {
+        try {
+            memory_request_value = parse_memory_quantity(memory_request);
+            memory_limit_value = parse_memory_quantity(memory_limit);
+        } except ValueError as exc {
+            raise ValueError(
+                f"Invalid memory quantity: {exc}"
+            ) ;
+        }
+        if (memory_limit_value < memory_request_value) {
+            raise ValueError(
+                f"K8s_MEMORY_LIMIT ({memory_limit}) must not be lower than K8s_MEMORY_REQUEST ({memory_request})."
+            ) ;
+        }
+    }
     if not build {
         repository_name = 'python:3.12-slim';
     }
@@ -170,7 +202,7 @@ def deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 0e115907daa0cd10bab02d655a7c801e44a5e1df &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-k8-jac-client-unreleased --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout b3766a22272050c900ec3cf9387dd558115554b6 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create_jac_app client_app &&cp -r ./app/* ./client_app &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,
