@@ -51,7 +51,6 @@ impl parse_memory_quantity(quantity: str) -> float {
 }
 
 """Stage the application code inside the PVC using a transient helper pod."""
-
 impl sync_code_to_pvc(
     core_v1: client.CoreV1Api,
     namespace: str,
