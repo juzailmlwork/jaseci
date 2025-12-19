@@ -20,11 +20,7 @@ import from .utils {
 }
 
 """Deploy jac application to K8s."""
-def deploy_K8s(
-    code_folder: str,
-    file_name: str = 'none',
-    build: bool = False
-) -> None {
+def deploy_K8s(code_folder: str, file_name: str = 'none', build: bool = False) -> None {
     app_name = os.getenv('APP_NAME', 'jaseci');
     image_name = os.getenv('DOCKER_IMAGE_NAME', f"{app_name}:latest");
     namespace = os.getenv('K8s_NAMESPACE', 'default');
