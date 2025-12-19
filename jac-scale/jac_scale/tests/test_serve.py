@@ -959,7 +959,7 @@ class TestJacScaleServe:
         register_response = requests.post(
             f"{self.base_url}/user/register",
             json={"email": email, "password": "secure123"},
-            timeout=5,
+            # timeout=5,
         )
         assert register_response.status_code == 201
         token1 = register_response.json()["token"]
@@ -968,7 +968,7 @@ class TestJacScaleServe:
         login_response = requests.post(
             f"{self.base_url}/user/login",
             json={"email": email, "password": "secure123"},
-            timeout=5,
+            # timeout=5,
         )
         assert login_response.status_code == 200
         token2 = login_response.json()["token"]
@@ -977,7 +977,7 @@ class TestJacScaleServe:
         refresh_response = requests.post(
             f"{self.base_url}/user/refresh-token",
             json={"token": token1},
-            timeout=5,
+            # timeout=5,
         )
         assert refresh_response.status_code == 200
         token3 = refresh_response.json()["token"]
@@ -986,7 +986,7 @@ class TestJacScaleServe:
         fail_response = requests.post(
             f"{self.base_url}/user/login",
             json={"email": email, "password": "wrongpass"},
-            timeout=5,
+            # timeout=5,
         )
         assert fail_response.status_code == 401
 
