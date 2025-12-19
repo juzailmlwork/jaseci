@@ -35,8 +35,8 @@ def deploy_K8s(
     repository_name = f"{docker_username}/{image_name}";
     cpu_request = os.getenv('K8s_CPU_REQUEST');
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
-    memory_request = os.getenv('K8s_MEMORY_REQUEST', "128 mi");
-    memory_limit = os.getenv('K8s_MEMORY_LIMIT', "256 mi");
+    memory_request = os.getenv('K8s_MEMORY_REQUEST');
+    memory_limit = os.getenv('K8s_MEMORY_LIMIT');
     readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
     readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
     liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
@@ -83,7 +83,7 @@ def deploy_K8s(
     is_aws = cluster_env == 'aws';
     service_type = 'LoadBalancer' if is_aws else 'NodePort';
     init_containers: list[dict[(str, Any)]] = [];
-    default_health_path = '/walkers' if testing else '/docs';
+    default_health_path = '/docs';
     health_check_path = os.getenv('K8s_HEALTHCHECK_PATH', default_health_path);
     if mongodb_enabled {
         mongodb_name = f"{app_name}-mongodb";

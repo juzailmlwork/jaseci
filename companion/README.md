@@ -3,7 +3,6 @@
 ## Running Jac Code
 
 Make sure node modules are installed:
-
 ```bash
 npm install
 ```
