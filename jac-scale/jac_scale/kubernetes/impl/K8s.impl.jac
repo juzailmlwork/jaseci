@@ -24,12 +24,7 @@ impl deploy_K8s(
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
-    validate_resource_limits(
-        cpu_request,
-        cpu_limit,
-        memory_request,
-        memory_limit
-    );
+    validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     if not build {
         repository_name = 'python:3.12-slim';
     }

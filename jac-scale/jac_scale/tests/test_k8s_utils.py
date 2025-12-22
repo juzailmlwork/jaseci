@@ -40,8 +40,8 @@ def test_parse_cpu_quantity_invalid(raw: str) -> None:
 @pytest.mark.parametrize(
     "raw,expected",
     [
-        ("256Mi", float(256 * 1024 ** 2)),
-        ("1Gi", float(1024 ** 3)),
+        ("256Mi", float(256 * 1024**2)),
+        ("1Gi", float(1024**3)),
         ("2", 2.0),
     ],
 )
