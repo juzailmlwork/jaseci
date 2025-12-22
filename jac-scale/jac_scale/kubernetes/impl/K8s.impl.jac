@@ -11,7 +11,7 @@ impl deploy_K8s(
     namespace = os.getenv('K8s_NAMESPACE', 'default');
     container_port = int(os.getenv('K8s_CONTAINER_PORT', '8000'));
     node_port = int(os.getenv('K8s_NODE_PORT', '30001'));
-    docker_username = os.getenv('DOCKER_USERNAME', 'juzailmlwork');
+    docker_username = os.getenv('DOCKER_USERNAME');
     repository_name = f"{docker_username}/{image_name}";
     cpu_request = os.getenv('K8s_CPU_REQUEST');
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
@@ -24,32 +24,12 @@ impl deploy_K8s(
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
-    if (cpu_request and cpu_limit) {
-        try {
-            cpu_request_value = parse_cpu_quantity(cpu_request);
-            cpu_limit_value = parse_cpu_quantity(cpu_limit);
-        } except ValueError as exc {
-            raise ValueError(f"Invalid CPU quantity: {exc}") ;
-        }
-        if (cpu_limit_value < cpu_request_value) {
-            raise ValueError(
-                f"K8s_CPU_LIMIT ({cpu_limit}) must not be lower than K8s_CPU_REQUEST ({cpu_request})."
-            ) ;
-        }
-    }
-    if (memory_request and memory_limit) {
-        try {
-            memory_request_value = parse_memory_quantity(memory_request);
-            memory_limit_value = parse_memory_quantity(memory_limit);
-        } except ValueError as exc {
-            raise ValueError(f"Invalid memory quantity: {exc}") ;
-        }
-        if (memory_limit_value < memory_request_value) {
-            raise ValueError(
-                f"K8s_MEMORY_LIMIT ({memory_limit}) must not be lower than K8s_MEMORY_REQUEST ({memory_request})."
-            ) ;
-        }
-    }
+    validate_resource_limits(
+        cpu_request,
+        cpu_limit,
+        memory_request,
+        memory_limit
+    );
     if not build {
         repository_name = 'python:3.12-slim';
     }

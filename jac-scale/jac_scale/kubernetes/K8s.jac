@@ -14,8 +14,7 @@ import from .utils {
     ensure_namespace_exists,
     ensure_pvc_exists,
     load_env_variables,
-    parse_cpu_quantity,
-    parse_memory_quantity,
+    validate_resource_limits,
     sync_code_to_pvc
 }
 

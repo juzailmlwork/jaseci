@@ -50,6 +50,40 @@ impl parse_memory_quantity(quantity: str) -> float {
     return float(trimmed);
 }
 
+impl validate_resource_limits(
+    cpu_request: (str | None),
+    cpu_limit: (str | None),
+    memory_request: (str | None),
+    memory_limit: (str | None)
+) -> None {
+    if (cpu_request and cpu_limit) {
+        try {
+            cpu_request_value = parse_cpu_quantity(cpu_request);
+            cpu_limit_value = parse_cpu_quantity(cpu_limit);
+        } except ValueError as exc {
+            raise ValueError(f"Invalid CPU quantity: {exc}") ;
+        }
+        if (cpu_limit_value < cpu_request_value) {
+            raise ValueError(
+                f"K8s_CPU_LIMIT ({cpu_limit}) must not be lower than K8s_CPU_REQUEST ({cpu_request})."
+            ) ;
+        }
+    }
+    if (memory_request and memory_limit) {
+        try {
+            memory_request_value = parse_memory_quantity(memory_request);
+            memory_limit_value = parse_memory_quantity(memory_limit);
+        } except ValueError as exc {
+            raise ValueError(f"Invalid memory quantity: {exc}") ;
+        }
+        if (memory_limit_value < memory_request_value) {
+            raise ValueError(
+                f"K8s_MEMORY_LIMIT ({memory_limit}) must not be lower than K8s_MEMORY_REQUEST ({memory_request})."
+            ) ;
+        }
+    }
+}
+
 """Stage the application code inside the PVC using a transient helper pod."""
 impl sync_code_to_pvc(
     core_v1: client.CoreV1Api,
