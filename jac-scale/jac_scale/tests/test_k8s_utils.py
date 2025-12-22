@@ -1,10 +1,12 @@
 import tarfile
+from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 from kubernetes.client.exceptions import ApiException
-from requests.exceptions import RequestException
+from pytest import MonkeyPatch
 
 from jac_scale.kubernetes import utils
 from jac_scale.kubernetes.utils import (
@@ -55,7 +57,7 @@ def test_parse_memory_quantity_invalid(raw: str) -> None:
         parse_memory_quantity(raw)
 
 
-def test_load_env_variables_reads_env_file(tmp_path) -> None:
+def test_load_env_variables_reads_env_file(tmp_path: Path) -> None:
     env_dir = tmp_path / "app"
     env_dir.mkdir()
     env_file = env_dir / ".env"
@@ -102,10 +104,10 @@ def test_ensure_pvc_exists_creates_when_missing() -> None:
     assert body["spec"]["storageClassName"] == "fast"
 
 
-def test_check_deployment_status_eventual_success(monkeypatch) -> None:
+def test_check_deployment_status_eventual_success(monkeypatch: MonkeyPatch) -> None:
     attempts: list[str] = []
 
-    def fake_sleep(*_, **__) -> None:
+    def fake_sleep(*args: Any, **kwargs: Any) -> None:
         return None
 
     def fake_get(url: str, timeout: int) -> SimpleNamespace:
@@ -129,8 +131,8 @@ def test_check_deployment_status_eventual_success(monkeypatch) -> None:
     assert len(attempts) == 3
 
 
-def test_check_deployment_status_eventual_failure(monkeypatch) -> None:
-    def fake_sleep(*_, **__) -> None:
+def test_check_deployment_status_eventual_failure(monkeypatch: MonkeyPatch) -> None:
+    def fake_sleep(*args: Any, **kwargs: Any) -> None:
         return None
 
     def fake_get(url: str, timeout: int) -> SimpleNamespace:
@@ -184,7 +186,7 @@ def test_validate_resource_limits_rejects_invalid_quantity() -> None:
         validate_resource_limits("abc", "1", None, None)
 
 
-def test_cluster_type_detects_aws_by_provider(monkeypatch) -> None:
+def test_cluster_type_detects_aws_by_provider(monkeypatch: MonkeyPatch) -> None:
     class Node:
         def __init__(self, provider_id: str) -> None:
             self.spec = SimpleNamespace(provider_id=provider_id)
@@ -203,7 +205,7 @@ def test_cluster_type_detects_aws_by_provider(monkeypatch) -> None:
     assert utils.cluster_type() == "aws"
 
 
-def test_cluster_type_returns_local_on_error(monkeypatch) -> None:
+def test_cluster_type_returns_local_on_error(monkeypatch: MonkeyPatch) -> None:
     def failing_core_v1() -> None:
         raise RuntimeError("boom")
 
@@ -212,7 +214,7 @@ def test_cluster_type_returns_local_on_error(monkeypatch) -> None:
     assert utils.cluster_type() == "local"
 
 
-def test_create_tarball_captures_files(tmp_path) -> None:
+def test_create_tarball_captures_files(tmp_path: Path) -> None:
     source_dir = tmp_path / "src"
     source_dir.mkdir()
     file_path = source_dir / "hello.txt"
@@ -227,7 +229,7 @@ def test_create_tarball_captures_files(tmp_path) -> None:
     assert "./hello.txt" in member_names
 
 
-def test_create_tarball_missing_source(tmp_path) -> None:
+def test_create_tarball_missing_source(tmp_path: Path) -> None:
     tar_path = tmp_path / "archive.tar.gz"
 
     with pytest.raises(FileNotFoundError):
