@@ -25,6 +25,16 @@ impl deploy_K8s(
     mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
     redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
+    # Use configuration from jac.toml with env var overrides
+    app_name = _k8s_config['app_name'];
+    image_name = _k8s_config['docker_image_name'] or f"{app_name}:latest";
+    namespace = _k8s_config['namespace'];
+    container_port = _k8s_config['container_port'];
+    node_port = _k8s_config['node_port'];
+    docker_username = _k8s_config['docker_username'] or 'juzailmlwork';
+    repository_name = f"{docker_username}/{image_name}";
+    mongodb_enabled = _k8s_config['mongodb_enabled'];
+    redis_enabled = _k8s_config['redis_enabled'];
     if not build {
         repository_name = 'python:3.12-slim';
     }
