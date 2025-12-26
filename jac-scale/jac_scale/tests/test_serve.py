@@ -615,7 +615,7 @@ class TestJacScaleServe:
             "/user/register",
             {"email": email1, "password": "pass1"},
         )
-        time.sleep(3)
+        time.sleep(10)
         user2 = self._request(
             "POST",
             "/user/register",
