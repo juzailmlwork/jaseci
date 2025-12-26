@@ -1,7 +1,6 @@
 import tarfile
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -107,13 +106,13 @@ def test_ensure_pvc_exists_creates_when_missing() -> None:
 def test_check_deployment_status_eventual_success(monkeypatch: MonkeyPatch) -> None:
     attempts: list[str] = []
 
-    def fake_sleep(*args: Any, **kwargs: Any) -> None:
+    def fake_sleep(*args: object, **kwargs: object) -> None:
         return None
 
     def fake_get(url: str, timeout: int) -> SimpleNamespace:
         attempts.append(url)
         if len(attempts) < 3:
-            raise RequestException("Service unavailable")
+            raise utils.RequestException("Service unavailable")
         return SimpleNamespace(status_code=200)
 
     monkeypatch.setattr(utils.time, "sleep", fake_sleep)
@@ -132,7 +131,7 @@ def test_check_deployment_status_eventual_success(monkeypatch: MonkeyPatch) -> N
 
 
 def test_check_deployment_status_eventual_failure(monkeypatch: MonkeyPatch) -> None:
-    def fake_sleep(*args: Any, **kwargs: Any) -> None:
+    def fake_sleep(*args: object, **kwargs: object) -> None:
         return None
 
     def fake_get(url: str, timeout: int) -> SimpleNamespace:
