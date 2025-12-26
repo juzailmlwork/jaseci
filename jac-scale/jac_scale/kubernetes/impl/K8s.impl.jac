@@ -6,13 +6,6 @@ impl deploy_K8s(
     build: bool = False,
     testing: bool = False
 ) -> None {
-    app_name = os.getenv('APP_NAME', 'jaseci');
-    image_name = os.getenv('DOCKER_IMAGE_NAME', f"{app_name}:latest");
-    namespace = os.getenv('K8s_NAMESPACE', 'default');
-    container_port = int(os.getenv('K8s_CONTAINER_PORT', '8000'));
-    node_port = int(os.getenv('K8s_NODE_PORT', '30001'));
-    docker_username = os.getenv('DOCKER_USERNAME');
-    repository_name = f"{docker_username}/{image_name}";
     cpu_request = os.getenv('K8s_CPU_REQUEST');
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
     memory_request = os.getenv('K8s_MEMORY_REQUEST');
@@ -22,8 +15,6 @@ impl deploy_K8s(
     liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
     liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '30'));
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
-    mongodb_enabled = os.getenv('K8s_MONGODB', 'true').lower() == 'true';
-    redis_enabled = os.getenv('K8s_REDIS', 'true').lower() == 'true';
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     # Use configuration from jac.toml with env var overrides
     app_name = _k8s_config['app_name'];
