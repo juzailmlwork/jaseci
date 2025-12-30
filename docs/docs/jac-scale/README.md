@@ -158,11 +158,15 @@ jac scale app.jac
 
 #### Method B: Build, Push, and Deploy (Production)
 
-To Build your application as a Docker container and deploy it you can run
+To Build your application as a Docker image and deploy it kubernetes you can run
 
 ```bash
 jac scale app.jac -b
 ```
+For this method to work you need to have a 
+1. Dockerfile 
+2. Dockerhub account
+3. `DOCKER_USERNAME` and `DOCKER_PASSWORD` set in `.env`
 
 **Access your application:**
 
