@@ -27,8 +27,6 @@
 
 ### 5. Support for public private endpoints with JWT authentication
 
-### 6. Support for websocket
-
 ## Supported jac commands
 
 - `jac serve`: For deploying jac application with fastapi backend

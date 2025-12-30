@@ -1,4 +1,4 @@
-## Jac scale configueration
+# Jac scale configueration
 
 `jac scale` not only simplifies application deployment but also supports advanced configurations.
 
