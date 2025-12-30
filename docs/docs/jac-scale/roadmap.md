@@ -14,6 +14,7 @@
 5. Auto creation of Dockerfile
 6. Support for horizontal scaling for k8s
 7. Dashboard to check status of deployment
+8. CORS support
 
 ### Upcoming documentations
 
