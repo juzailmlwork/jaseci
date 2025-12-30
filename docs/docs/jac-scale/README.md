@@ -251,27 +251,6 @@ jac destroy app.jac
   - Only the application's final Docker layer is pushed and pulled
   - Only deployments are updated (databases remain unchanged)
 
-## Deployment Process
-
-When you run `jac scale`, the following steps are executed:
-
-### 1. Create JAC Application Docker Image
-
-- Build the application image from the source directory
-- Tag the image with DockerHub repository
-
-### 2. Push Docker Image to DockerHub (Build Mode Only)
-
-- Authenticate using `DOCKER_USERNAME` and `DOCKER_PASSWORD`
-- Push the image to DockerHub
-- Subsequent pushes are faster since only the final image layer is pushed
-
-### 3. Deploy to Kubernetes
-
-- Create or update Kubernetes namespace
-- Deploy Redis and MongoDB (first run only)
-- Create application deployment
-- Create services and expose via NodePort
 
 ## Architecture
 
