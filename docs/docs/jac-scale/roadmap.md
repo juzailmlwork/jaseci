@@ -18,4 +18,3 @@
 ### Upcoming documentations
 
 1. Setting up SSO for your application
-2. Kubernetes support
