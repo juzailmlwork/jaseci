@@ -163,6 +163,7 @@ To Build your application as a Docker image and deploy it kubernetes you can run
 ```bash
 jac scale app.jac -b
 ```
+
 **Requirements for Build Mode:**
 
 - A `Dockerfile` in your application directory
@@ -228,7 +229,6 @@ jac destroy app.jac
 | `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
 | `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
 | `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
-
 
 ## Important Notes
 
