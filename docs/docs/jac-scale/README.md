@@ -30,8 +30,9 @@
 ### 6. Support for websocket
 
 ## Supported jac commands
- - `jac serve`: For deploying jac application with fastapi backend
- - `jac scale`: For deploying jac application in k8s
+
+- `jac serve`: For deploying jac application with fastapi backend
+- `jac scale`: For deploying jac application in k8s
 
 Whether you're developing locally with `jac serve` or deploying to k8s with `jac scale`, you get the same powerful features with the flexibility to choose your deployment strategy.
 
@@ -42,7 +43,6 @@ Whether you're developing locally with `jac serve` or deploying to k8s with `jac
   - [Docker Desktop with Kubernetes](https://www.docker.com/resources/kubernetes-and-docker/) (alternative for Windows - easier setup)
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
-
 
 ## Troubleshooting
 
@@ -88,7 +88,6 @@ If you encounter issues:
 1. Check pod status: `kubectl get pods -n <namespace>`
 2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
 3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
-
 
 ## Next Steps
 
