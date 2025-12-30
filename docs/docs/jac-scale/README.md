@@ -85,17 +85,18 @@ pip install -e ./jac-client
 
 ### 5. Create Todo application using jac-client
 
-Lets create the todo application using jac client.For that lets run following command
+Lets create the todo application using jac client.For that lets create a folder called todo and run jac create command provided by jac client
 
 ```bash
-jac create_jac_app todo
+mkdir todo
+cd todo
+jac create app
 ```
 
 Then lets copy the todo fully implemented jac code available inside jac-scale/examples/todo to our newly created /todo folder
 
 ```bash
-cp jac-scale/examples/todo/app.jac todo/app.jac
-cd todo
+cp ../jac-scale/examples/todo/app.jac app.jac
 ```
 
 ### 8. Run the Application with JAC Scale
@@ -113,7 +114,8 @@ jac serve app.jac
 - Swagger Documentation: http://localhost:8000/docs
 
 you can add new todo tasks
- from the frontend at http://localhost:8000/page/app
+ - from the frontend at http://localhost:8000/page/app
+ - from the swagger docs  at http://localhost:8000/docs using /walker/create-todo endpoint
 
 ### 9. Set Up Kubernetes (For JAC Scale)
 
