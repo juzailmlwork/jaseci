@@ -1,6 +1,22 @@
 ## Jac scale configueration
 
-### Environment Variables
+`jac scale` not only simplifies application deployment but also supports advanced configurations.
+
+### JWT environment variables
+
+| `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
+| `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
+| `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
+
+For production environment make sure you set a strong `JWT_SECRET` and rotate it frequently
+
+### SSO environment variables
+
+| `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
+| `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
+| `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
+
+### Kubernetes environment variables
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -18,51 +34,16 @@
 | `K8s_LIVENESS_INITIAL_DELAY` | Seconds before liveness probe first checks the pod | `120` |
 | `K8s_LIVENESS_PERIOD` | Seconds between liveness probe checks | `30` |
 | `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `10` |
-| `K8s_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
-| `K8s_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
+| `K8s_MONGODB` | Whether k8s MongoDB is needed (`True`/`False`) | `True` |
+| `K8s_REDIS` | Whether k8s Redis is needed (`True`/`False`) | `True` |
 
-### Environment Variables
+### Database environment variables
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `MONGODB_URI` | URL of MongoDB database | - |
 | `REDIS_URL` | URL of Redis database | - |
 
-### Environment Variables
+if you are manually setting `MONGODB_URI`,`REDIS_URL` as environment variable make sure you keep `K8s_MONGODB` and `K8s_REDIS` False respectively
 
-| `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
-| `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
-| `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
-| `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
-| `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
-| `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
 
-### Environment Variables
-
-| `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
-| `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
-| `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
-| `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
-| `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
-| `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
-
-## Important Notes
-
-### Implementation
-
-- The entire `jac scale` plugin is implemented using **Python and Kubernetes Python client libraries**
-- **No custom Kubernetes controllers** are used → easier to deploy and maintain
-
-### Database Provisioning
-
-- Databases are created as **StatefulSets** with persistent storage
-- Databases are **only created on the first run**
-- Subsequent `jac scale` calls only update application deployments
-- This ensures persistent storage and avoids recreating databases unnecessarily
-
-### Performance
-
-- **First-time deployment** may take longer due to database provisioning and image downloading
-- **Subsequent deployments** are faster since:
-  - Only the application's final Docker layer is pushed and pulled
-  - Only deployments are updated (databases remain unchanged)

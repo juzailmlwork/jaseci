@@ -7,7 +7,7 @@
 ### 1. Multi-Layer Memory Architecture
 
 - **Caching Layer**: Redis for high-speed data access and session management
-- **Persistence Storage**: MongoDB for reliable, long-term data storage
+- **Persistence Storage**: MongoDB for reliable, long-term data storage. If mongodb is not available uses Shelf storage as persistance storage.
 - **Optimized Performance**: Intelligent caching strategy to minimize database load and maximize response times
 
 ### 2. FastAPI Integration with Swagger Documentation
@@ -44,57 +44,8 @@ Whether you're developing locally with `jac serve` or deploying to k8s with `jac
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
 
-## Troubleshooting
 
-### Common Issues
+## Important Notes
 
-**Kubernetes cluster not accessible:**
-
-- Ensure Kubernetes is running: `kubectl cluster-info`
-- Check your kubeconfig: `kubectl config view`
-
-**DockerHub authentication fails:**
-
-- Verify your `DOCKER_USERNAME` and `DOCKER_PASSWORD` are correct
-- Ensure you're using an access token (not password) if 2FA is enabled
-
-**Namespace doesn't exist:**
-
-- The plugin creates namespaces automatically
-- If using a custom namespace, ensure proper permissions
-
-**Database connection issues:**
-
-- Verify StatefulSets are running: `kubectl get statefulsets -n <namespace>`
-- Check pod logs: `kubectl logs <pod-name> -n <namespace>`
-- Ensure persistent volumes are bound: `kubectl get pvc -n <namespace>`
-
-**Application not accessible:**
-
-- Check service exposure: `kubectl get svc -n <namespace>`
-- Verify NodePort is not blocked by firewall
-- For Minikube, use: `minikube service <service-name> -n <namespace>`
-
-**Build failures:**
-
-- Ensure Dockerfile exists in your application directory
-- Check Docker daemon is running
-- Verify sufficient disk space for image building
-
-### Getting Help
-
-If you encounter issues:
-
-1. Check pod status: `kubectl get pods -n <namespace>`
-2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
-3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
-
-## Next Steps
-
-After successfully running the demo:
-
-- **For JAC Serve**: Access your application at http://localhost:8000 and explore the Swagger documentation at http://localhost:8000/docs
-- **For JAC Scale**: Access your application at http://localhost:30001 and explore the Swagger documentation at http://localhost:30001/docs
-- Modify the JAC application and redeploy
-- Experiment with different configuration options
-- Try deploying to a production Kubernetes cluster
+- The entire `jac scale` plugin is implemented using **Python and Kubernetes Python client libraries**
+- **No custom Kubernetes controllers** are used which is easier to deploy and maintain

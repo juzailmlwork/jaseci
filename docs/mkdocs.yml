@@ -125,6 +125,7 @@ nav:
       - Getting Started: "jac-scale/README.md"
       - Quickstart: "jac-scale/quickstart.md"
       - Configuration: "jac-scale/configuration.md"
+      - Roadmap: "jac-scale/upcoming_roadmap.md"
     - Tooling:
       - Jac Debugger: "learn/debugger.md"
       - Run Jac In Browser: "learn/jac_playground.md"
