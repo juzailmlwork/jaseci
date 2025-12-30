@@ -163,12 +163,13 @@ To Build your application as a Docker image and deploy it kubernetes you can run
 ```bash
 jac scale app.jac -b
 ```
+**Requirements for Build Mode:**
 
-For this method to work you need to have a
-
-1. Dockerfile
-2. Dockerhub account
-3. `DOCKER_USERNAME` and `DOCKER_PASSWORD` set in `.env`
+- A `Dockerfile` in your application directory
+- Dockerhub account
+- Environment variables set:
+  - `DOCKER_USERNAME` - Your DockerHub username
+  - `DOCKER_PASSWORD` - Your DockerHub password/access token
 
 **Access your application:**
 
@@ -208,6 +209,15 @@ jac destroy app.jac
 | `DOCKER_PASSWORD` | DockerHub password or access token | - |
 | `K8s_NAMESPACE` | Kubernetes namespace to deploy the application | `default` |
 | `K8s_NODE_PORT` | Port in which your local kubernetes application will run on| `30001` |
+| `K8s_CPU_REQUEST` | CPU request for the application container | - |
+| `K8s_CPU_LIMIT` | CPU limit for the application container | - |
+| `K8s_MEMORY_REQUEST` | Memory request for the application container | - |
+| `K8s_MEMORY_LIMIT` | Memory limit for the application container | - |
+| `K8s_READINESS_INITIAL_DELAY` | Seconds before readiness probe first checks the pod | `120` |
+| `K8s_READINESS_PERIOD` | Seconds between readiness probe checks | `30` |
+| `K8s_LIVENESS_INITIAL_DELAY` | Seconds before liveness probe first checks the pod | `120` |
+| `K8s_LIVENESS_PERIOD` | Seconds between liveness probe checks | `30` |
+| `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `10` |
 | `K8s_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
 | `K8s_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
 | `MONGODB_URI` | URL of MongoDB database | - |
@@ -219,42 +229,6 @@ jac destroy app.jac
 | `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
 | `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
 
-## Deployment Modes
-
-### Mode 1: Deploy Without Building (Default)
-
-Deploys your JAC application to Kubernetes without building a Docker image.
-
-```bash
-jac scale main.jac
-```
-
-**Use this when:**
-
-- You want faster deployments without rebuilding
-- You're testing configuration changes
-- You're in development mode
-
-### Mode 2: Build, Push, and Deploy
-
-Builds a new Docker image, pushes it to DockerHub, then deploys to Kubernetes.
-
-```bash
-jac scale main.jac -b
-```
-
-**Requirements for Build Mode:**
-
-- A `Dockerfile` in your application directory
-- Environment variables set:
-  - `DOCKER_USERNAME` - Your DockerHub username
-  - `DOCKER_PASSWORD` - Your DockerHub password/access token
-
-**Use this when:**
-
-- Deploying to production
-- You want to version and host your Docker image
-- Sharing your application with others
 
 ## Important Notes
 
