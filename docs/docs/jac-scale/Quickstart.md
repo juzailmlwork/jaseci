@@ -122,6 +122,7 @@ To Build your application as a Docker image and deploy it kubernetes you can run
 ```bash
 jac scale app.jac -b
 ```
+
 **Requirements for Build Mode:**
 
 - A `Dockerfile` in your application directory

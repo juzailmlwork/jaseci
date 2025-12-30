@@ -30,8 +30,9 @@
 ### 6. Support for websocket
 
 ## Supported jac commands
- - `jac serve`: For deploying jac application with fastapi backend
- - `jac scale`: For deploying jac application in k8s
+
+- `jac serve`: For deploying jac application with fastapi backend
+- `jac scale`: For deploying jac application in k8s
 Whether you're developing locally with `jac serve` or deploying to k8s with `jac scale`, you get the same powerful features with the flexibility to choose your deployment strategy.
 
 ## Prerequisites
