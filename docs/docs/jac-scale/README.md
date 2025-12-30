@@ -114,8 +114,9 @@ jac serve app.jac
 - Swagger Documentation: http://localhost:8000/docs
 
 you can add new todo tasks
- - from the frontend at http://localhost:8000/page/app
- - from the swagger docs  at http://localhost:8000/docs using /walker/create-todo endpoint
+
+- from the frontend at http://localhost:8000/page/app
+- from the swagger docs  at http://localhost:8000/docs using /walker/create-todo endpoint
 
 ### 9. Set Up Kubernetes (For JAC Scale)
 
