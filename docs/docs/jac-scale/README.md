@@ -39,7 +39,6 @@ Whether you're developing locally with `jac serve` or deploying to production wi
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
 
-
 ## Quick Start: Running Todo application with frontend
 
 Follow these steps to set up and test the Todo application with frontend
