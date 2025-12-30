@@ -45,5 +45,3 @@ For production environment make sure you set a strong `JWT_SECRET` and rotate it
 | `REDIS_URL` | URL of Redis database | - |
 
 if you are manually setting `MONGODB_URI`,`REDIS_URL` as environment variable make sure you keep `K8s_MONGODB` and `K8s_REDIS` False respectively
-
-

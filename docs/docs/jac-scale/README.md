@@ -44,7 +44,6 @@ Whether you're developing locally with `jac serve` or deploying to k8s with `jac
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
 
-
 ## Important Notes
 
 - The entire `jac scale` plugin is implemented using **Python and Kubernetes Python client libraries**
