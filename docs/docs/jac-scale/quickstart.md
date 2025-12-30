@@ -157,3 +157,49 @@ jac destroy app.jac
 - Deletes all Kubernetes deployments, services, and StatefulSets
 - Removes persistent volumes and claims
 - Cleans up the namespace (if custom namespace was used)
+
+# Troubleshooting
+
+### Common Issues
+
+**Kubernetes cluster not accessible:**
+
+- Ensure Kubernetes is running: `kubectl cluster-info`
+- Check your kubeconfig: `kubectl config view`
+
+**DockerHub authentication fails:**
+
+- Verify your `DOCKER_USERNAME` and `DOCKER_PASSWORD` are correct
+- Ensure you're using an access token (not password) if 2FA is enabled
+
+**Namespace doesn't exist:**
+
+- The plugin creates namespaces automatically
+- If using a custom namespace, ensure proper permissions
+
+**Database connection issues:**
+
+- Verify StatefulSets are running: `kubectl get statefulsets -n <namespace>`
+- Check pod logs: `kubectl logs <pod-name> -n <namespace>`
+- Ensure persistent volumes are bound: `kubectl get pvc -n <namespace>`
+
+**Application not accessible:**
+
+- Check service exposure: `kubectl get svc -n <namespace>`
+- Verify NodePort is not blocked by firewall
+- For Minikube, use: `minikube service <service-name> -n <namespace>`
+
+**Build failures:**
+
+- Ensure Dockerfile exists in your application directory
+- Check Docker daemon is running
+- Verify sufficient disk space for image building
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check pod status: `kubectl get pods -n <namespace>`
+2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
+3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
+

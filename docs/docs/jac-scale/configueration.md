@@ -1,6 +1,6 @@
-## Configuration Options
+## Jac scale configueration
 
-### Optional Environment Variables
+### Environment Variables
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -20,8 +20,25 @@
 | `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `10` |
 | `K8s_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
 | `K8s_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
+
+### Environment Variables
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
 | `MONGODB_URI` | URL of MongoDB database | - |
 | `REDIS_URL` | URL of Redis database | - |
+
+### Environment Variables
+
+| `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
+| `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
+| `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
+| `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
+| `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
+| `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
+
+### Environment Variables
+
 | `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
 | `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
 | `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
@@ -49,9 +66,3 @@
 - **Subsequent deployments** are faster since:
   - Only the application's final Docker layer is pushed and pulled
   - Only deployments are updated (databases remain unchanged)
-
-## Architecture
-
-### K8s pods structure
-
-![K8s pod structure](assets/jac-scale-architecture.svg)
