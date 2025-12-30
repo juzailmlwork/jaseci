@@ -202,4 +202,3 @@ If you encounter issues:
 1. Check pod status: `kubectl get pods -n <namespace>`
 2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
 3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
-
