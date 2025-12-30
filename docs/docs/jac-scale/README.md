@@ -30,9 +30,9 @@
 ### 6. Support for websocket
 
 ## Supported jac commands
+ - `jac serve`: For deploying jac application with fastapi backend
+ - `jac scale`: For deploying jac application in k8s
 
-- `jac serve`: For deploying jac application with fastapi backend
-- `jac scale`: For deploying jac application in k8s
 Whether you're developing locally with `jac serve` or deploying to k8s with `jac scale`, you get the same powerful features with the flexibility to choose your deployment strategy.
 
 ## Prerequisites
@@ -43,63 +43,6 @@ Whether you're developing locally with `jac serve` or deploying to k8s with `jac
 
 **Note:** Kubernetes is only needed if you are planning to use the `jac scale` command. If you only want to use `jac serve`, Kubernetes is not required.
 
-## Configuration Options
-
-### Optional Environment Variables
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `APP_NAME` | Name of your JAC application | `jaseci` |
-| `DOCKER_USERNAME` | DockerHub username for pushing the image | - |
-| `DOCKER_PASSWORD` | DockerHub password or access token | - |
-| `K8s_NAMESPACE` | Kubernetes namespace to deploy the application | `default` |
-| `K8s_NODE_PORT` | Port in which your local kubernetes application will run on| `30001` |
-| `K8s_CPU_REQUEST` | CPU request for the application container | - |
-| `K8s_CPU_LIMIT` | CPU limit for the application container | - |
-| `K8s_MEMORY_REQUEST` | Memory request for the application container | - |
-| `K8s_MEMORY_LIMIT` | Memory limit for the application container | - |
-| `K8s_READINESS_INITIAL_DELAY` | Seconds before readiness probe first checks the pod | `120` |
-| `K8s_READINESS_PERIOD` | Seconds between readiness probe checks | `30` |
-| `K8s_LIVENESS_INITIAL_DELAY` | Seconds before liveness probe first checks the pod | `120` |
-| `K8s_LIVENESS_PERIOD` | Seconds between liveness probe checks | `30` |
-| `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `10` |
-| `K8s_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
-| `K8s_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
-| `MONGODB_URI` | URL of MongoDB database | - |
-| `REDIS_URL` | URL of Redis database | - |
-| `JWT_EXP_DELTA_DAYS` | Number of days until JWT token expires | `7` |
-| `JWT_SECRET` | Secret key used for JWT token signing and verification | `'supersecretkey'` |
-| `JWT_ALGORITHM` | Algorithm used for JWT token encoding/decoding | `'HS256'` |
-| `SSO_HOST` | SSO host URL | `'http://localhost:8000/sso'` |
-| `SSO_GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
-| `SSO_GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
-
-## Important Notes
-
-### Implementation
-
-- The entire `jac scale` plugin is implemented using **Python and Kubernetes Python client libraries**
-- **No custom Kubernetes controllers** are used → easier to deploy and maintain
-
-### Database Provisioning
-
-- Databases are created as **StatefulSets** with persistent storage
-- Databases are **only created on the first run**
-- Subsequent `jac scale` calls only update application deployments
-- This ensures persistent storage and avoids recreating databases unnecessarily
-
-### Performance
-
-- **First-time deployment** may take longer due to database provisioning and image downloading
-- **Subsequent deployments** are faster since:
-  - Only the application's final Docker layer is pushed and pulled
-  - Only deployments are updated (databases remain unchanged)
-
-## Architecture
-
-### K8s pods structure
-
-![K8s pod structure](assets/jac-scale-architecture.svg)
 
 ## Troubleshooting
 
@@ -146,31 +89,6 @@ If you encounter issues:
 2. View pod logs: `kubectl logs <pod-name> -n <namespace>`
 3. Describe resources: `kubectl describe <resource-type> <resource-name> -n <namespace>`
 
-## Tested Examples
-
-You can find more working examples in the examples directory:
-
-<!-- - [basic](../jac-client/jac_client/examples/basic/) - Minimal JAC application -->
-<!-- - [basic-full-stack](../jac-client/jac_client/examples/basic-full-stack/) - Basic full-stack application -->
-- [all-in-one](../jac-client/jac_client/examples/all-in-one/) - Complete example with all features
-- [with-router](../jac-client/jac_client/examples/with-router/) - Application with routing
-<!-- - [nested-folders/nested-basic](../jac-client/jac_client/examples/nested-folders/nested-basic/) - Basic nested folder structure -->
-- [nested-folders/nested-advance](../jac-client/jac_client/examples/nested-folders/nested-advance/) - Advanced nested folder structure
-- [basic-auth](../jac-client/jac_client/examples/basic-auth/) - Basic authentication
-- [basic-auth-with-router](../jac-client/jac_client/examples/basic-auth-with-router/) - Authentication with routing
-<!-- - [full-stack-with-auth](../jac-client/jac_client/examples/full-stack-with-auth/) - Full-stack app with authentication -->
-- [css-styling/js-styling](../jac-client/jac_client/examples/css-styling/js-styling/) - JavaScript styling example
-- [css-styling/material-ui](../jac-client/jac_client/examples/css-styling/material-ui/) - Material-UI styling example
-- [css-styling/pure-css](../jac-client/jac_client/examples/css-styling/pure-css/) - Pure CSS styling example
-- [css-styling/sass-example](../jac-client/jac_client/examples/css-styling/sass-example/) - SASS styling example
-- [css-styling/styled-components](../jac-client/jac_client/examples/css-styling/styled-components/) - Styled Components example
-- [css-styling/tailwind-example](../jac-client/jac_client/examples/css-styling/tailwind-example/) - Tailwind CSS example
-- [asset-serving/css-with-image](../jac-client/jac_client/examples/asset-serving/css-with-image/) - CSS with image assets
-- [asset-serving/image-asset](../jac-client/jac_client/examples/asset-serving/image-asset/) - Image asset serving
-- [asset-serving/import-alias](../jac-client/jac_client/examples/asset-serving/import-alias/) - Import alias example
-<!-- - [little-x](../jac-client/jac_client/examples/little-x/) - Little X application example -->
-
-Each example includes complete source code and can be run `jac serve`.
 
 ## Next Steps
 

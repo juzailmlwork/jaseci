@@ -123,7 +123,8 @@ nav:
         - Package Management: "jac-client/advance/package-management.md"
     - Jac Scale:
       - Getting Started: "jac-scale/README.md"
-      - Quickstart: "jac-scale/Quickstart.md"
+      - Quickstart: "jac-scale/quickstart.md"
+      - Configuration: "jac-scale/configuration.md"
     - Tooling:
       - Jac Debugger: "learn/debugger.md"
       - Run Jac In Browser: "learn/jac_playground.md"
