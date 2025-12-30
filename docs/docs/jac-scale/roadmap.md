@@ -3,9 +3,10 @@
 `jac scale` not only simplifies application deployment but also supports advanced configurations.
 
 ### Upcoming features
+
 1. Hot reload functionality
 2. Web socket support
-3. SSO support for 
+3. SSO support for
     - Apple
     - Meta
     - GIthub
@@ -15,7 +16,6 @@
 7. Dashboard to check status of deployment
 
 ### Upcoming documentations
+
 1. Setting up SSO for your application
 2. Kubernetes support
-
-
