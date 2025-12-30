@@ -251,7 +251,6 @@ jac destroy app.jac
   - Only the application's final Docker layer is pushed and pulled
   - Only deployments are updated (databases remain unchanged)
 
-
 ## Architecture
 
 ### K8s pods structure
