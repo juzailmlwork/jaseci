@@ -1,3 +1,4 @@
+import os;
 import pathlib;
 
 impl parse_cpu_quantity(quantity: str) -> float {
@@ -172,16 +173,19 @@ impl sync_code_to_pvc(
                 'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
             ]
         );
-        run_kubectl_command(
-            [
-                'cp',
-                '-n',
-                namespace,
-                "jac.toml",
-                f"{sync_pod_name}:/data/workspace/jac.toml"
-            ],
-            cwd=parent_dir
-        );
+        
+        if os.path.isfile(toml_path) {
+            run_kubectl_command(
+                [
+                    'cp',
+                    '-n',
+                    namespace,
+                    "jac.toml",
+                    f"{sync_pod_name}:/data/workspace/jac.toml"
+                ],
+                cwd=parent_dir
+            );
+        }
     } finally {
         temp_tar_path.unlink(missing_ok=True);
         try {
