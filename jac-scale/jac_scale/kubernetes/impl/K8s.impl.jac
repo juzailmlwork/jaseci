@@ -17,7 +17,7 @@ impl deploy_K8s(
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     # Use configuration from jac.toml with env var overrides
-    app_name = os.getenv('APP_NAME') or_k8s_config['app_name'];
+    app_name = os.getenv('APP_NAME') or _k8s_config['app_name'];
     image_name = _k8s_config['docker_image_name'] or f"{app_name}:latest";
     namespace = os.getenv('K8s_NAMESPACE') or _k8s_config['namespace'];
     container_port = _k8s_config['container_port'];
