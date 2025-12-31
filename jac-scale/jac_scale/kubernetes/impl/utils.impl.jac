@@ -173,7 +173,7 @@ impl sync_code_to_pvc(
                 'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
             ]
         );
-        
+
         if os.path.isfile(toml_path) {
             run_kubectl_command(
                 [
