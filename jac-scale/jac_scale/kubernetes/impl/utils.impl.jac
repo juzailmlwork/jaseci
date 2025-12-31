@@ -98,9 +98,9 @@ impl sync_code_to_pvc(
     import tempfile;
     import from pathlib { Path }
     sync_pod_name = f"{app_name}-code-sync";
-    print("the code folder is:",code_folder);
+    print("the code folder is:", code_folder);
     parent_dir = pathlib.Path(code_folder).parent;
-    print("the parent directory is:",parent_dir);
+    print("the parent directory is:", parent_dir);
     toml_path = os.path.join(parent_dir, 'jac.toml');
     pod_body = {
         'apiVersion': 'v1',
