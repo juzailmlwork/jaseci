@@ -10,11 +10,11 @@ impl deploy_K8s(
     cpu_limit = os.getenv('K8s_CPU_LIMIT');
     memory_request = os.getenv('K8s_MEMORY_REQUEST');
     memory_limit = os.getenv('K8s_MEMORY_LIMIT');
-    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '120'));
-    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '30'));
-    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '120'));
-    liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '30'));
-    liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
+    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '10'));
+    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '20'));
+    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '10'));
+    liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '20'));
+    liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '80'));
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     # Use configuration from jac.toml with env var overrides
     app_name = os.getenv('APP_NAME') or _k8s_config['app_name'];
