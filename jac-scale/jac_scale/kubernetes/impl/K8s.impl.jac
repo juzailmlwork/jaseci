@@ -17,11 +17,11 @@ impl deploy_K8s(
     liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '10'));
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     # Use configuration from jac.toml with env var overrides
-    app_name = _k8s_config['app_name'];
+    app_name = os.getenv('APP_NAME') or_k8s_config['app_name'];
     image_name = _k8s_config['docker_image_name'] or f"{app_name}:latest";
-    namespace = _k8s_config['namespace'];
+    namespace = os.getenv('K8s_NAMESPACE') or _k8s_config['namespace'];
     container_port = _k8s_config['container_port'];
-    node_port = _k8s_config['node_port'];
+    node_port = os.getenv('K8s_NODE_PORT') or _k8s_config['node_port'];
     docker_username = _k8s_config['docker_username'] or 'juzailmlwork';
     repository_name = f"{docker_username}/{image_name}";
     mongodb_enabled = _k8s_config['mongodb_enabled'];
@@ -29,6 +29,7 @@ impl deploy_K8s(
     if not build {
         repository_name = 'python:3.12-slim';
     }
+    print(f"Deploying Jaseci-app '{app_name}' to Kubernetes namespace '{namespace}'");
     config.load_kube_config();
     apps_v1 = client.AppsV1Api();
     core_v1 = client.CoreV1Api();
