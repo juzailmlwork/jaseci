@@ -329,6 +329,7 @@ impl JacAPIServer.render_page_callback(
         } except ValueError as exc {
             return HTMLResponse(content=f"<h1>404 Not Found</h1>", status_code=404);
         } except RuntimeError as exc {
+            print("503 RuntimeError occurred:", exc);
             return HTMLResponse(
                 content=f"<h1>503 Service Unavailable</h1>", status_code=503
             );

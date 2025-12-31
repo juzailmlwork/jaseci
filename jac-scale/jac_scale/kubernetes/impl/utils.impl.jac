@@ -1,3 +1,5 @@
+import pathlib;
+
 impl parse_cpu_quantity(quantity: str) -> float {
     trimmed = quantity.strip();
     if (trimmed == '') {
@@ -96,6 +98,10 @@ impl sync_code_to_pvc(
     import tempfile;
     import from pathlib { Path }
     sync_pod_name = f"{app_name}-code-sync";
+    print("the code folder is:",code_folder);
+    parent_dir = pathlib.Path(code_folder).parent;
+    print("the parent directory is:",parent_dir);
+    toml_path = os.path.join(parent_dir, 'jac.toml');
     pod_body = {
         'apiVersion': 'v1',
         'kind': 'Pod',
@@ -165,6 +171,16 @@ impl sync_code_to_pvc(
                 '-c',
                 'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
             ]
+        );
+        run_kubectl_command(
+            [
+                'cp',
+                '-n',
+                namespace,
+                "jac.toml",
+                f"{sync_pod_name}:/data/workspace/jac.toml"
+            ],
+            cwd=parent_dir
         );
     } finally {
         temp_tar_path.unlink(missing_ok=True);
