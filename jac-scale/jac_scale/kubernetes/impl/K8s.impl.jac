@@ -155,7 +155,7 @@ impl deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 048951300cc109225ff1a60171b22719c1bc9300 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&jac -V &&cd ../../.. &&yes n | jac create --cl client_app &&cp -r ./app/* ./client_app/src &&cp -r ./app/jac.toml ./client_app/jac.toml &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 68dfd890312ffd5de83f518ece048e519c4d63a4 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&yes n | jac create --cl client_app &&cp -r ./app/* ./client_app/src &&cp -r ./app/jac.toml ./client_app/jac.toml &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,
