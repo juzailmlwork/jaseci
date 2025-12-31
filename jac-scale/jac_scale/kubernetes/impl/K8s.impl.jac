@@ -29,7 +29,7 @@ impl deploy_K8s(
     if not build {
         repository_name = 'python:3.12-slim';
     }
-    print(f"Deploying Jaseci-app '{app_name}' to Kubernetes namespace '{namespace}'");
+    # print(f"Deploying Jaseci-app '{app_name}' to Kubernetes namespace '{namespace}'");
     config.load_kube_config();
     apps_v1 = client.AppsV1Api();
     core_v1 = client.CoreV1Api();
@@ -155,7 +155,7 @@ impl deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 68dfd890312ffd5de83f518ece048e519c4d63a4 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&yes n | jac create --cl client_app &&cp -r ./app/* ./client_app/src &&cp -r ./app/jac.toml ./client_app/jac.toml &&cd ./client_app && rm -rf node_modules && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 68dfd890312ffd5de83f518ece048e519c4d63a4 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,
