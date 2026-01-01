@@ -3,7 +3,6 @@
 import contextlib
 import gc
 import glob
-import pytest
 import socket
 import subprocess
 import time
@@ -13,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import jwt as pyjwt
+import pytest
 import requests
 
 
@@ -599,7 +599,7 @@ class TestJacScaleServe:
         assert "result" in result
         assert result["result"] == "Hello, World!"
 
-    @pytest.mark.xfail(reason="possible issue with user.json",strict=False)
+    @pytest.mark.xfail(reason="possible issue with user.json", strict=False)
     def test_spawn_walker_create_task(self) -> None:
         """Test spawning a CreateTask walker."""
         # Create user
@@ -621,7 +621,7 @@ class TestJacScaleServe:
         assert "result" in result
         assert "reports" in result
 
-    @pytest.mark.xfail(reason="possible issue with user.json",strict=False)
+    @pytest.mark.xfail(reason="possible issue with user.json", strict=False)
     def test_user_isolation(self) -> None:
         """Test that users have isolated graph spaces."""
         # Use unique emails to avoid conflicts with previous test runs
