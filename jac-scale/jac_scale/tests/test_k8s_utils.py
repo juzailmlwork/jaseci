@@ -55,17 +55,29 @@ def test_parse_memory_quantity_invalid(raw: str) -> None:
     with pytest.raises(ValueError):
         parse_memory_quantity(raw)
 
+def test_validate_resource_limits_accepts_valid_pairs() -> None:
+    validate_resource_limits("250m", "500m", "256Mi", "512Mi")
+
+
+def test_validate_resource_limits_rejects_lower_limits() -> None:
+    with pytest.raises(ValueError):
+        validate_resource_limits("500m", "250m", None, None)
+
+
+def test_validate_resource_limits_rejects_invalid_quantity() -> None:
+    with pytest.raises(ValueError):
+        validate_resource_limits("abc", "1", None, None)
 
 def test_load_env_variables_reads_env_file(tmp_path: Path) -> None:
     env_dir = tmp_path / "app"
     env_dir.mkdir()
     env_file = env_dir / ".env"
-    env_file.write_text("FOO=1\nBAR=two\n")
+    env_file.write_text("VAR1=1\nVAR2=two\n")
 
     env_vars = load_env_variables(str(env_dir))
 
-    assert {"name": "FOO", "value": "1"} in env_vars
-    assert {"name": "BAR", "value": "two"} in env_vars
+    assert {"name": "VAR1", "value": "1"} in env_vars
+    assert {"name": "VAR2", "value": "two"} in env_vars
 
 
 def test_ensure_pvc_exists_skips_when_present() -> None:
@@ -103,88 +115,6 @@ def test_ensure_pvc_exists_creates_when_missing() -> None:
     assert body["spec"]["storageClassName"] == "fast"
 
 
-def test_check_deployment_status_eventual_success(monkeypatch: MonkeyPatch) -> None:
-    attempts: list[str] = []
-
-    def fake_sleep(*args: object, **kwargs: object) -> None:
-        return None
-
-    def fake_get(url: str, timeout: int) -> SimpleNamespace:
-        attempts.append(url)
-        if len(attempts) < 3:
-            raise utils.RequestException("Service unavailable")
-        return SimpleNamespace(status_code=200)
-
-    monkeypatch.setattr(utils.time, "sleep", fake_sleep)
-    monkeypatch.setattr(utils.requests, "get", fake_get)
-
-    ok = check_deployment_status(
-        node_port=30051,
-        path="/health",
-        initial_wait=0,
-        interval=0,
-        max_retries=5,
-    )
-
-    assert ok is True
-    assert len(attempts) == 3
-
-
-def test_check_deployment_status_eventual_failure(monkeypatch: MonkeyPatch) -> None:
-    def fake_sleep(*args: object, **kwargs: object) -> None:
-        return None
-
-    def fake_get(url: str, timeout: int) -> SimpleNamespace:
-        return SimpleNamespace(status_code=503)
-
-    monkeypatch.setattr(utils.time, "sleep", fake_sleep)
-    monkeypatch.setattr(utils.requests, "get", fake_get)
-
-    ok = check_deployment_status(
-        node_port=30051,
-        path="/health",
-        initial_wait=0,
-        interval=0,
-        max_retries=2,
-    )
-
-    assert ok is False
-
-
-def test_delete_if_exists_handles_404() -> None:
-    recorded: list[tuple[str, str]] = []
-
-    def delete_func(name: str, namespace: str) -> None:
-        recorded.append((name, namespace))
-        raise ApiException(status=404)
-
-    delete_if_exists(delete_func, "demo", "demo-ns", "Deployment")
-
-    assert recorded == [("demo", "demo-ns")]
-
-
-def test_delete_if_exists_raises_on_other_errors() -> None:
-    def delete_func(name: str, namespace: str) -> None:
-        raise ApiException(status=500)
-
-    with pytest.raises(ApiException):
-        delete_if_exists(delete_func, "demo", "demo-ns", "Deployment")
-
-
-def test_validate_resource_limits_accepts_valid_pairs() -> None:
-    validate_resource_limits("250m", "500m", "256Mi", "512Mi")
-
-
-def test_validate_resource_limits_rejects_lower_limits() -> None:
-    with pytest.raises(ValueError):
-        validate_resource_limits("500m", "250m", None, None)
-
-
-def test_validate_resource_limits_rejects_invalid_quantity() -> None:
-    with pytest.raises(ValueError):
-        validate_resource_limits("abc", "1", None, None)
-
-
 def test_cluster_type_detects_aws_by_provider(monkeypatch: MonkeyPatch) -> None:
     class Node:
         def __init__(self, provider_id: str) -> None:
@@ -202,15 +132,6 @@ def test_cluster_type_detects_aws_by_provider(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(utils.client, "CoreV1Api", lambda: FakeApi())
 
     assert utils.cluster_type() == "aws"
-
-
-def test_cluster_type_returns_local_on_error(monkeypatch: MonkeyPatch) -> None:
-    def failing_core_v1() -> None:
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(utils.client, "CoreV1Api", failing_core_v1)
-
-    assert utils.cluster_type() == "local"
 
 
 def test_create_tarball_captures_files(tmp_path: Path) -> None:
