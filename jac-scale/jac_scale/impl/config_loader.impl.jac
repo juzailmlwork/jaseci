@@ -8,7 +8,6 @@ This file only implements plugin-specific methods.
 """
 import from pathlib { Path }
 import from typing { Any }
-import os
 
 """Get the plugin section name for scale."""
 impl JacScaleConfig.get_plugin_name(self: JacScaleConfig) -> str {
@@ -24,10 +23,8 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'google': {'client_id': '', 'client_secret': ''}
         },
         'database': {
-            'mongodb_uri': os.getenv('MONGODB_URI')
-            or 'mongodb://root:rootpassword123@localhost:27017/',
-            'redis_url': os.getenv('REDIS_URL')
-            or 'redis://:mypassword123@localhost:6379/0',
+            'mongodb_uri':'mongodb://root:rootpassword123@localhost:27017/',
+            'redis_url':'redis://:mypassword123@localhost:6379/0',
             'shelf_db_path': 'anchor_store.db'
         },
         'kubernetes': {
