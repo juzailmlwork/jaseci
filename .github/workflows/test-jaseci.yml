@@ -113,7 +113,7 @@ jobs:
 
     - name: Run Backend tests
       run: |
-        pytest -x jac-scale/jac_scale/tests/test_serve.py
+        pytest -x -vv -s jac-scale/jac_scale/tests/test_serve.py
 
     - name: Run jac-client examples
       run: |
