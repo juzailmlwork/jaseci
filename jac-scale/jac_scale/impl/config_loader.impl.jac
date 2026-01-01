@@ -8,6 +8,7 @@ This file only implements plugin-specific methods.
 """
 import from pathlib { Path }
 import from typing { Any }
+import os
 
 """Get the plugin section name for scale."""
 impl JacScaleConfig.get_plugin_name(self: JacScaleConfig) -> str {
