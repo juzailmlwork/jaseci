@@ -70,12 +70,7 @@ def test_deploy_todo_app():
     namespace = "todo-app"
 
     # Set environment
-    os.environ.update(
-        {
-            "APP_NAME": "todo-app",
-            "K8s_NAMESPACE": namespace
-        }
-    )
+    os.environ.update({"APP_NAME": "todo-app", "K8s_NAMESPACE": namespace})
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
