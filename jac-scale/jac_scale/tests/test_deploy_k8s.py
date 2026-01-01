@@ -74,7 +74,7 @@ def test_deploy_todo_app():
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    todo_app_path = os.path.join(test_dir, "../../examples/todo")
+    todo_app_path = os.path.join(test_dir, "../../examples/todo/src")
 
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
     deploy_K8s(code_folder=todo_app_path, file_name="app.jac", build=False)
