@@ -9,9 +9,7 @@ from pytest import MonkeyPatch
 
 from jac_scale.kubernetes import utils
 from jac_scale.kubernetes.utils import (
-    check_deployment_status,
     create_tarball,
-    delete_if_exists,
     ensure_pvc_exists,
     load_env_variables,
     parse_cpu_quantity,
@@ -55,6 +53,7 @@ def test_parse_memory_quantity_invalid(raw: str) -> None:
     with pytest.raises(ValueError):
         parse_memory_quantity(raw)
 
+
 def test_validate_resource_limits_accepts_valid_pairs() -> None:
     validate_resource_limits("250m", "500m", "256Mi", "512Mi")
 
@@ -67,6 +66,7 @@ def test_validate_resource_limits_rejects_lower_limits() -> None:
 def test_validate_resource_limits_rejects_invalid_quantity() -> None:
     with pytest.raises(ValueError):
         validate_resource_limits("abc", "1", None, None)
+
 
 def test_load_env_variables_reads_env_file(tmp_path: Path) -> None:
     env_dir = tmp_path / "app"
