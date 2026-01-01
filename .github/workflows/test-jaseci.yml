@@ -171,6 +171,7 @@ jobs:
         if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
           pytest -v jac-scale/jac_scale/tests/test_deploy_k8s.py
+          pytest -v jac-scale/jac_scale/tests/test_k8s_utils.py
 
       - name: Delete Kind cluster
         if: always() && steps.k8s-changes.outputs.k8s == 'true'

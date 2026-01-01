@@ -1080,6 +1080,7 @@ class TestJacScaleServe:
 
     def test_public_walker_200_no_auth(self) -> None:
         """Test that public walker works without authentication."""
+        time.sleep(5)
         response = requests.post(
             f"{self.base_url}/walker/PublicInfo",
             json={},
