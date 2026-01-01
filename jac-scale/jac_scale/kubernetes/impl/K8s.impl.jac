@@ -6,15 +6,15 @@ impl deploy_K8s(
     build: bool = False,
     testing: bool = False
 ) -> None {
-    cpu_request = os.getenv('K8s_CPU_REQUEST');
-    cpu_limit = os.getenv('K8s_CPU_LIMIT');
-    memory_request = os.getenv('K8s_MEMORY_REQUEST');
-    memory_limit = os.getenv('K8s_MEMORY_LIMIT');
-    readiness_initial_delay = int(os.getenv('K8s_READINESS_INITIAL_DELAY', '10'));
-    readiness_period = int(os.getenv('K8s_READINESS_PERIOD', '20'));
-    liveness_initial_delay = int(os.getenv('K8s_LIVENESS_INITIAL_DELAY', '10'));
-    liveness_period = int(os.getenv('K8s_LIVENESS_PERIOD', '20'));
-    liveness_failure_threshold = int(os.getenv('K8s_LIVENESS_FAILURE_THRESHOLD', '80'));
+    cpu_request = _k8s_config.get('cpu_request');
+    cpu_limit = _k8s_config.get('cpu_limit');
+    memory_request = _k8s_config.get('memory_request');
+    memory_limit = _k8s_config.get('memory_limit');
+    readiness_initial_delay = int(_k8s_config.get('readiness_initial_delay', 10));
+    readiness_period = int(_k8s_config.get('readiness_period', 20));
+    liveness_initial_delay = int(_k8s_config.get('liveness_initial_delay', 10));
+    liveness_period = int(_k8s_config.get('liveness_period', 20));
+    liveness_failure_threshold = int(_k8s_config.get('liveness_failure_threshold', 80));
     validate_resource_limits(cpu_request, cpu_limit, memory_request, memory_limit);
     # Use configuration from jac.toml with env var overrides
     app_name = os.getenv('APP_NAME') or _k8s_config['app_name'];

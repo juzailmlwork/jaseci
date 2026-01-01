@@ -632,7 +632,7 @@ class TestJacScaleServe:
             "/user/register",
             {"username": username1, "password": "pass1"},
         )
-        time.sleep(10)
+        time.sleep(5)
         user2 = self._request(
             "POST",
             "/user/register",
@@ -1080,7 +1080,6 @@ class TestJacScaleServe:
 
     def test_public_walker_200_no_auth(self) -> None:
         """Test that public walker works without authentication."""
-        time.sleep(5)
         response = requests.post(
             f"{self.base_url}/walker/PublicInfo",
             json={},
