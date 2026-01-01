@@ -109,9 +109,7 @@ impl JacScaleConfig.get_kubernetes_config(self: JacScaleConfig) -> dict[str, Any
     readiness_period = int(k8s_config.get('readiness_period', 20));
     liveness_initial_delay = int(k8s_config.get('liveness_initial_delay', 10));
     liveness_period = int(k8s_config.get('liveness_period', 20));
-    liveness_failure_threshold = int(
-        k8s_config.get('liveness_failure_threshold', 80)
-    );
+    liveness_failure_threshold = int(k8s_config.get('liveness_failure_threshold', 80));
     return {
         'app_name': app_name,
         'docker_image_name': k8s_config.get('docker_image_name', default_image),
