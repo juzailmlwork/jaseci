@@ -484,7 +484,7 @@ class TestJacScaleServe:
         assert new_payload["username"] == username
         assert original_payload["username"] == new_payload["username"]
 
-    @pytest.mark.xfail(reason="possible issue with user.json",strict=False)
+    @pytest.mark.xfail(reason="possible issue with user.json", strict=False)
     def test_refresh_token_updates_expiration(self) -> None:
         """Test that refreshed token has updated expiration time."""
         # Create user and get token
@@ -494,7 +494,6 @@ class TestJacScaleServe:
             {"username": "refresh_exp", "password": "password123"},
         )
         original_token = create_result["token"]
-
 
         # Refresh token
         refresh_result = self._request(
