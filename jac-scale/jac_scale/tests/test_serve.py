@@ -601,6 +601,7 @@ class TestJacScaleServe:
     def test_spawn_walker_create_task(self) -> None:
         """Test spawning a CreateTask walker."""
         # Create user
+        time.sleep(5)
         create_result = self._request(
             "POST",
             "/user/register",

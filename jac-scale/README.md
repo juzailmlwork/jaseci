@@ -438,11 +438,11 @@ jac destroy app.jac
 | `K8s_CPU_LIMIT` | CPU limit for the application container | - |
 | `K8s_MEMORY_REQUEST` | Memory request for the application container | - |
 | `K8s_MEMORY_LIMIT` | Memory limit for the application container | - |
-| `K8s_READINESS_INITIAL_DELAY` | Seconds before readiness probe first checks the pod | `120` |
-| `K8s_READINESS_PERIOD` | Seconds between readiness probe checks | `30` |
-| `K8s_LIVENESS_INITIAL_DELAY` | Seconds before liveness probe first checks the pod | `120` |
-| `K8s_LIVENESS_PERIOD` | Seconds between liveness probe checks | `30` |
-| `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `10` |
+| `K8s_READINESS_INITIAL_DELAY` | Seconds before readiness probe first checks the pod | `10` |
+| `K8s_READINESS_PERIOD` | Seconds between readiness probe checks | `20` |
+| `K8s_LIVENESS_INITIAL_DELAY` | Seconds before liveness probe first checks the pod | `10` |
+| `K8s_LIVENESS_PERIOD` | Seconds between liveness probe checks | `20` |
+| `K8s_LIVENESS_FAILURE_THRESHOLD` | Consecutive liveness probe failures before restart | `80` |
 | `K8s_MONGODB` | Whether MongoDB is needed (`True`/`False`) | `True` |
 | `K8s_REDIS` | Whether Redis is needed (`True`/`False`) | `True` |
 | `MONGODB_URI` | URL of MongoDB database | - |
