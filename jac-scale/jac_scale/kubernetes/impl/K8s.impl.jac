@@ -21,7 +21,7 @@ impl deploy_K8s(
     image_name = _k8s_config['docker_image_name'] or f"{app_name}:latest";
     namespace = os.getenv('K8s_NAMESPACE') or _k8s_config['namespace'];
     container_port = _k8s_config['container_port'];
-    node_port = os.getenv('K8s_NODE_PORT') or _k8s_config['node_port'];
+    node_port = _k8s_config['node_port'];
     docker_username = _k8s_config['docker_username'] or 'juzailmlwork';
     repository_name = f"{docker_username}/{image_name}";
     mongodb_enabled = _k8s_config['mongodb_enabled'];
@@ -155,7 +155,7 @@ impl deploy_K8s(
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 04a338a22123bf0bd7b57b64f839224400a168df &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch health-check-resource-limit --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout b74e7476cd4677618f5bd8a3b688e516b6264a66 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,

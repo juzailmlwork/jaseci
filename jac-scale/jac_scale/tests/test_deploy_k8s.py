@@ -73,8 +73,7 @@ def test_deploy_todo_app():
     os.environ.update(
         {
             "APP_NAME": "todo-app",
-            "K8s_NAMESPACE": namespace,
-            "K8s_NODE_PORT": "30051",
+            "K8s_NAMESPACE": namespace
         }
     )
 
