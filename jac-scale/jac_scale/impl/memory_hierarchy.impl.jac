@@ -180,8 +180,9 @@ impl RedisDB.redis_is_available -> bool {
 """Initialize Redis."""
 impl RedisDB.postinit -> None {
     if (self.redis_client is None) {
-        if self.redis_url:
+        if (self.redis_url) {
             self.redis_client = redis.from_url(self.redis_url);
+        }
         else:
             self.redis_client=False
     }
