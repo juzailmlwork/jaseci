@@ -52,6 +52,7 @@ class JacAutoLintPass(UniPass) {
     def enter_archetype(self: JacAutoLintPass, node: uni.Archetype) -> None;
     def enter_enum(self: JacAutoLintPass, node: uni.Enum) -> None;
     def enter_impl_def(self: JacAutoLintPass, node: uni.ImplDef) -> None;
+    def exit_impl_def(self: JacAutoLintPass, <>node: uni.ImplDef) -> None;
     def enter_ability(self: JacAutoLintPass, ability_node: uni.Ability) -> None;
     def _remove_staticmethod_from_kids(
         self: JacAutoLintPass, ability_node: uni.Ability
@@ -78,6 +79,7 @@ class JacAutoLintPass(UniPass) {
         self: JacAutoLintPass, uni_node: uni.UniNode, results: list
     ) -> None;
 
+    def _expr_to_key(self: JacAutoLintPass, expr: uni.Expr) -> (str | None);
     def _get_trailer_key(
         self: JacAutoLintPass, trailer: uni.AtomTrailer
     ) -> (str | None);
@@ -97,5 +99,19 @@ class JacAutoLintPass(UniPass) {
         self: JacAutoLintPass, impl_node: uni.ImplDef
     ) -> None;
 
+    def _signatures_match(
+        self: JacAutoLintPass, decl_sig: uni.FuncSignature, impl_sig: uni.FuncSignature
+    ) -> bool;
+
     def enter_import(self: JacAutoLintPass, import_node: uni.Import) -> None;
+    def _remove_empty_parens_from_sig(
+        self: JacAutoLintPass,
+        target_node: uni.UniNode,
+        sig: uni.FuncSignature,
+        sig_attr: str
+    ) -> None;
+
+    def _extract_string_literal_value(
+        self: JacAutoLintPass, expr: uni.Expr
+    ) -> (str | None);
 }
