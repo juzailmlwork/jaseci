@@ -152,14 +152,13 @@ impl deploy_K8s(
         } else {
             install_part = f"jac serve src/{file_name} ";
         }
-        if (development){
+        if (development) {
             current_branch = run_command(["git", "branch", "--show-current"]);
             current_commit = run_command(["git", "rev-parse", "HEAD"]);
             remote_url = run_command(["git", "config", "--get", "remote.origin.url"]);
-            branch_command= f"git clone --branch {current_branch} --single-branch {remote_url} &&cd ./jaseci &&git checkout {current_commit}";
-        }
-        else{
-            branch_command= f"git clone --branch main --single-branch https://github.com/jaseci-labs/jaseci.git &&cd ./jaseci";
+            branch_command = f"git clone --branch {current_branch} --single-branch {remote_url} &&cd ./jaseci &&git checkout {current_commit}";
+        } else {
+            branch_command = f"git clone --branch main --single-branch https://github.com/jaseci-labs/jaseci.git &&cd ./jaseci";
         }
         command = [
             'bash',
