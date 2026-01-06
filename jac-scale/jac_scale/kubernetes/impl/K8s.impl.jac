@@ -4,7 +4,7 @@ impl deploy_K8s(
     code_folder: str,
     file_name: str = 'none',
     build: bool = False,
-    testing: bool = False
+    development: bool = False
 ) -> None {
     cpu_request = _k8s_config.get('cpu_request');
     cpu_limit = _k8s_config.get('cpu_limit');
@@ -126,9 +126,9 @@ impl deploy_K8s(
         sync_image = 'busybox:1.36';
         ensure_pvc_exists(core_v1, namespace, pvc_name, pvc_size);
         print('Syncing application code');
-        sync_code_to_pvc(
-            core_v1, namespace, pvc_name, code_folder, app_name, sync_image
-        );
+        # sync_code_to_pvc(
+        #     core_v1, namespace, pvc_name, code_folder, app_name, sync_image
+        # );
         build_container = {
             'name': 'build-app',
             'image': 'python:3.12-slim',
@@ -152,10 +152,19 @@ impl deploy_K8s(
         } else {
             install_part = f"jac serve src/{file_name} ";
         }
+        if (development){
+            current_branch = run_command(["git", "branch", "--show-current"]);
+            current_commit = run_command(["git", "rev-parse", "HEAD"]);
+            remote_url = run_command(["git", "config", "--get", "remote.origin.url"]);
+            branch_command= f"git clone --branch {current_branch} --single-branch {remote_url} &&cd ./jaseci &&git checkout {current_commit}";
+        }
+        else{
+            branch_command= f"git clone --branch main --single-branch https://github.com/jaseci-labs/jaseci.git &&cd ./jaseci";
+        }
         command = [
             'bash',
             '-c',
-            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch fix-for-mongodb-env-variable --single-branch https://github.com/juzailmlwork/jaseci.git &&cd ./jaseci &&git checkout 1de76bfe3589cc44287e86ed9a614ffc0ea39b38 &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
+            f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && {branch_command} &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
         ];
         container_config = {
             'name': app_name,

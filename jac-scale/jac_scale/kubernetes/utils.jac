@@ -1,5 +1,6 @@
 import base64;
 import os;
+import subprocess;
 import tarfile;
 import time;
 import from collections.abc { Callable }
@@ -11,6 +12,9 @@ import from kubernetes { client, config }
 import from kubernetes.client.rest { ApiException }
 import from kubernetes.config.config_exception { ConfigException }
 import from requests.exceptions { RequestException }
+
+def run_command(cmd:str) -> str;
+
 def debug_print(statement: str, debug_only: bool = False) -> None;
 
 def parse_cpu_quantity(quantity: str) -> float;

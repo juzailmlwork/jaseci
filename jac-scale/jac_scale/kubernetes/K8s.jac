@@ -14,6 +14,7 @@ import from .utils {
     ensure_namespace_exists,
     ensure_pvc_exists,
     load_env_variables,
+    run_command,
     validate_resource_limits,
     sync_code_to_pvc
 }
@@ -26,5 +27,5 @@ def deploy_K8s(
     code_folder: str,
     file_name: str = 'none',
     build: bool = False,
-    testing: bool = False
+    development: bool = False
 ) -> None;

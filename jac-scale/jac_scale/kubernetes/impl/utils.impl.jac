@@ -571,3 +571,7 @@ impl debug_print(statement: str, debug_only: bool = False) -> None {
         print(statement);
     }
 }
+
+impl run_command(cmd:str) -> str {
+    return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
+}

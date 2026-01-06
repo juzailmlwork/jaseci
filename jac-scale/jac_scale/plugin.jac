@@ -19,7 +19,7 @@ class JacCmd {
     static def create_cmd -> None {
         """Jac Scale functionality.""";
         @cmd_registry.register
-        def scale(file_path: str, build: bool = False) -> None {
+        def scale(file_path: str, build: bool = False,development: bool =False) -> None {
             if not os.path.exists(file_path) {
                 raise FileNotFoundError(f"File not found: '{file_path}'") ;
             }
@@ -32,7 +32,7 @@ class JacCmd {
             if build {
                 build_and_push_docker(code_folder);
             }
-            deploy_K8s(code_folder, base_file_path, build);
+            deploy_K8s(code_folder, base_file_path, build,development);
         }
         """Jac Destroys functionality.""";
         @cmd_registry.register
