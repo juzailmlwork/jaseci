@@ -126,9 +126,9 @@ impl deploy_K8s(
         sync_image = 'busybox:1.36';
         ensure_pvc_exists(core_v1, namespace, pvc_name, pvc_size);
         print('Syncing application code');
-        # sync_code_to_pvc(
-        #     core_v1, namespace, pvc_name, code_folder, app_name, sync_image
-        # );
+        sync_code_to_pvc(
+            core_v1, namespace, pvc_name, code_folder, app_name, sync_image
+        );
         build_container = {
             'name': 'build-app',
             'image': 'python:3.12-slim',
