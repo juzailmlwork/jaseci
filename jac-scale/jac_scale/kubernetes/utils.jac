@@ -11,6 +11,11 @@ import from kubernetes { client, config }
 import from kubernetes.client.rest { ApiException }
 import from kubernetes.config.config_exception { ConfigException }
 import from requests.exceptions { RequestException }
+import from jac_scale.config_loader { get_scale_config }
+
+# Load kubernetes configuration from jac.toml with env var overrides
+glob _k8s_config = get_scale_config().get_kubernetes_config();
+
 def debug_print(statement: str, debug_only: bool = False) -> None;
 
 def parse_cpu_quantity(quantity: str) -> float;

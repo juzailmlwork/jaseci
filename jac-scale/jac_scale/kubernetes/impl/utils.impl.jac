@@ -457,8 +457,8 @@ impl ensure_namespace_exists(namespace: str) -> None {
 
 """Delete all K8s resources (deployment, service, etc.) created for the app."""
 impl cleanup_K8s_resources -> None {
-    app_name = os.getenv('APP_NAME', 'jaseci');
-    namespace = os.getenv('K8s_NAMESPACE', 'default');
+    app_name = os.getenv('APP_NAME') or _k8s_config['app_name'];
+    namespace = os.getenv('K8s_NAMESPACE') or _k8s_config['namespace'];
     config.load_kube_config();
     apps_v1 = client.AppsV1Api();
     core_v1 = client.CoreV1Api();
