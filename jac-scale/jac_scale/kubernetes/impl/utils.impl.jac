@@ -101,6 +101,7 @@ impl sync_code_to_pvc(
     sync_pod_name = f"{app_name}-code-sync";
     parent_dir = pathlib.Path(code_folder).parent;
     toml_path = os.path.join(parent_dir, 'jac.toml');
+    same_directory_toml_path = os.path.join(code_folder, 'jac.toml');
     pod_body = {
         'apiVersion': 'v1',
         'kind': 'Pod',
@@ -171,7 +172,6 @@ impl sync_code_to_pvc(
                 'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
             ]
         );
-
         if os.path.isfile(toml_path) {
             run_kubectl_command(
                 [
@@ -183,6 +183,21 @@ impl sync_code_to_pvc(
                 ],
                 cwd=parent_dir
             );
+        }
+        elif os.path.isfile(same_directory_toml_path) {
+            run_kubectl_command(
+                [
+                    'cp',
+                    '-n',
+                    namespace,
+                    "jac.toml",
+                    f"{sync_pod_name}:/data/workspace/jac.toml"
+                ],
+                cwd=code_folder
+            );
+        }
+        else{
+            print("jac.toml file not found");
         }
     } finally {
         temp_tar_path.unlink(missing_ok=True);
