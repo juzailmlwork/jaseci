@@ -369,9 +369,8 @@ impl cluster_type -> str {
 impl check_deployment_status(
     node_port: int,
     path: str = '/docs',
-    initial_wait: int = 60,
     interval: int = 30,
-    max_retries: int = 10,
+    max_retries: int = 30,
     nlb_url: (str | None) = None
 ) -> bool {
     if nlb_url {
@@ -379,7 +378,6 @@ impl check_deployment_status(
     } else {
         url = f"http://localhost:{node_port}{path}";
     }
-    time.sleep(initial_wait);
     for attempt in range(1, (max_retries + 1)) {
         try {
             response = requests.get(url, timeout=10);
