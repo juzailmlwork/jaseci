@@ -20,7 +20,7 @@ class JacCmd {
     static def create_cmd -> None {
         """Jac Scale functionality.""";
         @cmd_registry.register(priority=CommandPriority.PLUGIN, source='jac-scale')
-        def scale(file_path: str, build: bool = False) -> None {
+        def scale(file_path: str, build: bool = False ,development: bool = False) -> None {
             if not os.path.exists(file_path) {
                 raise FileNotFoundError(f"File not found: '{file_path}'") ;
             }
