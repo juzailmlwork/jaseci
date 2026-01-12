@@ -74,7 +74,9 @@ def test_deploy_all_in_one():
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    todo_app_path = os.path.join(test_dir, "../../../jac-client/jac_client/examples/all-in-one/src")
+    todo_app_path = os.path.join(
+        test_dir, "../../../jac-client/jac_client/examples/all-in-one/src"
+    )
 
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
     deploy_K8s(code_folder=todo_app_path, file_name="app.jac", build=False)
@@ -157,13 +159,17 @@ def test_deploy_all_in_one():
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        apps_v1.read_namespaced_stateful_set("all-in-one-app-mongodb", namespace=namespace)
+        apps_v1.read_namespaced_stateful_set(
+            "all-in-one-app-mongodb", namespace=namespace
+        )
         raise AssertionError("MongoDB StatefulSet should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service("all-in-one-app-mongodb-service", namespace=namespace)
+        core_v1.read_namespaced_service(
+            "all-in-one-app-mongodb-service", namespace=namespace
+        )
         raise AssertionError("MongoDB Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
@@ -175,7 +181,9 @@ def test_deploy_all_in_one():
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service("all-in-one-app-redis-service", namespace=namespace)
+        core_v1.read_namespaced_service(
+            "all-in-one-app-redis-service", namespace=namespace
+        )
         raise AssertionError("Redis Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"

@@ -184,8 +184,7 @@ impl sync_code_to_pvc(
                 ],
                 cwd=parent_dir
             );
-        }
-        elif os.path.isfile(same_directory_toml_path) {
+        } elif os.path.isfile(same_directory_toml_path) {
             run_kubectl_command(
                 [
                     'cp',
@@ -196,8 +195,7 @@ impl sync_code_to_pvc(
                 ],
                 cwd=code_folder
             );
-        }
-        else{
+        } else {
             print("jac.toml file not found");
         }
     } finally {
