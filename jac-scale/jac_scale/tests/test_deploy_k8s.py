@@ -10,6 +10,7 @@ from kubernetes.client.exceptions import ApiException
 from ..kubernetes.K8s import deploy_K8s
 from ..kubernetes.utils import cleanup_K8s_resources
 
+
 def _maybe_port_forward(namespace: str, local_port: int, target_port: int = 80):
     """
     In CI, NodePort is not reachable from localhost.
@@ -24,7 +25,7 @@ def _maybe_port_forward(namespace: str, local_port: int, target_port: int = 80):
         [
             "kubectl",
             "port-forward",
-            f"service/all-in-one-app-service",
+            "service/all-in-one-app-service",
             f"{local_port}:{target_port}",
             "-n",
             namespace,
@@ -35,6 +36,7 @@ def _maybe_port_forward(namespace: str, local_port: int, target_port: int = 80):
 
     time.sleep(5)  # give port-forward time to bind
     return proc
+
 
 def _request_with_retry(
     method: str,
@@ -146,7 +148,7 @@ def test_deploy_all_in_one():
         name="all-in-one-app-redis-service", namespace=namespace
     )
     assert redis_service.spec.ports[0].port == 6379
-    
+
     pf = _maybe_port_forward(namespace, node_port)
 
     try:
@@ -157,7 +159,7 @@ def test_deploy_all_in_one():
         response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
         assert response.status_code == 200
         print(f"✓ Successfully reached app page at {walker_url}")
-        
+
         frontend_url = f"{base_url}/cl/app"
         response = _request_with_retry("GET", frontend_url, timeout=120)
         assert response.status_code == 200
