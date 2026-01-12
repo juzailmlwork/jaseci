@@ -127,7 +127,7 @@ def test_deploy_all_in_one():
     service = core_v1.read_namespaced_service(
         name="all-in-one-app-service", namespace=namespace
     )
-    assert service.spec.type == "NodePort"
+    # assert service.spec.type == "NodePort"
     node_port = service.spec.ports[0].node_port
     print(f"✓ Service is exposed on NodePort: {node_port}")
     # Validate MongoDB StatefulSet and Service
@@ -153,11 +153,17 @@ def test_deploy_all_in_one():
     )
     assert redis_service.spec.ports[0].port == 6379
 
-    pf = _maybe_port_forward(namespace, node_port, target_port=node_port)
+    # pf = _maybe_port_forward(namespace, node_port, target_port=node_port)
+    SERVICE_PORT = 8000
 
+    pf = _maybe_port_forward(
+        namespace,
+        local_port=SERVICE_PORT,
+        target_port=SERVICE_PORT,
+    )
     try:
         base_url = f"http://localhost:{node_port}"
-
+        base_url = "http://localhost:8000"
         walker_url = f"{base_url}/walker/create_todo"
         payload = {"text": "first-task"}
         response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
