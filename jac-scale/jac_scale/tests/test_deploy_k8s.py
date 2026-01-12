@@ -1,4 +1,5 @@
 import os
+import subprocess
 import time
 from typing import Any
 
@@ -9,6 +10,31 @@ from kubernetes.client.exceptions import ApiException
 from ..kubernetes.K8s import deploy_K8s
 from ..kubernetes.utils import cleanup_K8s_resources
 
+def _maybe_port_forward(namespace: str, local_port: int, target_port: int = 80):
+    """
+    In CI, NodePort is not reachable from localhost.
+    Port-forward the service so tests work in both local & CI.
+    """
+    if not os.getenv("CI"):
+        return None  # Local machine: NodePort works
+
+    print("CI detected → using kubectl port-forward")
+
+    proc = subprocess.Popen(
+        [
+            "kubectl",
+            "port-forward",
+            f"service/all-in-one-app-service",
+            f"{local_port}:{target_port}",
+            "-n",
+            namespace,
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    time.sleep(5)  # give port-forward time to bind
+    return proc
 
 def _request_with_retry(
     method: str,
@@ -120,16 +146,27 @@ def test_deploy_all_in_one():
         name="all-in-one-app-redis-service", namespace=namespace
     )
     assert redis_service.spec.ports[0].port == 6379
+    
+    pf = _maybe_port_forward(namespace, node_port)
 
-    walker_url = f"http://localhost:{node_port}/walker/create_todo"
-    payload = {"text": "first-task"}
-    response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
-    assert response.status_code == 200
+    try:
+        base_url = f"http://localhost:{node_port}"
 
-    frontend_url = f"http://localhost:{node_port}/cl/app"
-    response = _request_with_retry("GET", frontend_url, timeout=120)
-    assert response.status_code == 200
-    print(f"✓ Successfully reached app page at {frontend_url}")
+        walker_url = f"{base_url}/walker/create_todo"
+        payload = {"text": "first-task"}
+        response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
+        assert response.status_code == 200
+        print(f"✓ Successfully reached app page at {walker_url}")
+        
+        frontend_url = f"{base_url}/cl/app"
+        response = _request_with_retry("GET", frontend_url, timeout=120)
+        assert response.status_code == 200
+        print(f"✓ Successfully reached app page at {frontend_url}")
+
+    finally:
+        if pf:
+            pf.terminate()
+
     # Cleanup resources
     cleanup_K8s_resources()
     time.sleep(60)  # Wait for deletion to propagate
