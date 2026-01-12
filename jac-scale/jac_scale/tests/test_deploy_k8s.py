@@ -120,27 +120,16 @@ def test_deploy_all_in_one():
         name="all-in-one-app-redis-service", namespace=namespace
     )
     assert redis_service.spec.ports[0].port == 6379
-
-    # Send POST request to create a todo (with retry for 503)
-    # try:
-    #     url = f"http://localhost:{node_port}/walker/create_todo"
-    #     payload = {"text": "first-task"}
-    #     response = _request_with_retry("POST", url, json=payload, timeout=10)
-    #     assert response.status_code == 200
-    #     print(f"✓ Successfully created todo at {url}")
-    #     print(f"  Response: {response.json()}")
-    # except requests.exceptions.RequestException as e:
-    #     print(f"Warning: Could not reach POST {url}: {e}")
-
-    # Send GET request to retrieve the clientpage of todo app (with retry for 503)
-    try:
-        url = f"http://localhost:{node_port}/cl/app"
-        response = _request_with_retry("GET", url, timeout=10)
-        assert response.status_code == 200
-        print(f"✓ Successfully reached app page at {url}")
-    except requests.exceptions.RequestException as e:
-        print(f"Warning: Could not reach GET {url}: {e}")
-
+    
+    walker_url = f"http://localhost:{node_port}/walker/create_todo"
+    payload = {"text": "first-task"}
+    response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
+    assert response.status_code == 200
+    
+    frontend_url = f"http://localhost:{node_port}/cl/app"
+    response = _request_with_retry("GET", frontend_url, timeout=120)
+    assert response.status_code == 200
+    print(f"✓ Successfully reached app page at {frontend_url}")
     # Cleanup resources
     cleanup_K8s_resources()
     time.sleep(60)  # Wait for deletion to propagate
