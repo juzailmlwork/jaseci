@@ -11,7 +11,11 @@ from ..kubernetes.K8s import deploy_K8s
 from ..kubernetes.utils import cleanup_K8s_resources
 
 
-def _maybe_port_forward(namespace: str, local_port: int, target_port: int = 80):
+def _maybe_port_forward(
+    namespace: str,
+    local_port: int,
+    target_port: int = 80,
+) -> subprocess.Popen | None:
     """
     In CI, NodePort is not reachable from localhost.
     Port-forward the service so tests work in both local & CI.
