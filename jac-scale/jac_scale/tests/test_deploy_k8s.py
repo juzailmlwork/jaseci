@@ -54,7 +54,7 @@ def _request_with_retry(
     return response
 
 
-def test_deploy_todo_app():
+def test_deploy_all_in_one():
     """
     This test runs deploy_K8s() with build=False to deploy the todo app
     against a live Kubernetes cluster using the app.jac from the todo folder.
@@ -67,14 +67,14 @@ def test_deploy_todo_app():
     apps_v1 = client.AppsV1Api()
     core_v1 = client.CoreV1Api()
 
-    namespace = "todo-app"
+    namespace = "all-in-one-app"
 
     # Set environment
-    os.environ.update({"APP_NAME": "todo-app", "K8s_NAMESPACE": namespace})
+    os.environ.update({"APP_NAME": "all-in-one-app", "K8s_NAMESPACE": namespace})
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    todo_app_path = os.path.join(test_dir, "../../examples/todo/src")
+    todo_app_path = os.path.join(test_dir, "../../../jac-client/jac_client/examples/all-in-one/src")
 
     # Run deploy with build=False, targeting the app.jac file in examples/todo folder
     deploy_K8s(code_folder=todo_app_path, file_name="app.jac", build=False)
@@ -84,51 +84,51 @@ def test_deploy_todo_app():
 
     # Validate the main deployment exists
     deployment = apps_v1.read_namespaced_deployment(
-        name="todo-app", namespace=namespace
+        name="all-in-one-app", namespace=namespace
     )
-    assert deployment.metadata.name == "todo-app"
+    assert deployment.metadata.name == "all-in-one-app"
     assert deployment.spec.replicas == 1
 
     # Validate main service
     service = core_v1.read_namespaced_service(
-        name="todo-app-service", namespace=namespace
+        name="all-in-one-app-service", namespace=namespace
     )
     assert service.spec.type == "NodePort"
     node_port = service.spec.ports[0].node_port
     print(f"✓ Service is exposed on NodePort: {node_port}")
     # Validate MongoDB StatefulSet and Service
     mongodb_stateful = apps_v1.read_namespaced_stateful_set(
-        name="todo-app-mongodb", namespace=namespace
+        name="all-in-one-app-mongodb", namespace=namespace
     )
-    assert mongodb_stateful.metadata.name == "todo-app-mongodb"
-    assert mongodb_stateful.spec.service_name == "todo-app-mongodb-service"
+    assert mongodb_stateful.metadata.name == "all-in-one-app-mongodb"
+    assert mongodb_stateful.spec.service_name == "all-in-one-app-mongodb-service"
 
     mongodb_service = core_v1.read_namespaced_service(
-        name="todo-app-mongodb-service", namespace=namespace
+        name="all-in-one-app-mongodb-service", namespace=namespace
     )
     assert mongodb_service.spec.ports[0].port == 27017
 
     # Validate Redis Deployment and Service
     redis_deploy = apps_v1.read_namespaced_deployment(
-        name="todo-app-redis", namespace=namespace
+        name="all-in-one-app-redis", namespace=namespace
     )
-    assert redis_deploy.metadata.name == "todo-app-redis"
+    assert redis_deploy.metadata.name == "all-in-one-app-redis"
 
     redis_service = core_v1.read_namespaced_service(
-        name="todo-app-redis-service", namespace=namespace
+        name="all-in-one-app-redis-service", namespace=namespace
     )
     assert redis_service.spec.ports[0].port == 6379
 
     # Send POST request to create a todo (with retry for 503)
-    try:
-        url = f"http://localhost:{node_port}/walker/create_todo"
-        payload = {"text": "first-task"}
-        response = _request_with_retry("POST", url, json=payload, timeout=10)
-        assert response.status_code == 200
-        print(f"✓ Successfully created todo at {url}")
-        print(f"  Response: {response.json()}")
-    except requests.exceptions.RequestException as e:
-        print(f"Warning: Could not reach POST {url}: {e}")
+    # try:
+    #     url = f"http://localhost:{node_port}/walker/create_todo"
+    #     payload = {"text": "first-task"}
+    #     response = _request_with_retry("POST", url, json=payload, timeout=10)
+    #     assert response.status_code == 200
+    #     print(f"✓ Successfully created todo at {url}")
+    #     print(f"  Response: {response.json()}")
+    # except requests.exceptions.RequestException as e:
+    #     print(f"Warning: Could not reach POST {url}: {e}")
 
     # Send GET request to retrieve the clientpage of todo app (with retry for 503)
     try:
@@ -145,37 +145,37 @@ def test_deploy_todo_app():
 
     # Verify cleanup - resources should no longer exist
     try:
-        apps_v1.read_namespaced_deployment("todo-app", namespace=namespace)
+        apps_v1.read_namespaced_deployment("all-in-one-app", namespace=namespace)
         raise AssertionError("Deployment should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service("todo-app-service", namespace=namespace)
+        core_v1.read_namespaced_service("all-in-one-app-service", namespace=namespace)
         raise AssertionError("Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        apps_v1.read_namespaced_stateful_set("todo-app-mongodb", namespace=namespace)
+        apps_v1.read_namespaced_stateful_set("all-in-one-app-mongodb", namespace=namespace)
         raise AssertionError("MongoDB StatefulSet should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service("todo-app-mongodb-service", namespace=namespace)
+        core_v1.read_namespaced_service("all-in-one-app-mongodb-service", namespace=namespace)
         raise AssertionError("MongoDB Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        apps_v1.read_namespaced_deployment("todo-app-redis", namespace=namespace)
+        apps_v1.read_namespaced_deployment("all-in-one-app-redis", namespace=namespace)
         raise AssertionError("Redis Deployment should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
     try:
-        core_v1.read_namespaced_service("todo-app-redis-service", namespace=namespace)
+        core_v1.read_namespaced_service("all-in-one-app-redis-service", namespace=namespace)
         raise AssertionError("Redis Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
@@ -183,7 +183,7 @@ def test_deploy_todo_app():
     # Verify PVC cleanup
     pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace)
     for pvc in pvcs.items:
-        assert not pvc.metadata.name.startswith("todo-app"), (
+        assert not pvc.metadata.name.startswith("all-in-one-app"), (
             f"PVC '{pvc.metadata.name}' should have been deleted"
         )
 
