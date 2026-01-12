@@ -120,12 +120,12 @@ def test_deploy_all_in_one():
         name="all-in-one-app-redis-service", namespace=namespace
     )
     assert redis_service.spec.ports[0].port == 6379
-    
+
     walker_url = f"http://localhost:{node_port}/walker/create_todo"
     payload = {"text": "first-task"}
     response = _request_with_retry("POST", walker_url, json=payload, timeout=10)
     assert response.status_code == 200
-    
+
     frontend_url = f"http://localhost:{node_port}/cl/app"
     response = _request_with_retry("GET", frontend_url, timeout=120)
     assert response.status_code == 200
