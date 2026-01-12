@@ -153,7 +153,7 @@ def test_deploy_all_in_one():
     )
     assert redis_service.spec.ports[0].port == 6379
 
-    pf = _maybe_port_forward(namespace, node_port)
+    pf = _maybe_port_forward(namespace, node_port,target_port=node_port)
 
     try:
         base_url = f"http://localhost:{node_port}"
