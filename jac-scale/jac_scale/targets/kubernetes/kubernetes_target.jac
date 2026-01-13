@@ -121,10 +121,10 @@ class KubernetesTarget(DeploymentTarget) {
             mongo_result = mongo_provider.deploy({});
             env_list.append(
                 {
-            'name': 'MONGODB_URI',
-            'value': mongo_provider.get_connection_string()
-                });
-
+                    'name': 'MONGODB_URI',
+                    'value': mongo_provider.get_connection_string()
+                }
+            );
             init_containers.append(
                 {
                     'name': 'wait-for-mongodb',
@@ -145,10 +145,8 @@ class KubernetesTarget(DeploymentTarget) {
             );
             redis_result = redis_provider.deploy({});
             env_list.append(
-                {
-            'name': 'REDIS_URL',
-            'value': redis_provider.get_connection_string()
-                });
+                {'name': 'REDIS_URL', 'value': redis_provider.get_connection_string()}
+            );
             init_containers.append(
                 {
                     'name': 'wait-for-redis',
@@ -487,7 +485,8 @@ class KubernetesTarget(DeploymentTarget) {
             k8s_config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
-            namespace = os.getenv('K8s_NAMESPACE') or self.k8s_config.namespace;;
+            namespace = os.getenv('K8s_NAMESPACE') or self.k8s_config.namespace;
+            ;
 
             # Delete main deployment and service
             delete_if_exists(
