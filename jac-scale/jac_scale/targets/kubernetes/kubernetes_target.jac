@@ -477,7 +477,7 @@ class KubernetesTarget(DeploymentTarget) {
             k8s_config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
-            namespace = self.k8s_config.namespace;
+            namespace = os.getenv('K8s_NAMESPACE') or self.k8s_config.namespace;;
 
             # Delete main deployment and service
             delete_if_exists(
