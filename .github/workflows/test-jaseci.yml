@@ -159,7 +159,7 @@ jobs:
         with:
           filters: |
             k8s:
-              - 'jac-scale/jac_scale/kubernetes/**'
+              - 'jac-scale/**'
 
       - name: Install Kind (Kubernetes in Docker)
         if: steps.k8s-changes.outputs.k8s == 'true'
