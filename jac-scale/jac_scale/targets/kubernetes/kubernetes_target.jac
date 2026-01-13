@@ -76,7 +76,6 @@ class KubernetesTarget(DeploymentTarget) {
 
         # Load environment variables
         env_list = load_env_variables(app_config.code_folder);
-
         # Determine cluster type and service configuration
         cluster_env = cluster_type();
         is_aws = cluster_env == 'aws';
@@ -120,6 +119,12 @@ class KubernetesTarget(DeploymentTarget) {
                 'kubernetes_mongo', self, {'app_name': app_name}
             );
             mongo_result = mongo_provider.deploy({});
+            env_list.append(
+                {
+            'name': 'MONGODB_URI',
+            'value': mongo_provider.get_connection_string()
+                });
+
             init_containers.append(
                 {
                     'name': 'wait-for-mongodb',
@@ -139,6 +144,11 @@ class KubernetesTarget(DeploymentTarget) {
                 'kubernetes_redis', self, {'app_name': app_name}
             );
             redis_result = redis_provider.deploy({});
+            env_list.append(
+                {
+            'name': 'REDIS_URL',
+            'value': redis_provider.get_connection_string()
+                });
             init_containers.append(
                 {
                     'name': 'wait-for-redis',
