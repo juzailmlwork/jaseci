@@ -251,14 +251,14 @@ class KubernetesTarget(DeploymentTarget) {
             ];
             init_containers.append(build_container);
             if ('requirements.txt' in os.listdir(app_config.code_folder)) {
-                install_part = f"pip install -r /app/requirements.txt && jac start src/{app_config.file_name}";
+                install_part = f"pip install -r /app/requirements.txt && jac start {app_config.file_name}";
             } else {
-                install_part = f"jac start src/{app_config.file_name} ";
+                install_part = f"jac start {app_config.file_name} ";
             }
             command = [
                 'bash',
                 '-c',
-                f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch main --single-branch https://github.com/jaseci-labs/jaseci.git &&cd ./jaseci &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app &&mkdir client_app/src &&cp -r ./app/* ./client_app/src && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
+                f"export DEBIAN_FRONTEND=noninteractive &&apt-get update &&apt-get install -y git npm nodejs && rm -rf jaseci && git clone --branch main --single-branch https://github.com/jaseci-labs/jaseci.git &&cd ./jaseci &&git submodule update --init --recursive &&python -m venv venv &&source venv/bin/activate &&pip install pluggy &&pip install -e ./jac &&pip install -e  ./jac-scale &&pip install -e ./jac-client &&cd ../../.. &&jac create --cl client_app && cp -r ./app/* ./client_app && [ -f ./app/jac.toml ] && cp ./app/jac.toml ./client_app/jac.toml || true &&cd ./client_app  && jac add --cl &&{install_part}"
             ];
             container_config = {
                 'name': app_name,
