@@ -78,7 +78,9 @@ def test_deploy_todo_app():
 
     # Resolve the absolute path to the todo app folder
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    todo_app_path = os.path.join(test_dir, "../../../examples/jac-client/jac_client/examples/all-in-one")
+    todo_app_path = os.path.join(
+        test_dir, "../../../examples/jac-client/jac_client/examples/all-in-one"
+    )
 
     # Get configuration
     scale_config = get_scale_config()
