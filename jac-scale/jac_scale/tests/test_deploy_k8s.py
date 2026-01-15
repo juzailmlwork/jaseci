@@ -164,24 +164,12 @@ def test_deploy_todo_app():
     assert response.status_code == 200
     print(f"✓ Successfully created todo at {url}")
     print(f"  Response: {response.json()}")
-    # try:
-    #     url = f"http://localhost:{node_port}/walker/create_todo"
-    #     payload = {"text": "first-task"}
-    #     response = _request_with_retry("POST", url, json=payload, timeout=10)
-    #     assert response.status_code == 200
-    #     print(f"✓ Successfully created todo at {url}")
-    #     print(f"  Response: {response.json()}")
-    # except requests.exceptions.RequestException as e:
-    #     print(f"Warning: Could not reach POST {url}: {e}")
-
-    # Send GET request to retrieve the clientpage of todo app (with retry for 503)
-    try:
-        url = f"http://localhost:{node_port}/cl/app"
-        response = _request_with_retry("GET", url, timeout=10)
-        assert response.status_code == 200
-        print(f"✓ Successfully reached app page at {url}")
-    except requests.exceptions.RequestException as e:
-        print(f"Warning: Could not reach GET {url}: {e}")
+    
+    url = f"http://localhost:{node_port}/cl/app"
+    response = _request_with_retry("GET", url, timeout=100)
+    print(f"Response status code for app page: {response.status_code}")
+    assert response.status_code == 200
+    print(f"✓ Successfully reached app page at {url}")
 
     # Cleanup using new architecture
     deployment_target.destroy(app_name)
