@@ -157,15 +157,21 @@ def test_deploy_todo_app():
     )
 
     # Send POST request to create a todo (with retry for 503)
-    try:
-        url = f"http://localhost:{node_port}/walker/create_todo"
-        payload = {"text": "first-task"}
-        response = _request_with_retry("POST", url, json=payload, timeout=10)
-        assert response.status_code == 200
-        print(f"✓ Successfully created todo at {url}")
-        print(f"  Response: {response.json()}")
-    except requests.exceptions.RequestException as e:
-        print(f"Warning: Could not reach POST {url}: {e}")
+    url = f"http://localhost:{node_port}/walker/create_todo"
+    payload = {"text": "first-task"}
+    response = _request_with_retry("POST", url, json=payload, timeout=10)
+    assert response.status_code == 200
+    print(f"✓ Successfully created todo at {url}")
+    print(f"  Response: {response.json()}")
+    # try:
+    #     url = f"http://localhost:{node_port}/walker/create_todo"
+    #     payload = {"text": "first-task"}
+    #     response = _request_with_retry("POST", url, json=payload, timeout=10)
+    #     assert response.status_code == 200
+    #     print(f"✓ Successfully created todo at {url}")
+    #     print(f"  Response: {response.json()}")
+    # except requests.exceptions.RequestException as e:
+    #     print(f"Warning: Could not reach POST {url}: {e}")
 
     # Send GET request to retrieve the clientpage of todo app (with retry for 503)
     try:
