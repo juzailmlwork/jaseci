@@ -162,20 +162,38 @@ jobs:
             k8s:
               - 'jac-scale/**'
 
-      - name: Install Kind (Kubernetes in Docker)
-        if: steps.k8s-changes.outputs.k8s == 'true'
-        run: |
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
-          kind version
+      # - name: Install Kind (Kubernetes in Docker)
+      #   if: steps.k8s-changes.outputs.k8s == 'true'
+      #   run: |
+      #     curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
+      #     chmod +x ./kind
+      #     sudo mv ./kind /usr/local/bin/kind
+      #     kind version
 
-      - name: Create Kubernetes cluster with Kind
-        if: steps.k8s-changes.outputs.k8s == 'true'
+      # - name: Create Kubernetes cluster with Kind
+      #   if: steps.k8s-changes.outputs.k8s == 'true'
+      #   run: |
+      #     kind create cluster --name jaseci-test --wait 60s
+      #     kubectl cluster-info
+      #     kubectl get nodes
+
+      - name: Install MicroK8s
         run: |
-          kind create cluster --name jaseci-test --wait 60s
+          sudo snap install microk8s --classic
+          sudo usermod -a -G microk8s $USER
+          sudo chown -f -R $USER ~/.kube
+
+      - name: Initialize MicroK8s
+        run: |
+          microk8s status --wait-ready
+          microk8s enable dns storage
           kubectl cluster-info
           kubectl get nodes
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          microk8s config > ~/.kube/config
 
       - name: Run K8 tests
         if: steps.k8s-changes.outputs.k8s == 'true'
@@ -195,12 +213,10 @@ jobs:
           echo "=== Pods in todo-app ==="
           kubectl get pods -n todo-app -o wide || echo "No pods found"
 
-          echo "=== Describe Pods (for failures) ==="
-          kubectl describe pods -n todo-app || true
 
-      - name: Delete Kind cluster
-        if: always() && steps.k8s-changes.outputs.k8s == 'true'
-        run: kind delete cluster --name jaseci-test
+      # - name: Delete Kind cluster
+      #   if: always() && steps.k8s-changes.outputs.k8s == 'true'
+      #   run: kind delete cluster --name jaseci-test
 
   test-pypi-build:
     runs-on: ubuntu-latest
