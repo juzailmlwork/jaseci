@@ -177,7 +177,7 @@ jobs:
       #     kubectl cluster-info
       #     kubectl get nodes
 
-            - name: Install MicroK8s
+      - name: Install MicroK8s
         run: |
           set +e
           sudo snap install microk8s --classic
