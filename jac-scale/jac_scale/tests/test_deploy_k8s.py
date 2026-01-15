@@ -65,6 +65,7 @@ def test_deploy_todo_app():
     Validates deployment, services, sends HTTP request, and tests cleanup.
     Use only in a test namespace.
     """
+    
     # Load kubeconfig and initialize client
     config.load_kube_config()
     apps_v1 = client.AppsV1Api()
