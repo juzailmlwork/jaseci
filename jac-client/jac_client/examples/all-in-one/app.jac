@@ -1,5 +1,5 @@
 import from datetime { datetime, timedelta }
-print("Loaded datetime module for backend walkers")
+
 #
 # Basic backend walkers
 #
