@@ -439,29 +439,28 @@ class KubernetesTarget(DeploymentTarget) {
                     self.k8s_config.node_port, path, nlb_url=nlb_url
                 );
                 if (deployment_status == False) {
-                    raise Exception("Deployment failed or timed out.") ;
-                }
+                    raise Exception("Deployment failed or timed out.");
+                }        
                 if self.logger {
                     self.logger.info(
                         f"Deployment complete! Access Jaseci-app at {nlb_url}{path}"
                     );
-                } else {
-                    raise Exception("Deployment failed or timed out.") ;
                 }
-            } else {
-                deployment_status = check_deployment_status(
-                    self.k8s_config.node_port, path
+                else {
+                    raise Exception("Deployment failed or timed out.");
+            }
+        } else {
+            deployment_status = check_deployment_status(self.k8s_config.node_port, path);
+            if (deployment_status == False) {
+                raise Exception("Deployment failed or timed out.");
+            }
+            if self.logger {
+                self.logger.info(
+                    f"Deployment complete! Access Jaseci-app at http://localhost:{self.k8s_config.node_port}{path}"
                 );
-                if (deployment_status == False) {
-                    raise Exception("Deployment failed or timed out.") ;
-                }
-                if self.logger {
-                    self.logger.info(
-                        f"Deployment complete! Access Jaseci-app at http://localhost:{self.k8s_config.node_port}{path}"
-                    );
-                }
             }
         }
+    }
     }
 
     """Handle image registry if build is requested."""
