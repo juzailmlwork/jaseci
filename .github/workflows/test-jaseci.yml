@@ -162,22 +162,8 @@ jobs:
             k8s:
               - 'jac-scale/**'
 
-      # - name: Install Kind (Kubernetes in Docker)
-      #   if: steps.k8s-changes.outputs.k8s == 'true'
-      #   run: |
-      #     curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
-      #     chmod +x ./kind
-      #     sudo mv ./kind /usr/local/bin/kind
-      #     kind version
-
-      # - name: Create Kubernetes cluster with Kind
-      #   if: steps.k8s-changes.outputs.k8s == 'true'
-      #   run: |
-      #     kind create cluster --name jaseci-test --wait 60s
-      #     kubectl cluster-info
-      #     kubectl get nodes
-
       - name: Install MicroK8s
+        if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
           set +e
           sudo snap install microk8s --classic
@@ -185,11 +171,13 @@ jobs:
           set -e
 
       - name: Initialize MicroK8s
+        if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
           sudo microk8s status --wait-ready
           sudo microk8s enable dns storage
 
       - name: Configure kubectl
+        if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
           mkdir -p ~/.kube
           sudo microk8s config > ~/.kube/config
@@ -201,22 +189,10 @@ jobs:
           pytest -vv -s jac-scale/jac_scale/tests/test_deploy_k8s.py
           pytest -v jac-scale/jac_scale/tests/test_k8s_utils.py
 
-      - name: Debug Kubernetes resources (svc & pods)
+      - name: Reset microk8s cluster
         if: always() && steps.k8s-changes.outputs.k8s == 'true'
         run: |
-          echo "=== Namespaces ==="
-          kubectl get ns
-
-          echo "=== Services in todo-app ==="
-          kubectl get svc -n todo-app || echo "No services found"
-
-          echo "=== Pods in todo-app ==="
-          kubectl get pods -n todo-app -o wide || echo "No pods found"
-
-
-      # - name: Delete Kind cluster
-      #   if: always() && steps.k8s-changes.outputs.k8s == 'true'
-      #   run: kind delete cluster --name jaseci-test
+          sudo microk8s reset
 
   test-pypi-build:
     runs-on: ubuntu-latest

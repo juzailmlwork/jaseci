@@ -58,12 +58,11 @@ def _request_with_retry(
     return response
 
 
-def test_deploy_todo_app():
+def test_deploy_all_in_one():
     """
     Test deployment using the new factory-based architecture.
-    Deploys the todo app against a live Kubernetes cluster.
+    Deploys the all-in-one app found in jac client examples against a live Kubernetes cluster.
     Validates deployment, services, sends HTTP request, and tests cleanup.
-    Use only in a test namespace.
     """
 
     # Load kubeconfig and initialize client
@@ -71,8 +70,8 @@ def test_deploy_todo_app():
     apps_v1 = client.AppsV1Api()
     core_v1 = client.CoreV1Api()
 
-    namespace = "todo-app"
-    app_name = "todo-app"
+    namespace = "all-in-one"
+    app_name = namespace
 
     # Set environment
     os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace})
