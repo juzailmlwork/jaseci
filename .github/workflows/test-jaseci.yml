@@ -183,6 +183,21 @@ jobs:
           pytest -vv -s jac-scale/jac_scale/tests/test_deploy_k8s.py
           pytest -v jac-scale/jac_scale/tests/test_k8s_utils.py
 
+      - name: Debug Kubernetes resources (svc & pods)
+        if: always() && steps.k8s-changes.outputs.k8s == 'true'
+        run: |
+          echo "=== Namespaces ==="
+          kubectl get ns
+
+          echo "=== Services in todo-app ==="
+          kubectl get svc -n todo-app || echo "No services found"
+
+          echo "=== Pods in todo-app ==="
+          kubectl get pods -n todo-app -o wide || echo "No pods found"
+
+          echo "=== Describe Pods (for failures) ==="
+          kubectl describe pods -n todo-app || true
+
       - name: Delete Kind cluster
         if: always() && steps.k8s-changes.outputs.k8s == 'true'
         run: kind delete cluster --name jaseci-test

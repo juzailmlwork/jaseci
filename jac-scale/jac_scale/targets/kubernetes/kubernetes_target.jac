@@ -621,33 +621,6 @@ class KubernetesTarget(DeploymentTarget) {
                 f"Deployment complete for '{app_name}'", {'service_url': service_url}
             );
         }
-        if self.logger:
-            self.logger.info("Listing Kubernetes Services and Pods");
-
-            # List Services
-            services = core_v1.list_namespaced_service(namespace=namespace);
-            print("\n=== Services ===");
-            for svc in services.items {
-                name = svc.metadata.name;
-                svc_type = svc.spec.type;
-                ports = svc.spec.ports or [];
-                port_info = ", ".join(
-                    f"{p.port}->{p.target_port}" for p in ports
-                );
-                print(f"- {name} | Type: {svc_type} | Ports: {port_info}");
-            }
-            # List Pods
-            pods = core_v1.list_namespaced_pod(
-                namespace=namespace,
-                label_selector=f"app={app_name}"
-            );
-            print("\n=== Pods ===");
-            for pod in pods.items{
-                pod_name = pod.metadata.name;
-                phase = pod.status.phase;
-                node = pod.spec.node_name;
-                print(f"- {pod_name} | Status: {phase} | Node: {node}");
-            }
 
         return DeploymentResult(
             success=True,
