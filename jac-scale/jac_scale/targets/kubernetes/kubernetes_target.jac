@@ -41,6 +41,7 @@ class KubernetesTarget(DeploymentTarget) {
     ) -> None {
         self.config = config;
         self.k8s_config = config;
+        self.env_list = [];
         if logger {
             self.logger = logger;
         }
@@ -241,7 +242,6 @@ class KubernetesTarget(DeploymentTarget) {
         self: KubernetesTarget,
         app_name: str,
         image: str,
-        env_list: list[dict[(str, Any)]],
         probe_configs: dict[(str, Any)],
         resources_config: dict[(str, Any)],
         command: (list[str] | None) = None,
@@ -252,7 +252,7 @@ class KubernetesTarget(DeploymentTarget) {
             'name': app_name,
             'image': image,
             'ports': [{'containerPort': self.k8s_config.container_port}],
-            'env': env_list,
+            'env': self.env_list,
             'readinessProbe': probe_configs['readiness'],
             'livenessProbe': probe_configs['liveness']
         };
@@ -330,6 +330,12 @@ class KubernetesTarget(DeploymentTarget) {
                 'kubernetes_mongo', self, {'app_name': app_name}
             );
             mongo_result = mongo_provider.deploy({});
+            self.env_list.append(
+                {
+                    'name': 'MONGODB_URI',
+                    'value': mongo_result['connection_string']
+                }
+            );
             try {
                 apps_v1.read_namespaced_stateful_set(
                     name=mongodb_name, namespace=namespace
@@ -365,6 +371,12 @@ class KubernetesTarget(DeploymentTarget) {
                 'kubernetes_redis', self, {'app_name': app_name}
             );
             redis_result = redis_provider.deploy({});
+            self.env_list.append(
+                {
+                    'name': 'REDIS_URL',
+                    'value': redis_result['connection_string']
+                }
+            );
             try {
                 apps_v1.read_namespaced_deployment(
                     name=redis_name, namespace=namespace
@@ -507,7 +519,7 @@ class KubernetesTarget(DeploymentTarget) {
         ensure_namespace_exists(namespace);
 
         # 3. Load environment variables
-        env_list = load_env_variables(app_config.code_folder);
+        self.env_list = load_env_variables(app_config.code_folder);
 
         # 4. Determine cluster type
         cluster_env = cluster_type();
@@ -532,7 +544,7 @@ class KubernetesTarget(DeploymentTarget) {
 
         # 9. Build container configuration
         container_config = self._build_container_config(
-            app_name, repository_name, env_list, probe_configs, resources_config
+            app_name, repository_name, probe_configs, resources_config
         );
 
         # 10. Handle volumes and build container if not building image
@@ -548,7 +560,6 @@ class KubernetesTarget(DeploymentTarget) {
             container_config = self._build_container_config(
                 app_name,
                 self.k8s_config.python_image,
-                env_list,
                 probe_configs,
                 resources_config,
                 command=command,
