@@ -331,10 +331,7 @@ class KubernetesTarget(DeploymentTarget) {
             );
             mongo_result = mongo_provider.deploy({});
             self.env_list.append(
-                {
-                    'name': 'MONGODB_URI',
-                    'value': mongo_result['connection_string']
-                }
+                {'name': 'MONGODB_URI', 'value': mongo_result['connection_string']}
             );
             try {
                 apps_v1.read_namespaced_stateful_set(
@@ -372,10 +369,7 @@ class KubernetesTarget(DeploymentTarget) {
             );
             redis_result = redis_provider.deploy({});
             self.env_list.append(
-                {
-                    'name': 'REDIS_URL',
-                    'value': redis_result['connection_string']
-                }
+                {'name': 'REDIS_URL', 'value': redis_result['connection_string']}
             );
             try {
                 apps_v1.read_namespaced_deployment(
