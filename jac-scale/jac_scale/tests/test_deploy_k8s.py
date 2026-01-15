@@ -164,7 +164,7 @@ def test_deploy_todo_app():
     assert response.status_code == 200
     print(f"✓ Successfully created todo at {url}")
     print(f"  Response: {response.json()}")
-    
+
     url = f"http://localhost:{node_port}/cl/app"
     response = _request_with_retry("GET", url, timeout=100)
     print(f"Response status code for app page: {response.status_code}")
