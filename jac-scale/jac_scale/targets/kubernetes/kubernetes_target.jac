@@ -434,12 +434,12 @@ class KubernetesTarget(DeploymentTarget) {
                     self.logger.warn(f"Could not retrieve NLB endpoint: {e}");
                 }
             }
-            if (nlb_url){
-                deployment_status=check_deployment_status(
+            if (nlb_url) {
+                deployment_status = check_deployment_status(
                     self.k8s_config.node_port, path, nlb_url=nlb_url
                 );
-                if not(deployment_status){
-                    raise Exception("Deployment failed: Application failed to deploy.");
+                if not (deployment_status) {
+                    raise Exception("Deployment failed: Application failed to deploy.") ;
                 }
                 if self.logger {
                     self.logger.info(
@@ -448,9 +448,11 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
         } else {
-            deployment_status=check_deployment_status(self.k8s_config.node_port, path);
+            deployment_status = check_deployment_status(
+                self.k8s_config.node_port, path
+            );
             if deployment_status is False {
-                raise Exception("Deployment failed: Application failed to deploy.");
+                raise Exception("Deployment failed: Application failed to deploy.") ;
             }
             if self.logger {
                 self.logger.info(
