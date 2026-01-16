@@ -99,8 +99,6 @@ impl sync_code_to_pvc(
     import tempfile;
     import from pathlib { Path }
     sync_pod_name = f"{app_name}-code-sync";
-    parent_dir = pathlib.Path(code_folder).parent;
-    toml_path = os.path.join(parent_dir, 'jac.toml');
     same_directory_toml_path = os.path.join(code_folder, 'jac.toml');
     pod_body = {
         'apiVersion': 'v1',
@@ -173,18 +171,7 @@ impl sync_code_to_pvc(
             ]
         );
 
-        if os.path.isfile(toml_path) {
-            run_kubectl_command(
-                [
-                    'cp',
-                    '-n',
-                    namespace,
-                    "jac.toml",
-                    f"{sync_pod_name}:/data/workspace/jac.toml"
-                ],
-                cwd=parent_dir
-            );
-        } elif os.path.isfile(same_directory_toml_path) {
+        if os.path.isfile(same_directory_toml_path) {
             run_kubectl_command(
                 [
                     'cp',
@@ -368,8 +355,8 @@ impl cluster_type -> str {
 impl check_deployment_status(
     node_port: int,
     path: str = '/docs',
-    interval: int = 20,
-    max_retries: int = 50,
+    interval: int = 15,
+    max_retries: int = 30,
     nlb_url: (str | None) = None
 ) -> bool {
     if nlb_url {
