@@ -230,7 +230,7 @@ class KubernetesTarget(DeploymentTarget) {
         commands.append('jac add --npm');
 
         # commands.append('jac hai');
-        commands.append('pwd');
+        commands.append('jac hai');
 
         # Start the application
         commands.append(f"jac start {app_config.file_name}");
