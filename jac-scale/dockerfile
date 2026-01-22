@@ -1,0 +1,132 @@
+# # ---------- Base Python Image ----------
+# FROM python:3.13-slim
+
+# ENV PATH="/usr/local/bin:${PATH}"
+# # ---------- Environment ----------
+# ENV DEBIAN_FRONTEND=noninteractive
+# ENV PYTHONDONTWRITEBYTECODE=1
+# ENV PYTHONUNBUFFERED=1
+
+# # ---------- System Dependencies ----------
+# RUN apt-get update && apt-get install -y \
+#     git \
+#     curl \
+#     nodejs \
+#     npm \
+#     build-essential \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # ---------- Upgrade pip ----------
+# RUN pip install --upgrade pip
+
+# # ---------- Working Directory ----------
+# WORKDIR /opt
+
+# # ---------- Clone Jaseci ----------
+# ARG JASECI_REPO_URL=https://github.com/Jaseci-Labs/jaseci.git
+# ARG JASECI_BRANCH=main
+# ARG JASECI_COMMIT=""
+
+# RUN git clone --branch ${JASECI_BRANCH} --single-branch ${JASECI_REPO_URL} jaseci
+
+# WORKDIR /opt/jaseci
+
+# # Optional: checkout specific commit
+# RUN if [ -n "${JASECI_COMMIT}" ]; then git checkout ${JASECI_COMMIT}; fi
+
+# # ---------- Submodules ----------
+# RUN git submodule update --init --recursive
+
+# # ---------- Install Python deps ----------
+# RUN pip install pluggy
+
+# # Install jac tooling
+# RUN pip install  ./jac \
+#     && pip install  ./jac-scale \
+#     && pip install  ./jac-client \
+#     && pip install  ./jac-byllm
+
+# # ---- HARDEN jac CLI (Dockerfile-safe) ----
+# RUN JAC_PATH="$(which jac)" \
+#     && echo "jac found at: ${JAC_PATH}" \
+#     && ln -sf "${JAC_PATH}" /usr/bin/jac \
+#     && chmod +x /usr/bin/jac
+
+# # Absolute verification
+# RUN /usr/bin/jac --version
+
+# # ---------- Verify jac ----------
+# RUN jac --version
+
+# # ---------- Default Workdir ----------
+# WORKDIR /app
+
+# # ---------- Default Entrypoint ----------
+# CMD ["sleep", "infinity"]
+
+# ================================
+# Stage 1: Builder
+# ================================
+FROM python:3.13-slim AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    nodejs \
+    npm \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip wheel
+
+WORKDIR /opt
+
+ARG JASECI_REPO_URL=https://github.com/Jaseci-Labs/jaseci.git
+ARG JASECI_BRANCH=main
+ARG JASECI_COMMIT=""
+
+RUN git clone --depth=1 --branch ${JASECI_BRANCH} ${JASECI_REPO_URL} jaseci
+WORKDIR /opt/jaseci
+
+RUN if [ -n "${JASECI_COMMIT}" ]; then git fetch --depth=1 origin ${JASECI_COMMIT} && git checkout ${JASECI_COMMIT}; fi
+RUN git submodule update --init --recursive
+
+# Build wheels instead of installing
+RUN pip wheel \
+    ./jac \
+    ./jac-scale \
+    ./jac-client \
+    ./jac-byllm \
+    -w /wheels
+
+
+# ================================
+# Stage 2: Runtime (small)
+# ================================
+FROM python:3.13-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN pip install --upgrade pip
+
+# Copy only wheels
+COPY --from=builder /wheels /wheels
+
+RUN pip install --no-cache-dir /wheels/* \
+    && rm -rf /wheels
+
+# Harden jac CLI
+RUN JAC_PATH="$(which jac)" \
+    && ln -sf "${JAC_PATH}" /usr/bin/jac \
+    && chmod +x /usr/bin/jac
+
+RUN jac --version
+
+WORKDIR /app
+CMD ["sleep", "infinity"]
