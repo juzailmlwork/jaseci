@@ -1,0 +1,76 @@
+# ================================
+# Stage 1: Builder (Python only)
+# ================================
+FROM python:3.13-slim AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip wheel
+
+WORKDIR /opt
+
+ARG JASECI_REPO_URL=https://github.com/Jaseci-Labs/jaseci.git
+ARG JASECI_BRANCH=main
+ARG JASECI_COMMIT=""
+
+RUN git clone --depth=1 --branch ${JASECI_BRANCH} ${JASECI_REPO_URL} jaseci
+WORKDIR /opt/jaseci
+
+RUN if [ -n "${JASECI_COMMIT}" ]; then \
+      git fetch --depth=1 origin ${JASECI_COMMIT} && git checkout ${JASECI_COMMIT}; \
+    fi
+
+RUN git submodule update --init --recursive
+
+# Build Python wheels only
+RUN pip wheel \
+    ./jac \
+    ./jac-scale \
+    ./jac-client \
+    ./jac-byllm \
+    -w /wheels
+
+
+# ================================
+# Stage 2: Runtime (Node REQUIRED)
+# ================================
+FROM python:3.13-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Node + npm required at runtime
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip
+
+# Install jac wheels
+COPY --from=builder /wheels /wheels
+
+RUN pip install --no-cache-dir /wheels/* \
+    && rm -rf /wheels
+
+# Harden jac CLI
+RUN JAC_PATH="$(which jac)" \
+    && ln -sf "${JAC_PATH}" /usr/bin/jac \
+    && chmod +x /usr/bin/jac
+
+# Sanity checks
+RUN jac --version
+RUN node --version
+RUN npm --version
+
+WORKDIR /app
+CMD ["sleep", "infinity"]
