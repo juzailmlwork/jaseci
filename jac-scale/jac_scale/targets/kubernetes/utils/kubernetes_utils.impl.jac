@@ -346,6 +346,38 @@ impl cluster_type -> str {
     }
 }
 
+impl pods_restarted(namespace: str,app_name: str) -> bool {
+    try {
+        config.load_kube_config();
+    } except Exception {
+        config.load_incluster_config();
+    }
+    v1 = client.CoreV1Api();
+    pods = v1.list_namespaced_pod(
+        namespace=namespace,
+        label_selector="app={}".format(app_name)
+    );
+
+    for pod in pods.items{
+        if not (pod.status.container_statuses) {
+            continue;
+        }
+    }
+
+        for container in pod.status.container_statuses{
+            if (container.restart_count > 0) {
+                print(
+                    f"Pod {pod.metadata.name} container "
+                    f"{container.name} restarted "
+                    f"{container.restart_count} times"
+                );
+                return True;
+            }
+        }
+    return False;
+
+}
+
 """
     Wait for a service to become available.
 
@@ -357,7 +389,9 @@ impl check_deployment_status(
     path: str = '/docs',
     interval: int = 15,
     max_retries: int = 30,
-    nlb_url: (str | None) = None
+    nlb_url: (str | None) = None,
+    namespace: str = "default",
+    app_name: str = "jaseci"
 ) -> bool {
     if nlb_url {
         url = f"{nlb_url.rstrip('/')}{path}";
@@ -372,6 +406,11 @@ impl check_deployment_status(
                 return True;
             }
         } except RequestException as e {
+            if pods_restarted(namespace, app_name){
+                print("Detected pod restart during deployment ❌");
+                return False;
+            }
+
             if (attempt == max_retries) {
                 print(f"Failed to connect to {url}: {e}");
             }
