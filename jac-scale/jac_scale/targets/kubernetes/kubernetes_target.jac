@@ -229,6 +229,8 @@ class KubernetesTarget(DeploymentTarget) {
         # Install Node requirements
         commands.append('jac add --npm');
 
+         commands.append('jac hai');
+
         # Start the application
         commands.append(f"jac start {app_config.file_name}");
 
