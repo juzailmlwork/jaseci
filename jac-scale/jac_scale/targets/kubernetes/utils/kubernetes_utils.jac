@@ -13,7 +13,7 @@ import from kubernetes.client.rest { ApiException }
 import from kubernetes.config.config_exception { ConfigException }
 import from requests.exceptions { RequestException }
 
-def pods_restarted(namespace: str,app_name: str) -> bool;
+def pods_restarted(namespace: str, app_name: str) -> bool;
 
 def debug_print(statement: str, debug_only: bool = False) -> None;
 

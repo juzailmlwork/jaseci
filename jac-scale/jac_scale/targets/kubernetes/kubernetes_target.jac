@@ -437,7 +437,11 @@ class KubernetesTarget(DeploymentTarget) {
             }
             if (nlb_url) {
                 deployment_status = check_deployment_status(
-                    self.k8s_config.node_port, path, nlb_url=nlb_url,namespace=namespace,app_name=app_name
+                    self.k8s_config.node_port,
+                    path,
+                    nlb_url=nlb_url,
+                    namespace=namespace,
+                    app_name=app_name
                 );
                 if not (deployment_status) {
                     raise Exception("Deployment failed: Application failed to deploy.") ;
@@ -450,7 +454,7 @@ class KubernetesTarget(DeploymentTarget) {
             }
         } else {
             deployment_status = check_deployment_status(
-                self.k8s_config.node_port, path,namespace=namespace,app_name=app_name
+                self.k8s_config.node_port, path, namespace=namespace, app_name=app_name
             );
             if deployment_status is False {
                 raise Exception("Deployment failed: Application failed to deploy.") ;

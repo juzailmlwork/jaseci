@@ -346,7 +346,7 @@ impl cluster_type -> str {
     }
 }
 
-impl pods_restarted(namespace: str,app_name: str) -> bool {
+impl pods_restarted(namespace: str, app_name: str) -> bool {
     try {
         config.load_kube_config();
     } except Exception {
@@ -354,28 +354,24 @@ impl pods_restarted(namespace: str,app_name: str) -> bool {
     }
     v1 = client.CoreV1Api();
     pods = v1.list_namespaced_pod(
-        namespace=namespace,
-        label_selector="app={}".format(app_name)
+        namespace=namespace, label_selector="app={}".format(app_name)
     );
-
-    for pod in pods.items{
+    for pod in pods.items {
         if not (pod.status.container_statuses) {
             continue;
         }
     }
-
-        for container in pod.status.container_statuses{
-            if (container.restart_count > 0) {
-                print(
-                    f"Pod {pod.metadata.name} container "
-                    f"{container.name} restarted "
-                    f"{container.restart_count} times"
-                );
-                return True;
-            }
+    for container in pod.status.container_statuses {
+        if (container.restart_count > 0) {
+            print(
+                f"Pod {pod.metadata.name} container "
+                f"{container.name} restarted "
+                f"{container.restart_count} times"
+            );
+            return True;
         }
+    }
     return False;
-
 }
 
 """
@@ -406,7 +402,7 @@ impl check_deployment_status(
                 return True;
             }
         } except RequestException as e {
-            if pods_restarted(namespace, app_name){
+            if pods_restarted(namespace, app_name) {
                 print("Detected pod restart during deployment ❌");
                 return False;
             }
