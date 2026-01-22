@@ -197,26 +197,26 @@ class KubernetesTarget(DeploymentTarget) {
 
         # Clone and setup Jaseci if enabled
         if config.install_jaseci {
-        #     commands.append('rm -rf jaseci');
-        #     # Clone repository
-        #     clone_cmd = f"git clone --branch {config.jaseci_branch} --single-branch {config.jaseci_repo_url}";
-        #     commands.append(clone_cmd);
-        #     commands.append('cd ./jaseci');
-        #     # Checkout specific commit if provided
-        #     if config.jaseci_commit {
-        #         commands.append(f"git checkout {config.jaseci_commit}");
-        #     }
-        #     # Update submodules
-        #     commands.append('git submodule update --init --recursive');
-        #     # Setup virtual environment
-        #     commands.append('python -m venv venv');
-        #     commands.append('source venv/bin/activate');
-        #     # Install Jaseci components
-        #     commands.append('pip install pluggy');
-        #     commands.append('pip install -e ./jac');
-        #     commands.append('pip install -e ./jac-scale');
-        #     commands.append('pip install -e ./jac-client');
-        #     commands.append('pip install -e ./jac-byllm');
+            #     commands.append('rm -rf jaseci');
+            #     # Clone repository
+            #     clone_cmd = f"git clone --branch {config.jaseci_branch} --single-branch {config.jaseci_repo_url}";
+            #     commands.append(clone_cmd);
+            #     commands.append('cd ./jaseci');
+            #     # Checkout specific commit if provided
+            #     if config.jaseci_commit {
+            #         commands.append(f"git checkout {config.jaseci_commit}");
+            #     }
+            #     # Update submodules
+            #     commands.append('git submodule update --init --recursive');
+            #     # Setup virtual environment
+            #     commands.append('python -m venv venv');
+            #     commands.append('source venv/bin/activate');
+            #     # Install Jaseci components
+            #     commands.append('pip install pluggy');
+            #     commands.append('pip install -e ./jac');
+            #     commands.append('pip install -e ./jac-scale');
+            #     commands.append('pip install -e ./jac-client');
+            #     commands.append('pip install -e ./jac-byllm');
             # commands.append('cd ..');
         }
 
