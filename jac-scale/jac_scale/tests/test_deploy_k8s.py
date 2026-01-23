@@ -5,8 +5,10 @@ import time
 from typing import Any
 
 import requests
-from kubernetes import config
+from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
+from ..abstractions.config.app_config import AppConfig
 from ..config_loader import get_scale_config
 from ..factories.deployment_factory import DeploymentTargetFactory
 from ..factories.utility_factory import UtilityFactory
