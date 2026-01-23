@@ -56,171 +56,171 @@ def _request_with_retry(
     return response
 
 
-# def test_deploy_all_in_one():
-#     """
-#     Test deployment using the new factory-based architecture.
-#     Deploys the all-in-one app found in jac client examples against a live Kubernetes cluster.
-#     Validates deployment, services, sends HTTP request, and tests cleanup.
-#     """
+def test_deploy_all_in_one():
+    """
+    Test deployment using the new factory-based architecture.
+    Deploys the all-in-one app found in jac client examples against a live Kubernetes cluster.
+    Validates deployment, services, sends HTTP request, and tests cleanup.
+    """
 
-#     # Load kubeconfig and initialize client
-#     config.load_kube_config()
-#     apps_v1 = client.AppsV1Api()
-#     core_v1 = client.CoreV1Api()
+    # Load kubeconfig and initialize client
+    config.load_kube_config()
+    apps_v1 = client.AppsV1Api()
+    core_v1 = client.CoreV1Api()
 
-#     namespace = "all-in-one"
-#     app_name = namespace
+    namespace = "all-in-one"
+    app_name = namespace
 
-#     # Set environment
-#     os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace})
+    # Set environment
+    os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace})
 
-#     # Resolve the absolute path to the todo app folder
-#     test_dir = os.path.dirname(os.path.abspath(__file__))
-#     todo_app_path = os.path.join(
-#         test_dir, "../../../jac-client/jac_client/examples/all-in-one"
-#     )
+    # Resolve the absolute path to the todo app folder
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    todo_app_path = os.path.join(
+        test_dir, "../../../jac-client/jac_client/examples/all-in-one"
+    )
 
-#     # Get configuration
-#     scale_config = get_scale_config()
-#     target_config = scale_config.get_kubernetes_config()
-#     target_config["app_name"] = app_name
-#     target_config["namespace"] = namespace
+    # Get configuration
+    scale_config = get_scale_config()
+    target_config = scale_config.get_kubernetes_config()
+    target_config["app_name"] = app_name
+    target_config["namespace"] = namespace
 
-#     # Create logger
-#     logger = UtilityFactory.create_logger("standard")
+    # Create logger
+    logger = UtilityFactory.create_logger("standard")
 
-#     # Create deployment target using factory
-#     deployment_target = DeploymentTargetFactory.create(
-#         "kubernetes", target_config, logger
-#     )
+    # Create deployment target using factory
+    deployment_target = DeploymentTargetFactory.create(
+        "kubernetes", target_config, logger
+    )
 
-#     # Create app config
-#     app_config = AppConfig(
-#         code_folder=todo_app_path,
-#         file_name="main.jac",
-#         build=False,
-#     )
+    # Create app config
+    app_config = AppConfig(
+        code_folder=todo_app_path,
+        file_name="main.jac",
+        build=False,
+    )
 
-#     # Deploy using new architecture
-#     result = deployment_target.deploy(app_config)
+    # Deploy using new architecture
+    result = deployment_target.deploy(app_config)
 
-#     assert result.success is True
-#     print(f"✓ Deployment successful: {result.message}")
+    assert result.success is True
+    print(f"✓ Deployment successful: {result.message}")
 
-#     # Wait a moment for services to stabilize
-#     time.sleep(5)
+    # Wait a moment for services to stabilize
+    time.sleep(5)
 
-#     # Validate the main deployment exists
-#     deployment = apps_v1.read_namespaced_deployment(name=app_name, namespace=namespace)
-#     assert deployment.metadata.name == app_name
-#     assert deployment.spec.replicas == 1
+    # Validate the main deployment exists
+    deployment = apps_v1.read_namespaced_deployment(name=app_name, namespace=namespace)
+    assert deployment.metadata.name == app_name
+    assert deployment.spec.replicas == 1
 
-#     # Validate main service
-#     service = core_v1.read_namespaced_service(
-#         name=f"{app_name}-service", namespace=namespace
-#     )
-#     assert service.spec.type == "NodePort"
-#     node_port = service.spec.ports[0].node_port
-#     print(f"✓ Service is exposed on NodePort: {node_port}")
+    # Validate main service
+    service = core_v1.read_namespaced_service(
+        name=f"{app_name}-service", namespace=namespace
+    )
+    assert service.spec.type == "NodePort"
+    node_port = service.spec.ports[0].node_port
+    print(f"✓ Service is exposed on NodePort: {node_port}")
 
-#     # Validate MongoDB StatefulSet and Service
-#     mongodb_stateful = apps_v1.read_namespaced_stateful_set(
-#         name=f"{app_name}-mongodb", namespace=namespace
-#     )
-#     assert mongodb_stateful.metadata.name == f"{app_name}-mongodb"
-#     assert mongodb_stateful.spec.service_name == f"{app_name}-mongodb-service"
+    # Validate MongoDB StatefulSet and Service
+    mongodb_stateful = apps_v1.read_namespaced_stateful_set(
+        name=f"{app_name}-mongodb", namespace=namespace
+    )
+    assert mongodb_stateful.metadata.name == f"{app_name}-mongodb"
+    assert mongodb_stateful.spec.service_name == f"{app_name}-mongodb-service"
 
-#     mongodb_service = core_v1.read_namespaced_service(
-#         name=f"{app_name}-mongodb-service", namespace=namespace
-#     )
-#     assert mongodb_service.spec.ports[0].port == 27017
+    mongodb_service = core_v1.read_namespaced_service(
+        name=f"{app_name}-mongodb-service", namespace=namespace
+    )
+    assert mongodb_service.spec.ports[0].port == 27017
 
-#     # Validate Redis Deployment and Service
-#     redis_deploy = apps_v1.read_namespaced_deployment(
-#         name=f"{app_name}-redis", namespace=namespace
-#     )
-#     assert redis_deploy.metadata.name == f"{app_name}-redis"
+    # Validate Redis Deployment and Service
+    redis_deploy = apps_v1.read_namespaced_deployment(
+        name=f"{app_name}-redis", namespace=namespace
+    )
+    assert redis_deploy.metadata.name == f"{app_name}-redis"
 
-#     redis_service = core_v1.read_namespaced_service(
-#         name=f"{app_name}-redis-service", namespace=namespace
-#     )
-#     assert redis_service.spec.ports[0].port == 6379
+    redis_service = core_v1.read_namespaced_service(
+        name=f"{app_name}-redis-service", namespace=namespace
+    )
+    assert redis_service.spec.ports[0].port == 6379
 
-#     # Test get_status
-#     status = deployment_target.get_status(app_name)
-#     assert status is not None
-#     assert status.replicas >= 0
-#     print(
-#         f"✓ Deployment status: {status.status.value}, replicas: {status.replicas}/{status.ready_replicas}"
-#     )
+    # Test get_status
+    status = deployment_target.get_status(app_name)
+    assert status is not None
+    assert status.replicas >= 0
+    print(
+        f"✓ Deployment status: {status.status.value}, replicas: {status.replicas}/{status.ready_replicas}"
+    )
 
-#     # Send POST request to create a todo (with retry for 503)
-#     url = f"http://localhost:{node_port}/walker/create_todo"
-#     payload = {"text": "first-task"}
-#     response = _request_with_retry("POST", url, json=payload, timeout=10)
-#     assert response.status_code == 200
-#     print(f"✓ Successfully created todo at {url}")
-#     print(f"  Response: {response.json()}")
+    # Send POST request to create a todo (with retry for 503)
+    url = f"http://localhost:{node_port}/walker/create_todo"
+    payload = {"text": "first-task"}
+    response = _request_with_retry("POST", url, json=payload, timeout=10)
+    assert response.status_code == 200
+    print(f"✓ Successfully created todo at {url}")
+    print(f"  Response: {response.json()}")
 
-#     url = f"http://localhost:{node_port}/cl/app"
-#     response = _request_with_retry("GET", url, timeout=100)
-#     print(f"Response status code for app page: {response.status_code}")
-#     assert response.status_code == 200
-#     print(f"✓ Successfully reached app page at {url}")
+    url = f"http://localhost:{node_port}/cl/app"
+    response = _request_with_retry("GET", url, timeout=100)
+    print(f"Response status code for app page: {response.status_code}")
+    assert response.status_code == 200
+    print(f"✓ Successfully reached app page at {url}")
 
-#     # Cleanup using new architecture
-#     deployment_target.destroy(app_name)
-#     time.sleep(60)  # Wait for deletion to propagate
+    # Cleanup using new architecture
+    deployment_target.destroy(app_name)
+    time.sleep(60)  # Wait for deletion to propagate
 
-#     # Verify cleanup - resources should no longer exist
-#     try:
-#         apps_v1.read_namespaced_deployment(app_name, namespace=namespace)
-#         raise AssertionError("Deployment should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    # Verify cleanup - resources should no longer exist
+    try:
+        apps_v1.read_namespaced_deployment(app_name, namespace=namespace)
+        raise AssertionError("Deployment should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     try:
-#         core_v1.read_namespaced_service(f"{app_name}-service", namespace=namespace)
-#         raise AssertionError("Service should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    try:
+        core_v1.read_namespaced_service(f"{app_name}-service", namespace=namespace)
+        raise AssertionError("Service should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     try:
-#         apps_v1.read_namespaced_stateful_set(f"{app_name}-mongodb", namespace=namespace)
-#         raise AssertionError("MongoDB StatefulSet should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    try:
+        apps_v1.read_namespaced_stateful_set(f"{app_name}-mongodb", namespace=namespace)
+        raise AssertionError("MongoDB StatefulSet should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     try:
-#         core_v1.read_namespaced_service(
-#             f"{app_name}-mongodb-service", namespace=namespace
-#         )
-#         raise AssertionError("MongoDB Service should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    try:
+        core_v1.read_namespaced_service(
+            f"{app_name}-mongodb-service", namespace=namespace
+        )
+        raise AssertionError("MongoDB Service should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     try:
-#         apps_v1.read_namespaced_deployment(f"{app_name}-redis", namespace=namespace)
-#         raise AssertionError("Redis Deployment should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    try:
+        apps_v1.read_namespaced_deployment(f"{app_name}-redis", namespace=namespace)
+        raise AssertionError("Redis Deployment should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     try:
-#         core_v1.read_namespaced_service(
-#             f"{app_name}-redis-service", namespace=namespace
-#         )
-#         raise AssertionError("Redis Service should have been deleted")
-#     except ApiException as e:
-#         assert e.status == 404, f"Expected 404, got {e.status}"
+    try:
+        core_v1.read_namespaced_service(
+            f"{app_name}-redis-service", namespace=namespace
+        )
+        raise AssertionError("Redis Service should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
 
-#     # Verify PVC cleanup
-#     pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace)
-#     for pvc in pvcs.items:
-#         assert not pvc.metadata.name.startswith(app_name), (
-#             f"PVC '{pvc.metadata.name}' should have been deleted"
-#         )
+    # Verify PVC cleanup
+    pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace)
+    for pvc in pvcs.items:
+        assert not pvc.metadata.name.startswith(app_name), (
+            f"PVC '{pvc.metadata.name}' should have been deleted"
+        )
 
-#     print("✓ Cleanup verification complete - all resources properly deleted")
+    print("✓ Cleanup verification complete - all resources properly deleted")
 
 
 def test_deployment_target_methods():
