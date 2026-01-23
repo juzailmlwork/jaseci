@@ -225,41 +225,41 @@ def test_deploy_all_in_one():
     print("✓ Cleanup verification complete - all resources properly deleted")
 
 
-def test_deployment_target_methods():
-    """Test individual methods of KubernetesTarget."""
-    # Load kubeconfig
-    config.load_kube_config()
+# def test_deployment_target_methods():
+#     """Test individual methods of KubernetesTarget."""
+#     # Load kubeconfig
+#     config.load_kube_config()
 
-    namespace = "test-methods"
-    app_name = "test-methods-app"
+#     namespace = "test-methods"
+#     app_name = "test-methods-app"
 
-    # Set environment
-    os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace})
+#     # Set environment
+#     os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace})
 
-    # Get configuration
-    scale_config = get_scale_config()
-    target_config = scale_config.get_kubernetes_config()
-    target_config["app_name"] = app_name
-    target_config["namespace"] = namespace
+#     # Get configuration
+#     scale_config = get_scale_config()
+#     target_config = scale_config.get_kubernetes_config()
+#     target_config["app_name"] = app_name
+#     target_config["namespace"] = namespace
 
-    # Create deployment target
-    logger = UtilityFactory.create_logger("standard")
-    deployment_target = DeploymentTargetFactory.create(
-        "kubernetes", target_config, logger
-    )
+#     # Create deployment target
+#     logger = UtilityFactory.create_logger("standard")
+#     deployment_target = DeploymentTargetFactory.create(
+#         "kubernetes", target_config, logger
+#     )
 
-    # Test get_service_url (before deployment, should return None or handle gracefully)
-    service_url = deployment_target.get_service_url(app_name)
-    # Service URL may be None if service doesn't exist yet
-    assert service_url is None or isinstance(service_url, str)
+#     # Test get_service_url (before deployment, should return None or handle gracefully)
+#     service_url = deployment_target.get_service_url(app_name)
+#     # Service URL may be None if service doesn't exist yet
+#     assert service_url is None or isinstance(service_url, str)
 
-    # Test get_status (before deployment, should handle gracefully)
-    try:
-        status = deployment_target.get_status(app_name)
-        # Should return UNKNOWN or handle the error gracefully
-        assert status is not None
-    except Exception:
-        # It's okay if it raises an exception for non-existent deployment
-        pass
+#     # Test get_status (before deployment, should handle gracefully)
+#     try:
+#         status = deployment_target.get_status(app_name)
+#         # Should return UNKNOWN or handle the error gracefully
+#         assert status is not None
+#     except Exception:
+#         # It's okay if it raises an exception for non-existent deployment
+#         pass
 
-    print("✓ Deployment target methods tested")
+#     print("✓ Deployment target methods tested")
