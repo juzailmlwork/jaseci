@@ -346,7 +346,7 @@ impl cluster_type -> str {
     }
 }
 
-impl pods_restarted(namespace: str, app_name: str) -> bool {
+impl check_pods_restarted(namespace: str, app_name: str) -> bool {
     try {
         config.load_kube_config();
     } except Exception {
@@ -403,7 +403,7 @@ impl check_deployment_status(
                 return True;
             }
         } except RequestException as e {
-            if pods_restarted(namespace, app_name) {
+            if check_pods_restarted(namespace, app_name) {
                 print("Detected pod restart during deployment ❌");
                 return False;
             }
