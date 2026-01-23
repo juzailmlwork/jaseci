@@ -189,14 +189,12 @@ class KubernetesTarget(DeploymentTarget) {
             # # Base setup
             # commands.append('export DEBIAN_FRONTEND=noninteractive');
             # commands.append('apt-get update');
-
             # # Install base packages
             # base_packages = ['git', 'npm', 'nodejs'];
             # if config.additional_packages {
             #     base_packages.extend(config.additional_packages);
             # }
             # commands.append(f"apt-get install -y {' '.join(base_packages)}");
-
             # #     commands.append('rm -rf jaseci');
             # # Clone repository
             # clone_cmd = f"git clone --branch {config.jaseci_branch} --single-branch {config.jaseci_repo_url}";
