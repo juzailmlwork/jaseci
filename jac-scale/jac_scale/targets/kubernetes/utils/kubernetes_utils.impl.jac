@@ -358,20 +358,20 @@ impl pods_restarted(namespace: str, app_name: str) -> bool {
     );
     for pod in pods.items {
         statuses = pod.status.container_statuses;
-        if not statuses{
+        if not statuses {
             continue;
         }
     }
-        for container in statuses  {
-            if (container.restart_count > 0) {
-                print(
-                    f"Pod {pod.metadata.name} container "
-                    f"{container.name} restarted "
-                    f"{container.restart_count} times"
-                );
-                return True;
-            }
+    for container in statuses {
+        if (container.restart_count > 0) {
+            print(
+                f"Pod {pod.metadata.name} container "
+                f"{container.name} restarted "
+                f"{container.restart_count} times"
+            );
+            return True;
         }
+    }
     return False;
 }
 
