@@ -23,6 +23,7 @@ def _scale_pre_hook(context: HookContext) -> None {
         # Handle deployment instead of local server
         filename = context.get_arg("filename");
         build = context.get_arg("build", False);
+        dev = context.get_arg("dev", False);
         target = context.get_arg("target", "kubernetes");
         registry = context.get_arg("registry", "dockerhub");
         if not os.path.exists(filename) {
@@ -45,7 +46,6 @@ def _scale_pre_hook(context: HookContext) -> None {
             # For future targets, get from config
             target_config = scale_config.get_kubernetes_config();  # Default for now
         }
-        dev = False;
         if dev == True {
             target_config.docker_image_name = 'python_image';
             target_config.install_jaseci = True;
