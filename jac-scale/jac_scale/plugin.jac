@@ -45,6 +45,11 @@ def _scale_pre_hook(context: HookContext) -> None {
             # For future targets, get from config
             target_config = scale_config.get_kubernetes_config();  # Default for now
         }
+        dev=False;
+        if dev == True {
+            target_config.docker_image_name = 'python_image';
+            target_config.install_jaseci = True;
+        }
         # Create deployment target
         deployment_target = DeploymentTargetFactory.create(
             target, target_config, logger
@@ -60,6 +65,7 @@ def _scale_pre_hook(context: HookContext) -> None {
             code_folder=code_folder, file_name=base_file_path, build=build
         );
         # Deploy
+
         result = deployment_target.deploy(app_config);
         if not result.success {
             raise RuntimeError(result.message or "Deployment failed") ;
@@ -158,7 +164,6 @@ class JacCmd {
                 # For future targets, get from config
                 target_config = scale_config.get_kubernetes_config();  # Default for now
             }
-
             # Create deployment target and destroy
             deployment_target = DeploymentTargetFactory.create(
                 target, target_config, logger

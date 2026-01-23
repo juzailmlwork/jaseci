@@ -38,7 +38,7 @@ class KubernetesConfig(BaseConfig) {
         jaseci_repo_url: str = 'https://github.com/jaseci-labs/jaseci.git',
         jaseci_branch: str = 'main',
         jaseci_commit: (str | None) = None,
-        install_jaseci: bool = True,
+        install_jaseci: bool = False,
         additional_packages: list[str] = [];
 
     def init(
@@ -74,7 +74,7 @@ class KubernetesConfig(BaseConfig) {
         jaseci_repo_url: str = 'https://github.com/jaseci-labs/jaseci.git',
         jaseci_branch: str = 'main',
         jaseci_commit: (str | None) = None,
-        install_jaseci: bool = True,
+        install_jaseci: bool = False,
         additional_packages: list[str] = []
         # Runtime configuration
         # Storage configuration
@@ -203,7 +203,7 @@ class KubernetesConfig(BaseConfig) {
             ),
             jaseci_branch=config.get('jaseci_branch', 'main'),
             jaseci_commit=config.get('jaseci_commit'),
-            install_jaseci=config.get('install_jaseci', True),
+            install_jaseci=config.get('install_jaseci', False),
             additional_packages=config.get('additional_packages', [])
             # Runtime configuration
             # Storage configuration
