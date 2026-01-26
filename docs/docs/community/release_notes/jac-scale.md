@@ -21,6 +21,7 @@ First release of **Jac-Scale** - a scalable runtime framework for distributed Ja
 - YAML-based configuration
 - Username-based user management for authentication
 - **Custom Response Headers**: Configure custom HTTP response headers via `[environments.response.headers]` in `jac.toml`. Useful for security headers like COOP/COEP (required for `SharedArrayBuffer` support in libraries like monaco-editor).
+- Auto-detection of restarting of k8s pods during deployment and stop k8s deployment with error
 
 ### Installation
 
