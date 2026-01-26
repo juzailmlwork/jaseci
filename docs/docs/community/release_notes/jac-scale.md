@@ -3,7 +3,7 @@
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jac-Scale**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking-changes.md) page.
 
 ## jac-scale 0.1.2 (Unreleased)
-
+- Auto-detection of restarting of k8s pods during deployment and stop k8s deployment
 ## jac-scale 0.1.1 (Latest Release)
 
 ## jac-scale 0.1.0
@@ -21,7 +21,6 @@ First release of **Jac-Scale** - a scalable runtime framework for distributed Ja
 - YAML-based configuration
 - Username-based user management for authentication
 - **Custom Response Headers**: Configure custom HTTP response headers via `[environments.response.headers]` in `jac.toml`. Useful for security headers like COOP/COEP (required for `SharedArrayBuffer` support in libraries like monaco-editor).
-- Auto-detection of restarting of k8s pods during deployment and stop k8s deployment with error
 
 ### Installation
 
