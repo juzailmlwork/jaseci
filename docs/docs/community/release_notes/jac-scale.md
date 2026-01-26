@@ -16,12 +16,13 @@ First release of **Jac-Scale** - a scalable runtime framework for distributed Ja
 
 ### Key Features
 
-- Distributed runtime with load balancing and service discovery
-- Intelligent walker scheduling across multiple nodes
-- Auto-partitioned graph storage
-- Performance monitoring and auto-scaling
-- YAML-based configuration
-- Username-based user management for authentication
+- Conversion of walker to fastapi endpoints
+- Multi memory hierachy implementation
+- Support for Mongodb (persistance storage) and Redis (cache storage) in k8s
+- Deployment of app code directly to k8s cluster
+- k8s support for local deployment and aws k8s deployment
+- SSO support for google 
+- 
 - **Custom Response Headers**: Configure custom HTTP response headers via `[environments.response.headers]` in `jac.toml`. Useful for security headers like COOP/COEP (required for `SharedArrayBuffer` support in libraries like monaco-editor).
 
 ### Installation
