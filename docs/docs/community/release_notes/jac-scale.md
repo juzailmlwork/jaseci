@@ -21,8 +21,8 @@ First release of **Jac-Scale** - a scalable runtime framework for distributed Ja
 - Support for Mongodb (persistance storage) and Redis (cache storage) in k8s
 - Deployment of app code directly to k8s cluster
 - k8s support for local deployment and aws k8s deployment
-- SSO support for google 
-- 
+- SSO support for google
+-
 - **Custom Response Headers**: Configure custom HTTP response headers via `[environments.response.headers]` in `jac.toml`. Useful for security headers like COOP/COEP (required for `SharedArrayBuffer` support in libraries like monaco-editor).
 
 ### Installation
