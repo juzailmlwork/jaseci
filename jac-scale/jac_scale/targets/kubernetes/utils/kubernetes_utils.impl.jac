@@ -361,7 +361,7 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         if not statuses {
             continue;
         }
-    
+
         for container in statuses {
             if (container.restart_count > 0) {
                 print(
@@ -372,7 +372,7 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
                 return True;
             }
         }
-    return False;
+        return False;
     }
 }
 
