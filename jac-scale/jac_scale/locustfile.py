@@ -9,7 +9,6 @@ class UserAuthLoadTest(HttpUser):
         self.username = f"user_{uuid.uuid4().hex}"
         self.password = "Test@12345"
 
-        # Register user once
         self.client.post(
             "/user/register",
             json={
@@ -19,7 +18,6 @@ class UserAuthLoadTest(HttpUser):
             name="/user/register"
         )
 
-        # Login once (if your backend sets session/cookies)
         self.client.post(
             "/user/login",
             json={
@@ -29,6 +27,22 @@ class UserAuthLoadTest(HttpUser):
             name="/user/login"
         )
 
+    # 🔁 Frontend page load (random like walkers)
+    @task(1)
+    def load_frontend(self):
+        with self.client.get(
+            "/",
+            name="Frontend Load",
+            catch_response=True
+        ) as response:
+            if response.status_code != 200:
+                response.failure(f"Frontend down ({response.status_code})")
+            elif "text/html" not in response.headers.get("Content-Type", ""):
+                response.failure("Frontend did not return HTML")
+            else:
+                response.success()
+
+    # 🔐 Login happens more frequently
     @task(2)
     def login_user(self):
         self.client.post(
@@ -40,7 +54,8 @@ class UserAuthLoadTest(HttpUser):
             name="/user/login"
         )
 
-    @task(1)
+    # 📝 Normal app action
+    @task(2)
     def create_todo(self):
         self.client.post(
             "/walker/create_todo",
