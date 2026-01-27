@@ -6,7 +6,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 = **jac destroy command wait till fully removal of resources**
 
-## jac-scale 0.1.2 
+## jac-scale 0.1.2
 
 ### PyPI Installation by Default
 
