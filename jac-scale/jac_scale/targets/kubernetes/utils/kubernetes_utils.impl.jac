@@ -1,5 +1,6 @@
 import os;
 import pathlib;
+import toml;
 
 impl parse_cpu_quantity(quantity: str) -> float {
     trimmed = quantity.strip();
@@ -492,14 +493,41 @@ impl check_K8s_status -> None {
     }
 }
 
+impl get_toml_env_keys(toml_path: str) -> list {
+    env_keys = [];
+    if not os.path.isfile(toml_path) {
+        return env_keys;
+    }
+    with open(toml_path, 'r') as f {
+        toml_data = toml.load(f);
+    }
+    scale_config = toml_data.get('plugins', {}).get('scale', {});
+    for (key, value) in scale_config.items() {
+        if isinstance(value, str) and value.startswith("${") and value.endswith("}") {
+            env_var_name = value[2:-1];
+            env_keys.append(env_var_name);
+        }
+    }
+    return env_keys;
+
+}
+
 """Load env variables in .env to aws beanstalk environment."""
 impl load_env_variables(code_folder: str) -> list {
     env_file = os.path.join(code_folder, '.env');
+    toml_path = os.path.join(code_folder, 'jac.toml');
     env_vars = dotenv_values(env_file);
     env_list = [];
     if os.path.exists(env_file) {
         for (key, value) in env_vars.items() {
             env_list.append({'name': key, 'value': value});
+        }
+    }
+    toml_env_keys = get_toml_env_keys(toml_path);
+    for key in toml_env_keys {
+        if (key not in env_vars) {
+            env_value = os.getenv(key, '');
+            env_list.append({'name': key, 'value': env_value});
         }
     }
     return env_list;

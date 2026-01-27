@@ -28,6 +28,8 @@ def validate_resource_limits(
 
 def load_env_variables(code_folder: str) -> list;
 
+def get_toml_env_keys(toml_path: str) -> list;
+
 def check_K8s_status -> None;
 
 def delete_if_exists(
