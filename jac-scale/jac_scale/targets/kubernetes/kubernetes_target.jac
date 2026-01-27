@@ -679,9 +679,7 @@ class KubernetesTarget(DeploymentTarget) {
 
             # Check deployment
             try {
-                apps_v1.read_namespaced_deployment(
-                    name=app_name, namespace=namespace
-                );
+                apps_v1.read_namespaced_deployment(name=app_name, namespace=namespace);
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
@@ -777,9 +775,11 @@ class KubernetesTarget(DeploymentTarget) {
             # If no resources exist, deletion is complete
             if not resources_exist {
                 if self.logger {
-                    self.logger.info(f"All resources for '{app_name}' have been deleted");
+                    self.logger.info(
+                        f"All resources for '{app_name}' have been deleted"
+                    );
                 }
-                return ;
+                return;
             }
 
             if self.logger {
@@ -886,7 +886,9 @@ class KubernetesTarget(DeploymentTarget) {
 
             # Wait for all resources to be completely deleted
             if self.logger {
-                self.logger.info(f"Waiting for all resources to be deleted for '{app_name}'...");
+                self.logger.info(
+                    f"Waiting for all resources to be deleted for '{app_name}'..."
+                );
             }
             self._wait_for_deletion(app_name, namespace, apps_v1, core_v1);
 
