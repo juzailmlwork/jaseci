@@ -509,7 +509,6 @@ impl get_toml_env_keys(toml_path: str) -> list {
         }
     }
     return env_keys;
-
 }
 
 """Load env variables in .env to aws beanstalk environment."""
