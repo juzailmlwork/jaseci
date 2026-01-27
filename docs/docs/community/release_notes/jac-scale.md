@@ -3,9 +3,10 @@
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jac-Scale**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking-changes.md) page.
 
 ## jac-scale 0.1.3 (Unreleased)
+
 - **Load env variables defined in toml**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
- 
-## jac-scale 0.1.2 
+
+## jac-scale 0.1.2
 
 ### PyPI Installation by Default
 
