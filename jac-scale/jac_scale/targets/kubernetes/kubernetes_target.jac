@@ -781,12 +781,6 @@ class KubernetesTarget(DeploymentTarget) {
                 }
                 return;
             }
-
-            if self.logger {
-                self.logger.debug(
-                    f"Waiting for resources to be deleted... ({elapsed:.1f}s/{max_wait}s)"
-                );
-            }
             time.sleep(poll_interval);
             elapsed = elapsed + poll_interval;
         }
