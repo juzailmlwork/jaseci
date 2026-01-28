@@ -7,6 +7,9 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Load env variables defined in toml**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
 
 ## jac-scale 0.1.2
+- **Streaming Response Support**: Streaming responses are supported with walker spawn calls and function calls.
+
+- **Internal**: Explicitly declared all postinit fields across the codebase.
 
 ### PyPI Installation by Default
 
