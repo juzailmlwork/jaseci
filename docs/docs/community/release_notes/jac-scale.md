@@ -4,10 +4,11 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.3 (Unreleased)
 
-= **jac destroy command wait till fully removal of resources**
+- **Streaming Response Support**: Streaming responses are supported with walker spawn calls and function calls.
 
-## jac-scale 0.1.2
+- **Internal**: Explicitly declared all postinit fields across the codebase.
 
+- **jac destroy command wait till fully removal of resources**
 ### PyPI Installation by Default
 
 Kubernetes deployments now install Jaseci packages from PyPI by default instead of cloning the entire repository. This provides faster startup times and more reproducible deployments.
