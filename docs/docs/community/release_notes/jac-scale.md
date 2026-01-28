@@ -7,6 +7,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Streaming Response Support**: Streaming responses are supported with walker spawn calls and function calls.
 
 - **Internal**: Explicitly declared all postinit fields across the codebase.
+- **early exit from k8s deployment if container restarted**
 
 ### PyPI Installation by Default
 
