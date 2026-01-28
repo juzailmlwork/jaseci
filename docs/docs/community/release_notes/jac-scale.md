@@ -12,6 +12,8 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - **Internal**: Explicitly declared all postinit fields across the codebase.
 
+- **jac destroy command wait till fully removal of resources**
+
 ### PyPI Installation by Default
 
 Kubernetes deployments now install Jaseci packages from PyPI by default instead of cloning the entire repository. This provides faster startup times and more reproducible deployments.
@@ -45,6 +47,13 @@ jac_byllm = "none"     # use "none" to skip installation (will insall elvant byl
 ```
 
 When not specified, defaults to `"latest"` for all packages.
+
+### Enhanced `restspec` Decorator
+
+The `@restspec` decorator now supports custom HTTP methods and custom endpoint paths for both walkers and functions.
+
+- **Custom Methods**: Use `method=HTTPMethod.GET`, `method=HTTPMethod.PUT`, etc.
+- **Custom Paths**: Use `path="/my/custom/path"` to override the default routing.
 
 ## jac-scale 0.1.1 (Latest Release)
 
