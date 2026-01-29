@@ -411,15 +411,16 @@ impl create_or_update_configmap(
     }
 }
 
-impl exclude_folders(tarinfo: tarfile.TarInfo) -> Optional[tarfile.TarInfo]{
+impl exclude_folders(tarinfo: tarfile.TarInfo) -> Optional[tarfile.TarInfo] {
     if tarinfo.isdir() and tarinfo.name.endswith("/.jac") {
         return None;
     }
-    if "/.jac/" in tarinfo.name{
+    if "/.jac/" in tarinfo.name {
         return None;
     }
     return tarinfo;
 }
+
 """
     Create a tar.gz file from the source directory using only os module.
 """
