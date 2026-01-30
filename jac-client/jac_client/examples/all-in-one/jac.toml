@@ -40,4 +40,5 @@ tailwindcss = "latest"
 "Cross-Origin-Embedder-Policy" = "require-corp"
 
 [plugins.scale]
-kubernetes.env.ENV_KEY_1 = "${ENV_KEY_1}"
+env_key_1 = "${ENV_KEY_1}"
+
