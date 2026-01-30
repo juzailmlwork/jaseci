@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.4 (Unreleased)
 
 - **Hot fix: call state**: Normal spawn calls inside API spawn calls supported.
+- **.jac folder is excluded when creating the zip folder that is uploaded into jaseci deployment pods.Fasten up deployment**
 
 ## jac-scale 0.1.3 (Latest Release)
 
@@ -22,8 +23,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **SPA Catch-All for BrowserRouter Support**: The FastAPI server's `serve_root_asset` endpoint now falls back to rendering SPA HTML for extensionless paths when `base_route_app` is configured. API prefix paths (`cl/`, `walker/`, `function/`, `user/`, `static/`) are excluded from the catch-all. This matches the built-in HTTP server's behavior for BrowserRouter support.
 
 - **Internal**: Explicitly declared all postinit fields across the codebase.
-
-- **.jac folder is excluded when syncing the code**
 
 ### PyPI Installation by Default
 
