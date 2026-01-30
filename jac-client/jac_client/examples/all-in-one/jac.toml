@@ -41,4 +41,3 @@ tailwindcss = "latest"
 
 [plugins.scale]
 env_key_1 = "${ENV_KEY_1}"
-
