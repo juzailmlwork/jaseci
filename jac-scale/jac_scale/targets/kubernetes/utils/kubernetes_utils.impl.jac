@@ -495,17 +495,13 @@ impl check_K8s_status -> None {
 
 impl get_toml_env_keys(toml_path: str) -> list {
     env_keys = [];
-
     if not os.path.isfile(toml_path) {
         return env_keys;
     }
-
     with open(toml_path, 'r') as f {
         toml_data = toml.load(f);
     }
-
     stack = [toml_data];
-
     while stack {
         current = stack.pop();
 
@@ -523,7 +519,6 @@ impl get_toml_env_keys(toml_path: str) -> list {
             }
         }
     }
-
     return env_keys;
 }
 

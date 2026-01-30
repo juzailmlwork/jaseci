@@ -198,7 +198,7 @@ def test_load_env_variables_with_toml_env_keys(
     import shutil
 
     shutil.copy(jac_toml_path, str(app_dir / "jac.toml"))
-    
+
     test_value1 = "test_secret_123"
     monkeypatch.setenv("ENV_KEY_1", test_value1)
     test_value2 = "test_secret_321"
@@ -208,18 +208,17 @@ def test_load_env_variables_with_toml_env_keys(
 
     # Call load_env_variables
     env_vars = load_env_variables(str(app_dir))
-    assert len(env_vars) == 5 
+    assert len(env_vars) == 5
     # Verify .env file vars are loaded
     assert {"name": "VAR1", "value": "value1"} in env_vars
     assert {"name": "VAR2", "value": "value2"} in env_vars
 
     # Verify ENV_KEY_1,ENV_KEY_2,ENV_KEY_3 from toml is loaded from os.environ
     expected = [
-    {"name": "ENV_KEY_1", "value": test_value1},
-    {"name": "ENV_KEY_2", "value": test_value2},
-    {"name": "ENV_KEY_3", "value": test_value3},
+        {"name": "ENV_KEY_1", "value": test_value1},
+        {"name": "ENV_KEY_2", "value": test_value2},
+        {"name": "ENV_KEY_3", "value": test_value3},
     ]
 
     for item in expected:
         assert item in env_vars
-
