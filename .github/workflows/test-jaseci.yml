@@ -187,6 +187,7 @@ jobs:
             k8s:
               - 'jac-scale/**'
               - 'jac-client/**'
+              - 'jac/**'
 
       - name: Install MicroK8s
         if: steps.k8s-changes.outputs.k8s == 'true'
