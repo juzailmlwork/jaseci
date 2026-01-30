@@ -1,3 +1,4 @@
+import os
 import tarfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +16,7 @@ from jac_scale.targets.kubernetes.utils.kubernetes_utils import (
     parse_cpu_quantity,
     parse_memory_quantity,
     validate_resource_limits,
+    get_toml_env_keys,
 )
 
 
@@ -154,3 +156,53 @@ def test_create_tarball_missing_source(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError):
         create_tarball(str(tmp_path / "missing"), str(tar_path))
+
+
+def test_get_toml_env_keys_from_example():
+    # Path to the provided example jac.toml (repository-relative)
+    repo_root = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    )
+    jac_toml_path = os.path.normpath(
+        os.path.join(repo_root, 'jac-client', 'jac_client', 'examples', 'all-in-one', 'jac.toml')
+    )
+    assert os.path.exists(jac_toml_path), f"Test fixture not found: {jac_toml_path}"
+
+    keys = get_toml_env_keys(jac_toml_path)
+
+    assert 'ENV_KEY_1' in keys
+
+
+def test_load_env_variables_with_toml_env_keys(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    # Get the example jac.toml path
+    repo_root = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    )
+    jac_toml_path = os.path.normpath(
+        os.path.join(repo_root, 'jac-client', 'jac_client', 'examples', 'all-in-one', 'jac.toml')
+    )
+    assert os.path.exists(jac_toml_path), f"Test fixture not found: {jac_toml_path}"
+    
+    # Setup: create app directory with .env file and copy jac.toml
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    env_file = app_dir / ".env"
+    env_file.write_text("VAR1=value1\nVAR2=value2\n")
+    
+    # Copy the jac.toml to the app directory
+    import shutil
+    shutil.copy(jac_toml_path, str(app_dir / "jac.toml"))
+    
+    # Set ENV_KEY_1 in os.environ with a random test value
+    test_value = "test_secret_123"
+    monkeypatch.setenv("ENV_KEY_1", test_value)
+    
+    # Call load_env_variables
+    env_vars = load_env_variables(str(app_dir))
+    
+    # Verify .env file vars are loaded
+    assert {"name": "VAR1", "value": "value1"} in env_vars
+    assert {"name": "VAR2", "value": "value2"} in env_vars
+    
+    # Verify ENV_KEY_1 from toml is loaded from os.environ
+    assert {"name": "ENV_KEY_1", "value": test_value} in env_vars
