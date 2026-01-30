@@ -495,19 +495,35 @@ impl check_K8s_status -> None {
 
 impl get_toml_env_keys(toml_path: str) -> list {
     env_keys = [];
+
     if not os.path.isfile(toml_path) {
         return env_keys;
     }
+
     with open(toml_path, 'r') as f {
         toml_data = toml.load(f);
     }
-    scale_config = toml_data.get('plugins', {}).get('scale', {});
-    for (key, value) in scale_config.items() {
-        if isinstance(value, str) and value.startswith("${") and value.endswith("}") {
-            env_var_name = value[2:-1];
-            env_keys.append(env_var_name);
+
+    stack = [toml_data];
+
+    while stack {
+        current = stack.pop();
+
+        if isinstance(current, dict) {
+            for (_, v) in current.items() {
+                stack.append(v);
+            }
+        } elif isinstance(current, list) {
+            for v in current {
+                stack.append(v);
+            }
+        } elif isinstance(current, str) {
+            if current.startswith("${") and current.endswith("}") {
+                env_keys.append(current[2:-1]);
+            }
         }
     }
+
     return env_keys;
 }
 

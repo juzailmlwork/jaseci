@@ -171,8 +171,7 @@ def test_get_toml_env_keys_from_example():
     assert os.path.exists(jac_toml_path), f"Test fixture not found: {jac_toml_path}"
 
     keys = get_toml_env_keys(jac_toml_path)
-
-    assert "ENV_KEY_1" in keys
+    assert set(keys) == {"ENV_KEY_1", "ENV_KEY_2", "ENV_KEY_3"}
 
 
 def test_load_env_variables_with_toml_env_keys(
@@ -199,17 +198,28 @@ def test_load_env_variables_with_toml_env_keys(
     import shutil
 
     shutil.copy(jac_toml_path, str(app_dir / "jac.toml"))
-
-    # Set ENV_KEY_1 in os.environ with a random test value
-    test_value = "test_secret_123"
-    monkeypatch.setenv("ENV_KEY_1", test_value)
+    
+    test_value1 = "test_secret_123"
+    monkeypatch.setenv("ENV_KEY_1", test_value1)
+    test_value2 = "test_secret_321"
+    monkeypatch.setenv("ENV_KEY_2", test_value2)
+    test_value3 = "test_secret_213"
+    monkeypatch.setenv("ENV_KEY_3", test_value3)
 
     # Call load_env_variables
     env_vars = load_env_variables(str(app_dir))
-
+    assert len(env_vars) == 5 
     # Verify .env file vars are loaded
     assert {"name": "VAR1", "value": "value1"} in env_vars
     assert {"name": "VAR2", "value": "value2"} in env_vars
 
-    # Verify ENV_KEY_1 from toml is loaded from os.environ
-    assert {"name": "ENV_KEY_1", "value": test_value} in env_vars
+    # Verify ENV_KEY_1,ENV_KEY_2,ENV_KEY_3 from toml is loaded from os.environ
+    expected = [
+    {"name": "ENV_KEY_1", "value": test_value1},
+    {"name": "ENV_KEY_2", "value": test_value2},
+    {"name": "ENV_KEY_3", "value": test_value3},
+    ]
+
+    for item in expected:
+        assert item in env_vars
+

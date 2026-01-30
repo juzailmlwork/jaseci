@@ -41,3 +41,7 @@ tailwindcss = "latest"
 
 [plugins.scale]
 env_key_1 = "${ENV_KEY_1}"
+kubernetes.env.ENV_KEY_2 = "${ENV_KEY_2}"
+
+[plugins.client.sso]
+env_key_3 = "${ENV_KEY_3}"
