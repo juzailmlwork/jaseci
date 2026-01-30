@@ -6,9 +6,10 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - **Hot fix: call state**: Normal spawn calls inside API spawn calls supported.
 
+- **Load env variables defined in toml**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
+
 ## jac-scale 0.1.3 (Latest Release)
 
-- **Load env variables defined in toml**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
 
 ## jac-scale 0.1.2
 
