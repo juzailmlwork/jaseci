@@ -663,11 +663,6 @@ class KubernetesTarget(DeploymentTarget) {
         details["health_check_of_deployment"]="Successful";
         service_url = self.get_service_url(app_name);
 
-        if self.logger {
-            self.logger.info(
-                f"Deployment complete for '{app_name}'", {'service_url': service_url}
-            );
-        }
         success_status = True;
         return DeploymentResult(
             success=success_status,
