@@ -21,7 +21,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Streaming Response Support**: Streaming responses are supported with walker spawn calls and function calls.
 - **Webhook Support**: Added webhook transport for walkers with HMAC-SHA256 signature verification. Walkers can be configured with `@restspec(webhook=True)` to receive webhook requests at `/webhook/{walker_name}` endpoints with API key authentication and signature verification.
 
-- **Internal**: Explicitly declared all postinit fields across the codebase.
 - **Storage Abstraction**: Introduced a pluggable storage abstraction layer for file operations.
   - Abstract `Storage` interface with standard operations: `upload`, `download`, `delete`, `list`, `copy`, `move`, `get_metadata`
   - Default `LocalStorage` implementation in `jaclang.runtimelib.storage`
