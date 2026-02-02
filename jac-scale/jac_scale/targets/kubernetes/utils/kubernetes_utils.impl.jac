@@ -365,7 +365,7 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
 
         for container in statuses {
             if (container.restart_count > 0) {
-                print(
+                console.print(
                     f"Pod {pod.metadata.name} container "
                     f"{container.name} restarted "
                     f"{container.restart_count} times"
@@ -406,7 +406,7 @@ impl check_deployment_status(
             }
         } except RequestException as e {
             if check_pods_restarted(namespace, app_name) {
-                print("Detected pod restart during deployment ❌");
+                console.print("Detected pod restart during deployment ❌");
                 return False;
             }
 
