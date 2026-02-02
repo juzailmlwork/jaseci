@@ -524,7 +524,7 @@ class KubernetesTarget(DeploymentTarget) {
         # 1. Initialize and validate
         app_name = app_config.app_name or self.k8s_config.app_name;
         namespace = os.getenv('K8s_NAMESPACE') or self.k8s_config.namespace;
-        success_status=False;
+        success_status = False;
         if self.logger {
             self.logger.info(
                 f"Deploying application '{app_name}' to Kubernetes",
@@ -659,7 +659,7 @@ class KubernetesTarget(DeploymentTarget) {
                 f"Deployment complete for '{app_name}'", {'service_url': service_url}
             );
         }
-        success_status=True;
+        success_status = True;
         return DeploymentResult(
             success=success_status,
             service_url=service_url,
