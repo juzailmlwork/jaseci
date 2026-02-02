@@ -468,11 +468,6 @@ class KubernetesTarget(DeploymentTarget) {
                 if not (deployment_status) {
                     raise Exception("Deployment failed: Application failed to deploy.") ;
                 }
-                if self.logger {
-                    self.logger.info(
-                        f"Deployment complete! Access Jaseci-app at {nlb_url}{path}"
-                    );
-                }
             }
         } else {
             deployment_status = check_deployment_status(
@@ -480,11 +475,6 @@ class KubernetesTarget(DeploymentTarget) {
             );
             if deployment_status is False {
                 raise Exception("Deployment failed: Application failed to deploy.") ;
-            }
-            if self.logger {
-                self.logger.info(
-                    f"Deployment complete! Access Jaseci-app at http://localhost:{self.k8s_config.node_port}{path}"
-                );
             }
         }
     }
