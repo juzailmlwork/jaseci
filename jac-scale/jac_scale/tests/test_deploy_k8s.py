@@ -107,7 +107,8 @@ def test_deploy_all_in_one():
 
     # Deploy using new architecture
     result = deployment_target.deploy(app_config)
-
+    print(f"Deployment result: {result.details}")
+    assert len(result.details) == 8
     assert result.success is True
     print(f"✓ Deployment successful: {result.message}")
 
