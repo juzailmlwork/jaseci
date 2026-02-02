@@ -401,12 +401,10 @@ impl check_deployment_status(
         try {
             response = requests.get(url, timeout=10);
             if (response.status_code == 200) {
-                console.print(f"Service is available at: {url}");
                 return True;
             }
         } except RequestException as e {
             if check_pods_restarted(namespace, app_name) {
-                console.print("Detected pod restart during deployment ❌");
                 return False;
             }
 
