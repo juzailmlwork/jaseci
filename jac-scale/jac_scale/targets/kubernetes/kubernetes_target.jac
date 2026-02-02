@@ -524,14 +524,16 @@ class KubernetesTarget(DeploymentTarget) {
         # 1. Initialize and validate
         app_name = app_config.app_name or self.k8s_config.app_name;
         namespace = os.getenv('K8s_NAMESPACE') or self.k8s_config.namespace;
-        success_status = False;
+        success_status=False;
+        details={};
+
         if self.logger {
             self.logger.info(
                 f"Deploying application '{app_name}' to Kubernetes",
                 {'namespace': namespace, 'build': app_config.build}
             );
         }
-
+        try {
         validate_resource_limits(
             self.k8s_config.cpu_request,
             self.k8s_config.cpu_limit,
@@ -665,8 +667,19 @@ class KubernetesTarget(DeploymentTarget) {
             service_url=service_url,
             message=f"Application '{app_name}' deployed successfully"
         );
-    }
 
+        }
+        except Exception as e {
+            if self.logger {
+                self.logger.error(f"Error deploying application '{app_name}': {e}");
+            }
+            return DeploymentResult(
+                success=success_status,
+                message=f"Deployment failed for application '{app_name}': {e}",
+                details=details
+            );
+    }
+    }
     """Wait for resources to be completely deleted."""
     def _wait_for_deletion(
         self: KubernetesTarget,
