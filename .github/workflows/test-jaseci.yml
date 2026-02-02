@@ -135,7 +135,7 @@ jobs:
 
     - name: Run Backend tests
       run: |
-        pytest -x -vv -s -n auto jac-scale/jac_scale/tests/test_serve.py
+        pytest -x -vv -s  jac-scale/jac_scale/tests/test_serve.py
 
     - name: Run Memory Hierarchy tests
       run: |
