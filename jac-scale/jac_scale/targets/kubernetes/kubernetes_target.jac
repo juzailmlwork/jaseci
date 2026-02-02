@@ -572,6 +572,7 @@ class KubernetesTarget(DeploymentTarget) {
                 volumes_config = self._build_volumes_config(
                     app_name, app_config, namespace, core_v1
                 );
+                details["sync_code_to_pvc"] = "Successful";
                 volumes = volumes_config['volumes'];
                 build_container = volumes_config['build_container'];
                 init_containers.append(build_container);
