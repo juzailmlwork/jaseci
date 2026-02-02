@@ -51,8 +51,8 @@ def check_deployment_status(
     max_retries: int = 30,
     nlb_url: (str | None) = None,
     namespace: str = "default",
-    app_name: str = "jaseci"
-) -> bool;
+    app_name: str = "jaseci",
+) -> tuple[bool, str];
 
 def cluster_type -> str;
 

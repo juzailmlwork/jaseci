@@ -391,7 +391,7 @@ impl check_deployment_status(
     nlb_url: (str | None) = None,
     namespace: str = "default",
     app_name: str = "jaseci"
-) -> bool {
+) -> tuple[bool, str] {
     if nlb_url {
         url = f"{nlb_url.rstrip('/')}{path}";
     } else {
@@ -401,11 +401,11 @@ impl check_deployment_status(
         try {
             response = requests.get(url, timeout=10);
             if (response.status_code == 200) {
-                return True;
+                return True,"successful";
             }
         } except RequestException as e {
             if check_pods_restarted(namespace, app_name) {
-                return False;
+                return False,"Containers restarted";
             }
 
             if (attempt == max_retries) {
@@ -416,7 +416,7 @@ impl check_deployment_status(
             time.sleep(interval);
         }
     }
-    return False;
+    return False,"Timeout reached";
 }
 
 """Create or update ConfigMap with binary tar.gz using Kubernetes API."""

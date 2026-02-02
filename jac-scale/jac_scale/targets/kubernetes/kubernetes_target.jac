@@ -430,8 +430,9 @@ class KubernetesTarget(DeploymentTarget) {
         namespace: str,
         health_check_path: str,
         is_aws: bool
-    ) -> None {
+    ) -> str {
         path = health_check_path;
+        deployment_details="";
         if is_aws {
             time.sleep(self.k8s_config.aws_nlb_wait);
             nlb_url = None;
@@ -458,7 +459,7 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
             if (nlb_url) {
-                deployment_status = check_deployment_status(
+                deployment_status,deployment_details = check_deployment_status(
                     self.k8s_config.node_port,
                     path,
                     nlb_url=nlb_url,
@@ -470,13 +471,14 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
         } else {
-            deployment_status = check_deployment_status(
+            deployment_status,deployment_details = check_deployment_status(
                 self.k8s_config.node_port, path, namespace=namespace, app_name=app_name
             );
             if deployment_status is False {
                 raise Exception("Deployment failed: Application failed to deploy.") ;
             }
         }
+        return deployment_details;
     }
 
     """Handle image registry if build is requested."""
@@ -652,8 +654,8 @@ class KubernetesTarget(DeploymentTarget) {
             details["create_jaseci_application_service"] = "Successful";
 
             # 15. Wait for deployment and get service URL
-            self._wait_for_deployment(app_name, namespace, health_check_path, is_aws);
-            details["health_check_of_deployment"] = "Successful";
+            deployment_details = self._wait_for_deployment(app_name, namespace, health_check_path, is_aws);
+            details["health_check_of_deployment"] = deployment_details;
             service_url = self.get_service_url(app_name);
 
             success_status = True;
