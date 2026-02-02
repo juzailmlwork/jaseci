@@ -459,7 +459,7 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
             if (nlb_url) {
-                deployment_status,deployment_details = check_deployment_status(
+                (deployment_status,deployment_details) = check_deployment_status(
                     self.k8s_config.node_port,
                     path,
                     nlb_url=nlb_url,
@@ -471,7 +471,7 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
         } else {
-            deployment_status,deployment_details = check_deployment_status(
+            (deployment_status,deployment_details) = check_deployment_status(
                 self.k8s_config.node_port, path, namespace=namespace, app_name=app_name
             );
             if deployment_status is False {
