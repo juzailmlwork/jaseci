@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.5 (Unreleased)
 
 - **Client bundle error help message**: When the client bundle build fails during `jac start`, the server now prints a troubleshooting suggestion to run `jac clean --all` and a link to the Discord community for support.
+- **early exit from k8s deployment if container restarted**
 
 ## jac-scale 0.1.4 (Latest Release)
 
@@ -21,7 +22,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Webhook Support**: Added webhook transport for walkers with HMAC-SHA256 signature verification. Walkers can be configured with `@restspec(webhook=True)` to receive webhook requests at `/webhook/{walker_name}` endpoints with API key authentication and signature verification.
 
 - **Internal**: Explicitly declared all postinit fields across the codebase.
-- **early exit from k8s deployment if container restarted**
 - **Storage Abstraction**: Introduced a pluggable storage abstraction layer for file operations.
   - Abstract `Storage` interface with standard operations: `upload`, `download`, `delete`, `list`, `copy`, `move`, `get_metadata`
   - Default `LocalStorage` implementation in `jaclang.runtimelib.storage`
