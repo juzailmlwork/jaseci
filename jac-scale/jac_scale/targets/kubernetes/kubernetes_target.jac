@@ -534,27 +534,27 @@ class KubernetesTarget(DeploymentTarget) {
             );
         }
         try {
-        validate_resource_limits(
-            self.k8s_config.cpu_request,
-            self.k8s_config.cpu_limit,
-            self.k8s_config.memory_request,
-            self.k8s_config.memory_limit
-        );
-        details["validate_resource_limits"]="Successful";
-        # 2. Initialize Kubernetes clients
-        k8s_config.load_kube_config();
-        apps_v1 = client.AppsV1Api();
-        core_v1 = client.CoreV1Api();
-        check_K8s_status();
-        ensure_namespace_exists(namespace);
+            validate_resource_limits(
+                self.k8s_config.cpu_request,
+                self.k8s_config.cpu_limit,
+                self.k8s_config.memory_request,
+                self.k8s_config.memory_limit
+            );
+            details["validate_resource_limits"] = "Successful";
+            # 2. Initialize Kubernetes clients
+            k8s_config.load_kube_config();
+            apps_v1 = client.AppsV1Api();
+            core_v1 = client.CoreV1Api();
+            check_K8s_status();
+            ensure_namespace_exists(namespace);
 
-        # 3. Load environment variables
-        self.env_list = load_env_variables(app_config.code_folder);
-        details["load_env_variables"]="Successful";
-        # 4. Determine cluster type
-        cluster_env = cluster_type();
-        is_aws = cluster_env == 'aws';
-        service_type = 'LoadBalancer' if is_aws else 'NodePort';
+            # 3. Load environment variables
+            self.env_list = load_env_variables(app_config.code_folder);
+            details["load_env_variables"] = "Successful";
+            # 4. Determine cluster type
+            cluster_env = cluster_type();
+            is_aws = cluster_env == 'aws';
+            service_type = 'LoadBalancer' if is_aws else 'NodePort';
 
             # 5. Handle image registry if build is requested
             repository_name = self._handle_image_registry(app_name, app_config);
@@ -629,50 +629,50 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             };
 
-        # 12. Delete existing resources if they exist
-        delete_if_exists(
-            apps_v1.delete_namespaced_deployment, app_name, namespace, 'Deployment'
-        );
-        details["delete_previous_existing_resources"]="Successful";
-        time.sleep(self.k8s_config.resource_deletion_wait);
-
-        # 13. Deploy databases
-        self._deploy_databases(app_name, namespace, apps_v1, core_v1);
-        details["deploy_databases"]="Successful";
-        # 14. Deploy main application
-        if self.logger {
-            self.logger.info(f'Deploying Jaseci-app app...');
-        }
-        apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment);
-        details["create_jaseci_application_deployment"]="Successful";
-        try {
-            core_v1.read_namespaced_service(
-                name=f"{app_name}-service", namespace=namespace
+            # 12. Delete existing resources if they exist
+            delete_if_exists(
+                apps_v1.delete_namespaced_deployment, app_name, namespace, 'Deployment'
             );
-        } except ApiException as e {
-            if (e.status == 404) {
-                core_v1.create_namespaced_service(namespace=namespace, body=service);
-            } else {
-                raise ;
+            details["delete_previous_existing_resources"] = "Successful";
+            time.sleep(self.k8s_config.resource_deletion_wait);
+
+            # 13. Deploy databases
+            self._deploy_databases(app_name, namespace, apps_v1, core_v1);
+            details["deploy_databases"] = "Successful";
+            # 14. Deploy main application
+            if self.logger {
+                self.logger.info(f'Deploying Jaseci-app app...');
             }
-        }
-        details["create_jaseci_application_service"]="Successful";
+            apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment);
+            details["create_jaseci_application_deployment"] = "Successful";
+            try {
+                core_v1.read_namespaced_service(
+                    name=f"{app_name}-service", namespace=namespace
+                );
+            } except ApiException as e {
+                if (e.status == 404) {
+                    core_v1.create_namespaced_service(
+                        namespace=namespace, body=service
+                    );
+                } else {
+                    raise ;
+                }
+            }
+            details["create_jaseci_application_service"] = "Successful";
 
-        # 15. Wait for deployment and get service URL
-        self._wait_for_deployment(app_name, namespace, health_check_path, is_aws);
-        details["health_check_of_deployment"]="Successful";
-        service_url = self.get_service_url(app_name);
+            # 15. Wait for deployment and get service URL
+            self._wait_for_deployment(app_name, namespace, health_check_path, is_aws);
+            details["health_check_of_deployment"] = "Successful";
+            service_url = self.get_service_url(app_name);
 
-        success_status = True;
-        return DeploymentResult(
-            success=success_status,
-            service_url=service_url,
-            message=f"Application '{app_name}' deployed successfully",
-            details=details
-        );
-
-        }
-        except Exception as e {
+            success_status = True;
+            return DeploymentResult(
+                success=success_status,
+                service_url=service_url,
+                message=f"Application '{app_name}' deployed successfully",
+                details=details
+            );
+        } except Exception as e {
             if self.logger {
                 self.logger.error(f"Error deploying application '{app_name}': {e}");
             }
