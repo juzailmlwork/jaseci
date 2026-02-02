@@ -126,7 +126,6 @@ jobs:
         pip install -e jac
         pip install -e jac-scale
         pip install pytest
-        pip install pytest-xdist
         pip install pytest-asyncio
         pip install -e jac-client
         pip install testcontainers
@@ -139,14 +138,14 @@ jobs:
 
     - name: Run Memory Hierarchy tests
       run: |
-        pytest -x -vv -s -n auto jac-scale/jac_scale/tests/test_memory_hierarchy.py
+        pytest -x -vv -s  jac-scale/jac_scale/tests/test_memory_hierarchy.py
 
     - name: Run jac-client examples
       run: |
-        pytest -x -n auto jac-scale/jac_scale/tests/test_examples.py
+        pytest -x  jac-scale/jac_scale/tests/test_examples.py
     - name: Run SSO tests
       run: |
-        pytest -x -n auto jac-scale/jac_scale/tests/test_sso.py
+        pytest -x  jac-scale/jac_scale/tests/test_sso.py
 
   test-scale-k8s:
     runs-on: ubuntu-latest
@@ -176,7 +175,6 @@ jobs:
           pip install -e jac-scale
           pip install -e jac-client
           pip install pytest
-          pip install pytest-xdist
           pip install pytest-asyncio
 
 
@@ -213,7 +211,7 @@ jobs:
       - name: Run K8 tests
         if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
-          pytest -vv -s -n auto jac-scale/jac_scale/tests/test_deploy_k8s.py
+          pytest -vv -s  jac-scale/jac_scale/tests/test_deploy_k8s.py
           pytest -v jac-scale/jac_scale/tests/test_k8s_utils.py
 
       - name: Reset microk8s cluster
