@@ -4,11 +4,12 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.6 (Unreleased)
 
+- **Load env variables defined in toml inside k8s**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
+
 ## jac-scale 0.1.5 (Latest Release)
 
 - **JsxElement Return Types**: Updated all JSX component return types from `any` to `JsxElement` for compile-time type safety.
 - **Client bundle error help message**: When the client bundle build fails during `jac start`, the server now prints a troubleshooting suggestion to run `jac clean --all` and a link to the Discord community for support.
-- **Load env variables defined in toml**: the variables defined in jac.toml under plugins.scale which have a format ${variable_name} are now checked using os.getenv() and loaded into k8s pods env variables
 
 ## jac-scale 0.1.4
 
