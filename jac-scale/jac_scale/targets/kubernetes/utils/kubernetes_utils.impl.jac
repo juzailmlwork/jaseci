@@ -373,8 +373,8 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
                 return True;
             }
         }
-        return False;
     }
+    return False;
 }
 
 """
