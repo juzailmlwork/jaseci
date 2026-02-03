@@ -4,11 +4,12 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.6 (Unreleased)
 
+- **.jac folder is excluded when creating the zip folder that is uploaded into jaseci deployment pods.Fasten up deployment**
+
 ## jac-scale 0.1.5 (Latest Release)
 
 - **JsxElement Return Types**: Updated all JSX component return types from `any` to `JsxElement` for compile-time type safety.
 - **Client bundle error help message**: When the client bundle build fails during `jac start`, the server now prints a troubleshooting suggestion to run `jac clean --all` and a link to the Discord community for support.
-- **.jac folder is excluded when creating the zip folder that is uploaded into jaseci deployment pods.Fasten up deployment**e
 
 ## jac-scale 0.1.4
 
