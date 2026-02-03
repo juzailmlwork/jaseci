@@ -655,9 +655,9 @@ class KubernetesTarget(DeploymentTarget) {
         create_hpa(
             namespace=namespace,
             deployment_name=app_name,
-            min_replicas=1,
-            max_replicas=3,
-            cpu_target=50
+            min_replicas=self.k8s_config.min_replicas,
+            max_replicas=self.k8s_config.max_replicas,
+            cpu_target=self.k8s_config.cpu_utilization_target
         );
 
         if self.logger {
