@@ -401,11 +401,11 @@ impl check_deployment_status(
         try {
             response = requests.get(url, timeout=10);
             if (response.status_code == 200) {
-                return True,"successful";
+                return (True, "successful");
             }
         } except RequestException as e {
             if check_pods_restarted(namespace, app_name) {
-                return False,"Containers restarted";
+                return (False, "Containers restarted");
             }
 
             if (attempt == max_retries) {
@@ -416,7 +416,7 @@ impl check_deployment_status(
             time.sleep(interval);
         }
     }
-    return False,"Timeout reached";
+    return (False, "Timeout reached");
 }
 
 """Create or update ConfigMap with binary tar.gz using Kubernetes API."""
