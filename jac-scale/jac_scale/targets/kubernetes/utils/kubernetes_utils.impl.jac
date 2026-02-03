@@ -401,7 +401,7 @@ impl check_deployment_status(
         try {
             response = requests.get(url, timeout=10);
             if (response.status_code == 200) {
-                return (True, "successful");
+                return (True, "Successful");
             }
         } except RequestException as e {
             if check_pods_restarted(namespace, app_name) {
