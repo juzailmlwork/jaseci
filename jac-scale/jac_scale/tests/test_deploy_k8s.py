@@ -155,30 +155,35 @@ def _get_git_config() -> tuple[str, str, str]:
 
         # Get commit hash
         commit = None
-        
+
         # GitHub Actions - for Pull Requests, get the actual HEAD commit from the event
         if "GITHUB_HEAD_REF" in os.environ and os.environ["GITHUB_HEAD_REF"]:
             if "GITHUB_EVENT_PATH" in os.environ:
                 try:
                     import json
-                    with open(os.environ["GITHUB_EVENT_PATH"], 'r') as f:
+
+                    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
                         event_data = json.load(f)
                     # Get the actual head commit SHA from PR
-                    if "pull_request" in event_data and "head" in event_data["pull_request"]:
+                    if (
+                        "pull_request" in event_data
+                        and "head" in event_data["pull_request"]
+                    ):
                         commit = event_data["pull_request"]["head"]["sha"]
                 except (FileNotFoundError, json.JSONDecodeError, KeyError):
                     pass
-        
+
         # Fallback to git command (this will be the merge commit in PRs)
         if not commit:
             commit = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
             ).strip()
-        
+
         return repo_url, branch, commit
     except subprocess.CalledProcessError as e:
         print(f"Error getting git config: {e}")
         raise
+
 
 def _request_with_retry(
     method: str,
