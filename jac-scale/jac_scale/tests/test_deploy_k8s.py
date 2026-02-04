@@ -16,13 +16,8 @@ from ..factories.utility_factory import UtilityFactory
 
 
 def _get_git_config() -> tuple[str, str, str]:
-    """Get current git repository URL, branch, and commit hash.
-
-    Returns:
-        Tuple of (repo_url, branch, commit_hash)
-    """
+    """Get current git repository URL, branch, and commit hash."""
     try:
-        # Find the git repository root by walking up from this file's location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         git_root = subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"],
@@ -35,16 +30,22 @@ def _get_git_config() -> tuple[str, str, str]:
             ["git", "remote", "get-url", "origin"], cwd=git_root, text=True
         ).strip()
 
-        # Try to get the current branch name
-        # git branch --show-current works best but returns empty in detached HEAD
-        branch = subprocess.check_output(
-            ["git", "branch", "--show-current"], cwd=git_root, text=True
-        ).strip()
+        # Try environment variables first (CI/CD context)
+        branch = (
+            os.environ.get("GITHUB_REF_NAME") or  # GitHub Actions
+            os.environ.get("CI_COMMIT_REF_NAME") or  # GitLab CI
+            os.environ.get("BRANCH_NAME") or  # Jenkins
+            os.environ.get("GIT_BRANCH", "").replace("origin/", "")  # Generic
+        )
 
-        # If empty (detached HEAD state), try to get from git describe or symbolic-ref
+        # Fall back to git commands if no env var
+        if not branch:
+            branch = subprocess.check_output(
+                ["git", "branch", "--show-current"], cwd=git_root, text=True
+            ).strip()
+
         if not branch:
             try:
-                # Try symbolic-ref which gives the actual branch we're on
                 branch = subprocess.check_output(
                     ["git", "symbolic-ref", "--short", "HEAD"],
                     cwd=git_root,
@@ -52,14 +53,41 @@ def _get_git_config() -> tuple[str, str, str]:
                     stderr=subprocess.PIPE,
                 ).strip()
             except subprocess.CalledProcessError:
-                # In detached HEAD, use the commit hash as the "branch"
-                branch = subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
-                ).strip()
+                # Try to find branch from remote refs
+                try:
+                    branch = subprocess.check_output(
+                        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                        cwd=git_root,
+                        text=True,
+                    ).strip()
+                    if branch == "HEAD":
+                        # Still detached, use git log to find branch
+                        branch = subprocess.check_output(
+                            ["git", "log", "-n", "1", "--pretty=%D"],
+                            cwd=git_root,
+                            text=True,
+                        ).strip()
+                        # Parse out branch name from refs like "HEAD -> main, origin/main"
+                        if branch:
+                            for ref in branch.split(","):
+                                ref = ref.strip()
+                                if ref.startswith("origin/"):
+                                    branch = ref.replace("origin/", "")
+                                    break
+                except subprocess.CalledProcessError:
+                    pass
+
+        # Last resort: use commit hash
+        if not branch or branch == "HEAD":
+            branch = subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], cwd=git_root, text=True
+            ).strip()
+            print(f"Warning: Could not determine branch name, using short commit hash: {branch}")
 
         commit = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
         ).strip()
+        
         return repo_url, branch, commit
     except subprocess.CalledProcessError as e:
         print(f"Error getting git config: {e}")
