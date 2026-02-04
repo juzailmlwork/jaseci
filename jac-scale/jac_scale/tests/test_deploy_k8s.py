@@ -37,17 +37,21 @@ def _get_git_config() -> tuple[str, str, str]:
 
         # Try to get branch from CI environment variables first
         branch = None
-        
+
         # GitHub Actions - for Pull Requests, prefer HEAD_REF (the source branch)
-        if not branch and "GITHUB_HEAD_REF" in os.environ and os.environ["GITHUB_HEAD_REF"]:
+        if (
+            not branch
+            and "GITHUB_HEAD_REF" in os.environ
+            and os.environ["GITHUB_HEAD_REF"]
+        ):
             # This is the actual branch name in a PR
             branch = os.environ["GITHUB_HEAD_REF"]
-        
+
         # GitHub Actions - for direct pushes, use REF_NAME
         if not branch and "GITHUB_REF_NAME" in os.environ:
             # For direct branch pushes, this contains the branch name
             branch = os.environ["GITHUB_REF_NAME"]
-        
+
         # GitHub Actions - older approach (fallback)
         if not branch and "GITHUB_REF" in os.environ:
             ref = os.environ["GITHUB_REF"]
@@ -55,19 +59,19 @@ def _get_git_config() -> tuple[str, str, str]:
                 branch = ref.replace("refs/heads/", "")
             elif ref.startswith("refs/tags/"):
                 branch = ref.replace("refs/tags/", "")
-        
+
         # GitLab CI
         if not branch:
             branch = os.environ.get("CI_COMMIT_REF_NAME")
-        
+
         # Jenkins
         if not branch:
             branch = os.environ.get("GIT_BRANCH", "").replace("origin/", "")
-        
+
         # CircleCI
         if not branch:
             branch = os.environ.get("CIRCLE_BRANCH")
-        
+
         # Travis CI
         if not branch:
             branch = os.environ.get("TRAVIS_BRANCH")
@@ -92,29 +96,41 @@ def _get_git_config() -> tuple[str, str, str]:
                 # Try to find branch from remote tracking
                 try:
                     # Get all branches containing the current commit
-                    branches = subprocess.check_output(
-                        ["git", "branch", "-r", "--contains", "HEAD"],
-                        cwd=git_root,
-                        text=True,
-                    ).strip().split('\n')
-                    
+                    branches = (
+                        subprocess.check_output(
+                            ["git", "branch", "-r", "--contains", "HEAD"],
+                            cwd=git_root,
+                            text=True,
+                        )
+                        .strip()
+                        .split("\n")
+                    )
+
                     if branches and branches[0]:
                         # Take first branch and clean it up
-                        branch = branches[0].strip().replace('origin/', '').replace('*', '').strip()
+                        branch = (
+                            branches[0]
+                            .strip()
+                            .replace("origin/", "")
+                            .replace("*", "")
+                            .strip()
+                        )
                 except subprocess.CalledProcessError:
                     pass
-                
+
                 # Last resort: use short commit hash as "branch"
                 if not branch:
                     branch = subprocess.check_output(
                         ["git", "rev-parse", "--short", "HEAD"], cwd=git_root, text=True
                     ).strip()
-                    print(f"Warning: Detached HEAD state, using short commit as branch: {branch}")
+                    print(
+                        f"Warning: Detached HEAD state, using short commit as branch: {branch}"
+                    )
 
         commit = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
         ).strip()
-        
+
         return repo_url, branch, commit
     except subprocess.CalledProcessError as e:
         print(f"Error getting git config: {e}")
