@@ -22,14 +22,23 @@ def _get_git_config() -> tuple[str, str, str]:
         Tuple of (repo_url, branch, commit_hash)
     """
     try:
+        # Find the git repository root by walking up from this file's location
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        git_root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=current_dir,
+            text=True,
+            stderr=subprocess.PIPE,
+        ).strip()
+
         repo_url = subprocess.check_output(
-            ["git", "remote", "get-url", "origin"], cwd="/root/jaseci", text=True
+            ["git", "remote", "get-url", "origin"], cwd=git_root, text=True
         ).strip()
         branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd="/root/jaseci", text=True
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=git_root, text=True
         ).strip()
         commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd="/root/jaseci", text=True
+            ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
         ).strip()
         return repo_url, branch, commit
     except subprocess.CalledProcessError as e:
