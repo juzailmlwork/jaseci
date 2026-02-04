@@ -20,7 +20,7 @@ def _get_git_config() -> tuple[str, str, str]:
 
     Returns:
         Tuple of (repo_url, branch, commit_hash)
-        
+
     Logic:
     - For fork-based PRs: Use the fork repository, branch, and commit
     - For non-fork PRs or direct pushes: Use upstream jaseci-labs/jaseci main branch
@@ -39,29 +39,30 @@ def _get_git_config() -> tuple[str, str, str]:
         branch = None
         commit = None
         is_fork_pr = False
-        
+
         # Check if this is a Pull Request
         if "GITHUB_HEAD_REF" in os.environ and os.environ["GITHUB_HEAD_REF"]:
             # This is a PR - check if it's from a fork
             if "GITHUB_EVENT_PATH" in os.environ:
                 try:
                     import json
-                    with open(os.environ["GITHUB_EVENT_PATH"], 'r') as f:
+
+                    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
                         event_data = json.load(f)
-                    
+
                     if "pull_request" in event_data:
                         pr_data = event_data["pull_request"]
                         head_repo = pr_data.get("head", {}).get("repo")
                         base_repo = pr_data.get("base", {}).get("repo")
-                        
+
                         # Check if head repo exists and is different from base repo
                         if head_repo and base_repo:
                             head_full_name = head_repo.get("full_name", "")
                             base_full_name = base_repo.get("full_name", "")
-                            
+
                             # This is a fork if the repo names are different
                             is_fork_pr = head_full_name != base_full_name
-                            
+
                             if is_fork_pr:
                                 # Use fork repository details
                                 repo_url = head_repo.get("clone_url")
@@ -74,17 +75,19 @@ def _get_git_config() -> tuple[str, str, str]:
                                 branch = "main"
                                 # Get latest commit from main branch
                                 commit = pr_data.get("base", {}).get("sha")
-                                print(f"Detected non-fork PR in {base_full_name}, using main branch")
-                                
+                                print(
+                                    f"Detected non-fork PR in {base_full_name}, using main branch"
+                                )
+
                 except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
                     print(f"Warning: Could not parse GitHub event data: {e}")
-        
+
         # If not a PR or couldn't determine from event, use git commands
         if not repo_url:
             repo_url = subprocess.check_output(
                 ["git", "remote", "get-url", "origin"], cwd=git_root, text=True
             ).strip()
-        
+
         if not branch:
             # Try to get branch from GitHub Actions environment
             if "GITHUB_HEAD_REF" in os.environ and os.environ["GITHUB_HEAD_REF"]:
@@ -97,7 +100,7 @@ def _get_git_config() -> tuple[str, str, str]:
                     branch = ref.replace("refs/heads/", "")
                 elif ref.startswith("refs/tags/"):
                     branch = ref.replace("refs/tags/", "")
-            
+
             # Fallback to other CI systems
             if not branch:
                 branch = os.environ.get("CI_COMMIT_REF_NAME")
@@ -107,13 +110,13 @@ def _get_git_config() -> tuple[str, str, str]:
                 branch = os.environ.get("CIRCLE_BRANCH")
             if not branch:
                 branch = os.environ.get("TRAVIS_BRANCH")
-            
+
             # Fallback to git commands
             if not branch:
                 branch = subprocess.check_output(
                     ["git", "branch", "--show-current"], cwd=git_root, text=True
                 ).strip()
-            
+
             # If still empty (detached HEAD state)
             if not branch:
                 try:
@@ -125,31 +128,45 @@ def _get_git_config() -> tuple[str, str, str]:
                     ).strip()
                 except subprocess.CalledProcessError:
                     try:
-                        branches = subprocess.check_output(
-                            ["git", "branch", "-r", "--contains", "HEAD"],
-                            cwd=git_root,
-                            text=True,
-                        ).strip().split('\n')
-                        
+                        branches = (
+                            subprocess.check_output(
+                                ["git", "branch", "-r", "--contains", "HEAD"],
+                                cwd=git_root,
+                                text=True,
+                            )
+                            .strip()
+                            .split("\n")
+                        )
+
                         if branches and branches[0]:
-                            branch = branches[0].strip().replace('origin/', '').replace('*', '').strip()
+                            branch = (
+                                branches[0]
+                                .strip()
+                                .replace("origin/", "")
+                                .replace("*", "")
+                                .strip()
+                            )
                     except subprocess.CalledProcessError:
                         pass
-                    
+
                     if not branch:
                         branch = subprocess.check_output(
-                            ["git", "rev-parse", "--short", "HEAD"], cwd=git_root, text=True
+                            ["git", "rev-parse", "--short", "HEAD"],
+                            cwd=git_root,
+                            text=True,
                         ).strip()
-                        print(f"Warning: Detached HEAD state, using short commit as branch: {branch}")
-        
+                        print(
+                            f"Warning: Detached HEAD state, using short commit as branch: {branch}"
+                        )
+
         # Get commit hash if not already set
         if not commit:
             commit = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
             ).strip()
-        
+
         return repo_url, branch, commit
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error getting git config: {e}")
         raise
