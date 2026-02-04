@@ -34,9 +34,29 @@ def _get_git_config() -> tuple[str, str, str]:
         repo_url = subprocess.check_output(
             ["git", "remote", "get-url", "origin"], cwd=git_root, text=True
         ).strip()
+
+        # Try to get the current branch name
+        # git branch --show-current works best but returns empty in detached HEAD
         branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=git_root, text=True
+            ["git", "branch", "--show-current"], cwd=git_root, text=True
         ).strip()
+
+        # If empty (detached HEAD state), try to get from git describe or symbolic-ref
+        if not branch:
+            try:
+                # Try symbolic-ref which gives the actual branch we're on
+                branch = subprocess.check_output(
+                    ["git", "symbolic-ref", "--short", "HEAD"],
+                    cwd=git_root,
+                    text=True,
+                    stderr=subprocess.PIPE,
+                ).strip()
+            except subprocess.CalledProcessError:
+                # In detached HEAD, use the commit hash as the "branch"
+                branch = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
+                ).strip()
+
         commit = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
         ).strip()
