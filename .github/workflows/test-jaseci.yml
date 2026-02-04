@@ -156,16 +156,13 @@ jobs:
         with:
           submodules: true
 
-      - name: Echo Jaseci repo info
+      - name: Debug GitHub environment
         run: |
-          echo "Repository URL:"
-          git config --get remote.origin.url
-
-          echo "Branch:"
-          git branch --show-current || echo "Detached HEAD"
-
-          echo "Commit SHA:"
-          git rev-parse HEAD
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
+          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
+          echo "GITHUB_SHA: $GITHUB_SHA"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
