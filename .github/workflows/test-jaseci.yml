@@ -156,6 +156,17 @@ jobs:
         with:
           submodules: true
 
+      - name: Echo Jaseci repo info
+        run: |
+          echo "Repository URL:"
+          git config --get remote.origin.url
+
+          echo "Branch:"
+          git branch --show-current || echo "Detached HEAD"
+
+          echo "Commit SHA:"
+          git rev-parse HEAD
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
