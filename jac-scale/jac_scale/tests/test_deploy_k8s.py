@@ -32,10 +32,10 @@ def _get_git_config() -> tuple[str, str, str]:
 
         # Try environment variables first (CI/CD context)
         branch = (
-            os.environ.get("GITHUB_REF_NAME") or  # GitHub Actions
-            os.environ.get("CI_COMMIT_REF_NAME") or  # GitLab CI
-            os.environ.get("BRANCH_NAME") or  # Jenkins
-            os.environ.get("GIT_BRANCH", "").replace("origin/", "")  # Generic
+            os.environ.get("GITHUB_REF_NAME")  # GitHub Actions
+            or os.environ.get("CI_COMMIT_REF_NAME")  # GitLab CI
+            or os.environ.get("BRANCH_NAME")  # Jenkins
+            or os.environ.get("GIT_BRANCH", "").replace("origin/", "")  # Generic
         )
 
         # Fall back to git commands if no env var
@@ -82,12 +82,14 @@ def _get_git_config() -> tuple[str, str, str]:
             branch = subprocess.check_output(
                 ["git", "rev-parse", "--short", "HEAD"], cwd=git_root, text=True
             ).strip()
-            print(f"Warning: Could not determine branch name, using short commit hash: {branch}")
+            print(
+                f"Warning: Could not determine branch name, using short commit hash: {branch}"
+            )
 
         commit = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=git_root, text=True
         ).strip()
-        
+
         return repo_url, branch, commit
     except subprocess.CalledProcessError as e:
         print(f"Error getting git config: {e}")
