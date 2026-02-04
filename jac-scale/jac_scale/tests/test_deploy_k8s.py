@@ -1,6 +1,7 @@
 """Tests for Kubernetes deployment using new factory-based architecture."""
 
 import os
+import subprocess
 import time
 from typing import Any
 
@@ -12,6 +13,28 @@ from ..abstractions.config.app_config import AppConfig
 from ..config_loader import get_scale_config
 from ..factories.deployment_factory import DeploymentTargetFactory
 from ..factories.utility_factory import UtilityFactory
+
+
+def _get_git_config() -> tuple[str, str, str]:
+    """Get current git repository URL, branch, and commit hash.
+
+    Returns:
+        Tuple of (repo_url, branch, commit_hash)
+    """
+    try:
+        repo_url = subprocess.check_output(
+            ["git", "remote", "get-url", "origin"], cwd="/root/jaseci", text=True
+        ).strip()
+        branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd="/root/jaseci", text=True
+        ).strip()
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd="/root/jaseci", text=True
+        ).strip()
+        return repo_url, branch, commit
+    except subprocess.CalledProcessError as e:
+        print(f"Error getting git config: {e}")
+        raise
 
 
 def _request_with_retry(
@@ -88,6 +111,12 @@ def test_deploy_all_in_one():
     target_config["app_name"] = app_name
     target_config["namespace"] = namespace
 
+    # Get current git configuration
+    repo_url, branch, commit = _get_git_config()
+    target_config["jaseci_repo_url"] = repo_url
+    target_config["jaseci_branch"] = branch
+    target_config["jaseci_commit"] = commit
+    print(f"Using Jaseci repo: {repo_url}, branch: {branch}, commit: {commit}")
     # Create logger
     logger = UtilityFactory.create_logger("standard")
 
