@@ -48,8 +48,6 @@ def _get_git_config() -> tuple[str, str, str]:
             and "GITHUB_EVENT_PATH" in os.environ
         ):
             try:
-
-
                 with open(os.environ["GITHUB_EVENT_PATH"]) as f:
                     event_data = json.load(f)
 
