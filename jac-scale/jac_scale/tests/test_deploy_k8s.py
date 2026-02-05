@@ -39,31 +39,32 @@ def _get_git_config() -> tuple[str, str, str]:
         branch = None
         commit = None
         is_fork_pr = False
-        
+
         # Check if this is a Pull Request with event data available
         if (
-            "GITHUB_HEAD_REF" in os.environ 
-            and os.environ["GITHUB_HEAD_REF"] 
+            "GITHUB_HEAD_REF" in os.environ
+            and os.environ["GITHUB_HEAD_REF"]
             and "GITHUB_EVENT_PATH" in os.environ
         ):
             try:
                 import json
-                with open(os.environ["GITHUB_EVENT_PATH"], 'r') as f:
+
+                with open(os.environ["GITHUB_EVENT_PATH"]) as f:
                     event_data = json.load(f)
-                
+
                 if "pull_request" in event_data:
                     pr_data = event_data["pull_request"]
                     head_repo = pr_data.get("head", {}).get("repo")
                     base_repo = pr_data.get("base", {}).get("repo")
-                    
+
                     # Check if head repo exists and is different from base repo
                     if head_repo and base_repo:
                         head_full_name = head_repo.get("full_name", "")
                         base_full_name = base_repo.get("full_name", "")
-                        
+
                         # This is a fork if the repo names are different
                         is_fork_pr = head_full_name != base_full_name
-                        
+
                         if is_fork_pr:
                             # Use fork repository details
                             repo_url = head_repo.get("clone_url")
@@ -76,11 +77,13 @@ def _get_git_config() -> tuple[str, str, str]:
                             branch = "main"
                             # Get latest commit from main branch
                             commit = pr_data.get("base", {}).get("sha")
-                            print(f"Detected non-fork PR in {base_full_name}, using main branch")
-                            
+                            print(
+                                f"Detected non-fork PR in {base_full_name}, using main branch"
+                            )
+
             except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
                 print(f"Warning: Could not parse GitHub event data: {e}")
-        
+
         # If not a PR or couldn't determine from event, use git commands
         if not repo_url:
             repo_url = subprocess.check_output(
