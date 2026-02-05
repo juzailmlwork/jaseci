@@ -4,9 +4,10 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.7 (Unreleased)
 
+- **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
+
 ## jac-scale 0.1.6 (Latest Release)
 
-- **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
 - **fix: Exclude `jac.local.toml` during K8s code sync**: The local dev override file (`jac.local.toml`) is now excluded when syncing application code to the Kubernetes PVC. Previously, this file could override deployment settings such as the serve port, causing health check failures.
 
 ## jac-scale 0.1.5
