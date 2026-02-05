@@ -4,9 +4,9 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-client 0.2.16 (Unreleased)
 
-## jac-client 0.2.15 (Latest Release)
-
 - updated all-in-one example jac.toml file to include some env variables
+
+## jac-client 0.2.15 (Latest Release)
 
 ## jac-client 0.2.14
 
