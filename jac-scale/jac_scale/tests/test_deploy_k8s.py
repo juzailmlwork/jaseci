@@ -1,5 +1,6 @@
 """Tests for Kubernetes deployment using new factory-based architecture."""
 
+import json
 import os
 import subprocess
 import time
@@ -47,7 +48,7 @@ def _get_git_config() -> tuple[str, str, str]:
             and "GITHUB_EVENT_PATH" in os.environ
         ):
             try:
-                import json
+
 
                 with open(os.environ["GITHUB_EVENT_PATH"]) as f:
                     event_data = json.load(f)
