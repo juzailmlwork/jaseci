@@ -1,5 +1,6 @@
 import os;
 import pathlib;
+import tomllib;
 import toml;
 import from jaclang.cli.console { console }
 
@@ -513,8 +514,8 @@ impl get_toml_env_keys(toml_path: str) -> list {
     if not os.path.isfile(toml_path) {
         return env_keys;
     }
-    with open(toml_path, 'r') as f {
-        toml_data = toml.load(f);
+    with open(toml_path, 'rb') as f {
+        toml_data = tomllib.load(f);
     }
     stack = [toml_data];
     while stack {
