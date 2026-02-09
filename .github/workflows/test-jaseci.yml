@@ -177,6 +177,7 @@ jobs:
           pip install -e jac-scale
           pip install -e jac-client
           pip install pytest
+          pip install pytest-xdist
           pip install pytest-asyncio
 
 
