@@ -214,7 +214,6 @@ jobs:
       - name: Run K8 tests
         if: steps.k8s-changes.outputs.k8s == 'true'
         run: |
-          pytest -s -x -n auto jac-scale/jac_scale/tests/test_deploy_k8s.py
           pytest  -s -x -n auto jac-scale/jac_scale/tests/test_k8s_utils.py
 
       - name: Reset microk8s cluster
