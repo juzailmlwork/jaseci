@@ -22,7 +22,7 @@ impl create_hpa(
             max_replicas=max_replicas,
             metrics=[
                 V2MetricSpec(
-                    <>type='Resource',
+                    `type='Resource',
                     resource=V2ResourceMetricSource(
                         name='cpu',
                         target={
