@@ -5,7 +5,8 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.8 (Unreleased)
 
 - **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
-- 
+-
+
 ## jac-scale 0.1.7 (Latest Release)
 
 - **KWESC_NAME syntax changed from `<>` to backtick**: Updated keyword-escaped names from `<>` prefix to backtick prefix to match the jaclang grammar change.
