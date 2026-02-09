@@ -87,6 +87,7 @@ def test_deploy_all_in_one():
     target_config = scale_config.get_kubernetes_config()
     target_config["app_name"] = app_name
     target_config["namespace"] = namespace
+    target_config["node_port"] = 30001
 
     # Create logger
     logger = UtilityFactory.create_logger("standard")
@@ -255,6 +256,7 @@ def test_deploy_all_in_one_2():
     target_config = scale_config.get_kubernetes_config()
     target_config["app_name"] = app_name
     target_config["namespace"] = namespace
+    target_config["node_port"] = 30002
 
     # Create logger
     logger = UtilityFactory.create_logger("standard")
