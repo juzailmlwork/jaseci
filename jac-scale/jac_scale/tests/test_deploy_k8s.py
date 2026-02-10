@@ -277,7 +277,10 @@ def test_deploy_all_in_one_2():
 
     # Deploy using new architecture
     result = deployment_target.deploy(app_config)
-
+    details = result.details
+    print(f"Deployment result: {details}")
+    assert details.get("health_check_of_deployment") == "Successful"
+    assert len(details) == 8
     assert result.success is True
     print(f"✓ Deployment successful: {result.message}")
 
