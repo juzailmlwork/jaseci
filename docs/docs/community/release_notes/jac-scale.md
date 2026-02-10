@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.8 (Unreleased)
 
 - **.jac folder is excluded when creating the zip folder that is uploaded into jaseci deployment pods.Fasten up deployment**
+- **Code refactors**: Backtick escape, etc.
 
 ## jac-scale 0.1.7 (Latest Release)
 
