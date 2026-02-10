@@ -382,7 +382,6 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
                 console.print(
                     f"Pod {pod.metadata.name} container "
                     f"{container.name} restarted "
-                    f"{container.restart_count} times"
                 );
                 return True;
             }
