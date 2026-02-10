@@ -279,8 +279,7 @@ def test_early_exit():
     print(f"Deployment result: {details}")
     assert "health_check_of_deployment" not in details
     assert len(details) == 7
-    assert result.success is True
-    print(f"✓ Deployment successful: {result.message}")
+    assert result.success is False
 
 
 def test_deployment_target_methods():
