@@ -4,6 +4,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.8 (Unreleased)
 
+- Update jaseci scale k8s pipeline to support parellel test cases.
 - **early exit from k8s deployment if container restarted**
 - **Code refactors**: Backtick escape, etc.
 
