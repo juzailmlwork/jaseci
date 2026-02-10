@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.8 (Unreleased)
 
 - Updated JAC Scale Kubernetes integration tests to use JAC plugins from the latest commit of the forked repository when running fork-based PRs, and fall back to the latest main branch of the upstream Jaseci repository for non-fork PRs.
+- **Code refactors**: Backtick escape, etc.
 
 ## jac-scale 0.1.7 (Latest Release)
 
