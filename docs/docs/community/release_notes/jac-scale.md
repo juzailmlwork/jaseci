@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.8 (Unreleased)
 
 - **early exit from k8s deployment if container restarted**
+- **Code refactors**: Backtick escape, etc.
 
 ## jac-scale 0.1.7 (Latest Release)
 
