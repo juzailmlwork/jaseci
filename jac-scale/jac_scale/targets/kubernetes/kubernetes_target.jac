@@ -28,6 +28,7 @@ import from jac_scale.providers.database.kubernetes_mongo { KubernetesMongoProvi
 import from jac_scale.providers.database.kubernetes_redis { KubernetesRedisProvider }
 import from jac_scale.factories.database_factory { DatabaseProviderFactory }
 import from jac_scale.factories.registry_factory { ImageRegistryFactory }
+import from jac_scale.targets.kubernetes.monitoring { MonitoringDeployer }
 import time;
 import from kubernetes { client, config as k8s_config }
 import from kubernetes.client.exceptions { ApiException }
@@ -157,10 +158,14 @@ class KubernetesTarget(DeploymentTarget) {
         };
 
         if is_aws {
+            nlb_name = f"{app_name}-nlb"[:32];
             service_metadata['annotations'] = {
-                'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
+                'service.beta.kubernetes.io/aws-load-balancer-type': 'external',
                 'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
-                'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path
+                'service.beta.kubernetes.io/aws-load-balancer-nlb-target-type': 'ip',
+                'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path,
+                # Named NLB so monitoring services can share the same load balancer
+                'service.beta.kubernetes.io/aws-load-balancer-name': nlb_name
             };
         }
 
@@ -678,7 +683,12 @@ class KubernetesTarget(DeploymentTarget) {
             }
             details["create_jaseci_application_service"] = "Successful";
 
-            # 15. Wait for deployment and get service URL
+            # 15. Deploy monitoring stack (Prometheus / Grafana) if enabled
+            monitoring = MonitoringDeployer(self.k8s_config, self.logger);
+            monitoring.deploy(app_name, namespace, apps_v1, core_v1, is_aws);
+            details["deploy_monitoring"] = "Successful";
+
+            # 17. Wait for deployment and get service URL
             deployment_details = self._wait_for_deployment(
                 app_name, namespace, health_check_path, is_aws
             );
@@ -781,6 +791,52 @@ class KubernetesTarget(DeploymentTarget) {
                 try {
                     core_v1.read_namespaced_service(
                         name=f"{redis_name}-service", namespace=namespace
+                    );
+                    resources_exist = True;
+                } except ApiException as e {
+                    if e.status != 404 {
+                        raise ;
+                    }
+                }
+            }
+
+            # Check monitoring resources (Prometheus / Grafana) if enabled
+            if self.k8s_config.monitoring_enabled {
+                prometheus_name = f"{app_name}-prometheus";
+                try {
+                    apps_v1.read_namespaced_deployment(
+                        name=prometheus_name, namespace=namespace
+                    );
+                    resources_exist = True;
+                } except ApiException as e {
+                    if e.status != 404 {
+                        raise ;
+                    }
+                }
+                try {
+                    core_v1.read_namespaced_service(
+                        name=f"{prometheus_name}-service", namespace=namespace
+                    );
+                    resources_exist = True;
+                } except ApiException as e {
+                    if e.status != 404 {
+                        raise ;
+                    }
+                }
+                grafana_name = f"{app_name}-grafana";
+                try {
+                    apps_v1.read_namespaced_deployment(
+                        name=grafana_name, namespace=namespace
+                    );
+                    resources_exist = True;
+                } except ApiException as e {
+                    if e.status != 404 {
+                        raise ;
+                    }
+                }
+                try {
+                    core_v1.read_namespaced_service(
+                        name=f"{grafana_name}-service", namespace=namespace
                     );
                     resources_exist = True;
                 } except ApiException as e {
@@ -898,6 +954,10 @@ class KubernetesTarget(DeploymentTarget) {
 
             # Delete K8s Secret if it exists
             delete_k8s_secret(core_v1, namespace, f"{app_name}-secrets");
+
+            # Delete monitoring stack (Prometheus / Grafana)
+            monitoring = MonitoringDeployer(self.k8s_config, self.logger);
+            monitoring.destroy(app_name, namespace, apps_v1, core_v1);
 
             # Delete databases
             self._destroy_databases(app_name, namespace, apps_v1, core_v1);
