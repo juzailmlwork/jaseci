@@ -224,6 +224,7 @@ class MonitoringDeployer {
             "apiVersion: 1\n"
             "datasources:\n"
             "  - name: Prometheus\n"
+            "    uid: prometheus\n"
             "    type: prometheus\n"
             f"    url: {prometheus_url}\n"
             "    isDefault: true\n"
@@ -270,7 +271,7 @@ class MonitoringDeployer {
             "    disableDeletion: false\n"
             "    updateIntervalSeconds: 10\n"
             "    options:\n"
-            "      path: /etc/grafana/provisioning/dashboards\n"
+            "      path: /var/lib/grafana/dashboards\n"
         );
         grafana_provider_configmap = {
             'apiVersion': 'v1',
@@ -302,40 +303,55 @@ class MonitoringDeployer {
         }
 
         # Dashboard JSON ConfigMap – pre-built panels for jac_scale metrics
+        # datasource uses {"type":"prometheus","uid":"prometheus"} to match the
+        # auto-provisioned datasource (Grafana assigns uid="prometheus" by default
+        # when the name is "Prometheus" and it is the only prometheus source).
+        ds = '{"type":"prometheus","uid":"prometheus"}';
         dashboard_json = (
-            '{"title":"Jac Scale – App Metrics","uid":"jac-scale-app",'
+            '{"title":"Jac Scale - App Metrics","uid":"jac-scale-app",'
             '"schemaVersion":36,"refresh":"10s","time":{"from":"now-1h","to":"now"},'
             '"panels":['
             '{"id":1,"type":"timeseries","title":"HTTP Request Rate (req/s)",'
             '"gridPos":{"x":0,"y":0,"w":12,"h":8},'
-            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (method,path)",'
-            '"legendFormat":"{{method}} {{path}}","datasource":"Prometheus"}]},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (method,path)",'
+            '"legendFormat":"{{method}} {{path}}",'
+            f'"datasource":{ds}' + '}]},'
             '{"id":2,"type":"timeseries","title":"Error Rate (5xx req/s)",'
             '"gridPos":{"x":12,"y":0,"w":12,"h":8},'
-            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total{status_code=~\\"5..\\"}[1m]))",'
-            '"legendFormat":"5xx errors","datasource":"Prometheus"}]},'
-            '{"id":3,"type":"timeseries","title":"Request Latency (p50 / p95 / p99)",'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(rate(jac_scale_http_requests_total{status_code=~\\"5..\\"}[1m]))",'
+            '"legendFormat":"5xx errors",'
+            f'"datasource":{ds}' + '}]},'
+            '{"id":3,"type":"timeseries","title":"Request Latency p50/p95/p99",'
             '"gridPos":{"x":0,"y":8,"w":12,"h":8},'
+            f'"datasource":{ds},'
             '"targets":['
-            '{"expr":"histogram_quantile(0.50,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
-            '"legendFormat":"p50","datasource":"Prometheus"},'
-            '{"expr":"histogram_quantile(0.95,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
-            '"legendFormat":"p95","datasource":"Prometheus"},'
-            '{"expr":"histogram_quantile(0.99,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
-            '"legendFormat":"p99","datasource":"Prometheus"}]},'
+            '{"refId":"A","expr":"histogram_quantile(0.50,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'"legendFormat":"p50","datasource":{ds}' + '},'
+            '{"refId":"B","expr":"histogram_quantile(0.95,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'"legendFormat":"p95","datasource":{ds}' + '},'
+            '{"refId":"C","expr":"histogram_quantile(0.99,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'"legendFormat":"p99","datasource":{ds}' + '}]},'
             '{"id":4,"type":"stat","title":"Active Requests",'
             '"gridPos":{"x":12,"y":8,"w":6,"h":8},'
-            '"targets":[{"expr":"jac_scale_http_requests_in_progress",'
-            '"legendFormat":"active","datasource":"Prometheus"}]},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A","expr":"jac_scale_http_requests_in_progress",'
+            f'"legendFormat":"active","datasource":{ds}' + '}]},'
             '{"id":5,"type":"timeseries","title":"Requests by Status Code",'
             '"gridPos":{"x":0,"y":16,"w":12,"h":8},'
-            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (status_code)",'
-            '"legendFormat":"{{status_code}}","datasource":"Prometheus"}]},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (status_code)",'
+            f'"legendFormat":"{{status_code}}","datasource":{ds}' + '}]},'
             '{"id":6,"type":"timeseries","title":"Requests by Path",'
             '"gridPos":{"x":12,"y":16,"w":12,"h":8},'
-            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (path)",'
-            '"legendFormat":"{{path}}","datasource":"Prometheus"}]}'
-            ']}'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (path)",'
+            f'"legendFormat":"{{path}}","datasource":{ds}' + '}]}' ']}'
         );
         grafana_dashboard_configmap = {
             'apiVersion': 'v1',
@@ -425,7 +441,9 @@ class MonitoringDeployer {
             }
         };
         try {
-            apps_v1.read_namespaced_deployment(name=grafana_name, namespace=namespace);
+            apps_v1.patch_namespaced_deployment(
+                name=grafana_name, namespace=namespace, body=grafana_deployment
+            );
         } except ApiException as e {
             if e.status == 404 {
                 apps_v1.create_namespaced_deployment(
