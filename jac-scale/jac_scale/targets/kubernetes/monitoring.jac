@@ -321,9 +321,7 @@ class MonitoringDeployer {
                     'namespace': namespace,
                     'labels': {'app': grafana_name},
                     'annotations': {
-                        'service.beta.kubernetes.io/aws-load-balancer-type': 'external',
-                        'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
-                        'service.beta.kubernetes.io/aws-load-balancer-nlb-target-type': 'ip'
+                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
                     }
                 },
                 'spec': {
