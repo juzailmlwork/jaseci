@@ -259,6 +259,113 @@ class MonitoringDeployer {
             }
         }
 
+        # Dashboard provider ConfigMap – tells Grafana where to find dashboards
+        dashboard_provider_yaml = (
+            "apiVersion: 1\n"
+            "providers:\n"
+            "  - name: 'jac-scale'\n"
+            "    orgId: 1\n"
+            "    folder: 'Jac Scale'\n"
+            "    type: file\n"
+            "    disableDeletion: false\n"
+            "    updateIntervalSeconds: 10\n"
+            "    options:\n"
+            "      path: /etc/grafana/provisioning/dashboards\n"
+        );
+        grafana_provider_configmap = {
+            'apiVersion': 'v1',
+            'kind': 'ConfigMap',
+            'metadata': {
+                'name': f"{grafana_name}-dashboard-provider",
+                'namespace': namespace,
+                'labels': {'app': grafana_name}
+            },
+            'data': {'provider.yaml': dashboard_provider_yaml}
+        };
+        try {
+            core_v1.read_namespaced_config_map(
+                name=f"{grafana_name}-dashboard-provider", namespace=namespace
+            );
+            core_v1.replace_namespaced_config_map(
+                name=f"{grafana_name}-dashboard-provider",
+                namespace=namespace,
+                body=grafana_provider_configmap
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_config_map(
+                    namespace=namespace, body=grafana_provider_configmap
+                );
+            } else {
+                raise ;
+            }
+        }
+
+        # Dashboard JSON ConfigMap – pre-built panels for jac_scale metrics
+        dashboard_json = (
+            '{"title":"Jac Scale – App Metrics","uid":"jac-scale-app",'
+            '"schemaVersion":36,"refresh":"10s","time":{"from":"now-1h","to":"now"},'
+            '"panels":['
+            '{"id":1,"type":"timeseries","title":"HTTP Request Rate (req/s)",'
+            '"gridPos":{"x":0,"y":0,"w":12,"h":8},'
+            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (method,path)",'
+            '"legendFormat":"{{method}} {{path}}","datasource":"Prometheus"}]},'
+            '{"id":2,"type":"timeseries","title":"Error Rate (5xx req/s)",'
+            '"gridPos":{"x":12,"y":0,"w":12,"h":8},'
+            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total{status_code=~\\"5..\\"}[1m]))",'
+            '"legendFormat":"5xx errors","datasource":"Prometheus"}]},'
+            '{"id":3,"type":"timeseries","title":"Request Latency (p50 / p95 / p99)",'
+            '"gridPos":{"x":0,"y":8,"w":12,"h":8},'
+            '"targets":['
+            '{"expr":"histogram_quantile(0.50,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            '"legendFormat":"p50","datasource":"Prometheus"},'
+            '{"expr":"histogram_quantile(0.95,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            '"legendFormat":"p95","datasource":"Prometheus"},'
+            '{"expr":"histogram_quantile(0.99,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            '"legendFormat":"p99","datasource":"Prometheus"}]},'
+            '{"id":4,"type":"stat","title":"Active Requests",'
+            '"gridPos":{"x":12,"y":8,"w":6,"h":8},'
+            '"targets":[{"expr":"jac_scale_http_requests_in_progress",'
+            '"legendFormat":"active","datasource":"Prometheus"}]},'
+            '{"id":5,"type":"timeseries","title":"Requests by Status Code",'
+            '"gridPos":{"x":0,"y":16,"w":12,"h":8},'
+            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (status_code)",'
+            '"legendFormat":"{{status_code}}","datasource":"Prometheus"}]},'
+            '{"id":6,"type":"timeseries","title":"Requests by Path",'
+            '"gridPos":{"x":12,"y":16,"w":12,"h":8},'
+            '"targets":[{"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (path)",'
+            '"legendFormat":"{{path}}","datasource":"Prometheus"}]}'
+            ']}'
+        );
+        grafana_dashboard_configmap = {
+            'apiVersion': 'v1',
+            'kind': 'ConfigMap',
+            'metadata': {
+                'name': f"{grafana_name}-dashboard",
+                'namespace': namespace,
+                'labels': {'app': grafana_name}
+            },
+            'data': {'jac-scale.json': dashboard_json}
+        };
+        try {
+            core_v1.read_namespaced_config_map(
+                name=f"{grafana_name}-dashboard", namespace=namespace
+            );
+            core_v1.replace_namespaced_config_map(
+                name=f"{grafana_name}-dashboard",
+                namespace=namespace,
+                body=grafana_dashboard_configmap
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_config_map(
+                    namespace=namespace, body=grafana_dashboard_configmap
+                );
+            } else {
+                raise ;
+            }
+        }
+
         grafana_deployment = {
             'apiVersion': 'apps/v1',
             'kind': 'Deployment',
@@ -285,6 +392,14 @@ class MonitoringDeployer {
                                     {
                                         'name': 'grafana-datasources-vol',
                                         'mountPath': '/etc/grafana/provisioning/datasources'
+                                    },
+                                    {
+                                        'name': 'grafana-dashboard-provider-vol',
+                                        'mountPath': '/etc/grafana/provisioning/dashboards'
+                                    },
+                                    {
+                                        'name': 'grafana-dashboard-vol',
+                                        'mountPath': '/var/lib/grafana/dashboards'
                                     }
                                 ]
                             }
@@ -293,6 +408,16 @@ class MonitoringDeployer {
                             {
                                 'name': 'grafana-datasources-vol',
                                 'configMap': {'name': f"{grafana_name}-datasources"}
+                            },
+                            {
+                                'name': 'grafana-dashboard-provider-vol',
+                                'configMap': {
+                                    'name': f"{grafana_name}-dashboard-provider"
+                                }
+                            },
+                            {
+                                'name': 'grafana-dashboard-vol',
+                                'configMap': {'name': f"{grafana_name}-dashboard"}
                             }
                         ]
                     }
@@ -442,13 +567,17 @@ class MonitoringDeployer {
             namespace,
             'Service'
         );
-        try {
-            core_v1.delete_namespaced_config_map(
-                name=f"{grafana_name}-datasources", namespace=namespace
-            );
-        } except ApiException as e {
-            if e.status != 404 {
-                raise ;
+        for cm_name in [
+            f"{grafana_name}-datasources",
+            f"{grafana_name}-dashboard-provider",
+            f"{grafana_name}-dashboard"
+        ] {
+            try {
+                core_v1.delete_namespaced_config_map(name=cm_name, namespace=namespace);
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise ;
+                }
             }
         }
         delete_k8s_secret(core_v1, namespace, f"{grafana_name}-secret");
