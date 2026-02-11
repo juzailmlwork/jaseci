@@ -162,14 +162,6 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install Jaseci scale package
         run: |
           python -m pip install --upgrade pip
@@ -177,6 +169,7 @@ jobs:
           pip install -e jac-scale
           pip install -e jac-client
           pip install pytest
+          pip install pytest-xdist
           pip install pytest-asyncio
 
       - name: Install MicroK8s
@@ -199,12 +192,8 @@ jobs:
 
       - name: Run K8 tests
         run: |
-          pytest -vv -s jac-scale/jac_scale/tests/test_deploy_k8s.py
-          pytest -v jac-scale/jac_scale/tests/test_k8s_utils.py
-
-      - name: Reset microk8s cluster
-        run: |
-          sudo microk8s reset
+          pytest  -s -x -n auto jac-scale/jac_scale/tests/test_k8s_utils.py
+          pytest  -s -x -n auto jac-scale/jac_scale/tests/test_deploy_k8s.py
 
   test-pypi-build:
     runs-on: ubuntu-latest
