@@ -219,11 +219,7 @@ class MonitoringDeployer {
         }
 
         # Datasource ConfigMap – Prometheus is always ClusterIP at port 9090
-        prometheus_url = (
-            f"http://{prometheus_name}-service:9090"
-            if self.k8s_config.prometheus_enabled
-            else "http://prometheus:9090"
-        );
+        prometheus_url = f"http://{prometheus_name}-service:9090";
         datasource_yaml = (
             "apiVersion: 1\n"
             "datasources:\n"
@@ -377,9 +373,7 @@ class MonitoringDeployer {
         if self.logger {
             if is_aws {
                 self.logger.info(
-                    f"Grafana deployed for '{app_name}' – accessible at NLB '{self._nlb_name(
-                        app_name
-                    )}' on port 3000"
+                    f"Grafana deployed for '{app_name}' – accessible at <grafana-nlb-url>:3000"
                 );
             } else {
                 self.logger.info(
