@@ -12,10 +12,8 @@ import from kubernetes.client.exceptions { ApiException }
 
 Prometheus is always exposed as ClusterIP (internal – scraped by Grafana).
 Grafana is exposed as:
-  - NodePort  (non-AWS): accessible via localhost:<grafana_node_port>
-  - LoadBalancer (AWS):  shares the same NLB as the app service via the
-    'aws-load-balancer-name' annotation so both are reachable at
-    <nlb-url>:80 (app) and <nlb-url>:3000 (Grafana).
+  - NodePort      (non-AWS): accessible via <node-ip>:<grafana_node_port>
+  - LoadBalancer  (AWS):     its own NLB, accessible at <grafana-nlb-url>:3000
 
 Admin credentials for Grafana use the 'prometheus_admin_password' config value.
 """
@@ -30,12 +28,6 @@ class MonitoringDeployer {
     ) -> None {
         self.k8s_config = k8s_config;
         self.logger = logger;
-    }
-
-    """Return the shared NLB name derived from the app name (max 32 chars)."""
-    def _nlb_name(self: MonitoringDeployer, app_name: str) -> str {
-        base = f"{app_name}-nlb";
-        return base[:32];
     }
 
     """Deploy Prometheus – ConfigMap with scrape config + Deployment + ClusterIP Service."""
@@ -182,9 +174,8 @@ class MonitoringDeployer {
 
     """Deploy Grafana – admin Secret, datasource ConfigMap, Deployment and Service.
 
-    On AWS the service shares the existing app NLB via aws-load-balancer-name annotation,
-    so Grafana is reachable at <nlb-url>:3000.
-    On non-AWS a NodePort is used.
+    On AWS a dedicated LoadBalancer (NLB) is created; Grafana is reachable at
+    <grafana-nlb-url>:3000.  On non-AWS a NodePort is used.
     """
     def _deploy_grafana(
         self: MonitoringDeployer,
@@ -336,11 +327,7 @@ class MonitoringDeployer {
                     'annotations': {
                         'service.beta.kubernetes.io/aws-load-balancer-type': 'external',
                         'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
-                        'service.beta.kubernetes.io/aws-load-balancer-nlb-target-type': 'ip',
-                        # Share the same NLB as the main app service
-                        'service.beta.kubernetes.io/aws-load-balancer-name': self._nlb_name(
-                            app_name
-                        )
+                        'service.beta.kubernetes.io/aws-load-balancer-nlb-target-type': 'ip'
                     }
                 },
                 'spec': {

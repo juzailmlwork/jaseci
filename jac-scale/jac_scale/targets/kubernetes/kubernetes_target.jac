@@ -158,14 +158,11 @@ class KubernetesTarget(DeploymentTarget) {
         };
 
         if is_aws {
-            nlb_name = f"{app_name}-nlb"[:32];
             service_metadata['annotations'] = {
                 'service.beta.kubernetes.io/aws-load-balancer-type': 'external',
                 'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
                 'service.beta.kubernetes.io/aws-load-balancer-nlb-target-type': 'ip',
-                'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path,
-                # Named NLB so monitoring services can share the same load balancer
-                'service.beta.kubernetes.io/aws-load-balancer-name': nlb_name
+                'service.beta.kubernetes.io/aws-load-balancer-healthcheck-path': health_check_path
             };
         }
 
