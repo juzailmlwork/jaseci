@@ -327,7 +327,7 @@ class MonitoringDeployer {
                 'spec': {
                     'type': 'LoadBalancer',
                     'selector': {'app': grafana_name},
-                    'ports': [{'protocol': 'TCP', 'port': 3000, 'targetPort': 3000}]
+                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 3000}]
                 }
             };
         } else {
