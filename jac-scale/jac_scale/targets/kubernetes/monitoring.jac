@@ -1,4 +1,5 @@
 """Prometheus and Grafana monitoring stack deployer for Kubernetes."""
+import re;
 import from typing { Any }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
 import from jac_scale.abstractions.logger { Logger }
@@ -13,7 +14,7 @@ import from kubernetes.client.exceptions { ApiException }
 Prometheus is always exposed as ClusterIP (internal – scraped by Grafana).
 Grafana is exposed as:
   - NodePort      (non-AWS): accessible via <node-ip>:<grafana_node_port>
-  - LoadBalancer  (AWS):     its own NLB, accessible at <grafana-nlb-url>:3000
+  - LoadBalancer  (AWS):     its own NLB, accessible at <grafana-nlb-url> (port 80)
 
 Admin credentials for Grafana use the 'prometheus_admin_password' config value.
 """
@@ -176,8 +177,8 @@ class MonitoringDeployer {
 
     """Deploy Grafana – admin Secret, datasource ConfigMap, Deployment and Service.
 
-    On AWS a dedicated LoadBalancer (NLB) is created; Grafana is reachable at
-    <grafana-nlb-url>:3000.  On non-AWS a NodePort is used.
+    On AWS a dedicated LoadBalancer (NLB) is created on port 80.
+    On non-AWS a NodePort is used.
     """
     def _deploy_grafana(
         self: MonitoringDeployer,
@@ -307,7 +308,6 @@ class MonitoringDeployer {
         # Dashboard JSON ConfigMap – pre-built panels matching the app's metrics.
         # The metric prefix is derived from the K8s namespace (same logic as
         # config_loader's sanitize_prometheus_namespace).
-        import re;
         pfx = re.sub(r'[^a-zA-Z0-9]', '_', namespace);
         pfx = re.sub(r'_+', '_', pfx).strip('_');
         if pfx and pfx[0].isdigit() {
@@ -509,7 +509,7 @@ class MonitoringDeployer {
             }
         }
 
-        # Service: NodePort locally, LoadBalancer sharing the app's NLB on AWS
+        # Service: NodePort locally, dedicated LoadBalancer (NLB) on AWS
         if is_aws {
             grafana_service = {
                 'apiVersion': 'v1',
@@ -569,7 +569,7 @@ class MonitoringDeployer {
         if self.logger {
             if is_aws {
                 self.logger.info(
-                    f"Grafana deployed for '{app_name}' – accessible at <grafana-nlb-url>:3000"
+                    f"Grafana deployed for '{app_name}' – accessible via LoadBalancer on port 80"
                 );
             } else {
                 self.logger.info(

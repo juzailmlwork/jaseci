@@ -683,7 +683,7 @@ class KubernetesTarget(DeploymentTarget) {
             monitoring.deploy(app_name, namespace, apps_v1, core_v1, is_aws);
             details["deploy_monitoring"] = "Successful";
 
-            # 17. Wait for deployment and get service URL
+            # 16. Wait for deployment and get service URL
             deployment_details = self._wait_for_deployment(
                 app_name, namespace, health_check_path, is_aws
             );
