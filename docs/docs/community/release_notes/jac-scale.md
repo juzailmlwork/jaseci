@@ -4,8 +4,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.8 (Unreleased)
 
-- Updated JAC Scale Kubernetes integration tests to use JAC plugins from the latest commit of the forked repository when running fork-based PRs, and fall back to the latest main branch of the upstream Jaseci repository for non-fork PRs.
-- Various refactors
+- Internal: K8s integration tests now install jac plugins from fork PRs instead of always using main
 - **PWA Build Detection**: Server startup now detects existing PWA builds (via `manifest.json`) and skips redundant client bundling. The `/static/client.js` endpoint serves Vite-hashed files (`client.*.js`) in PWA mode.
 - **Prometheus Metrics Integration**: Added `/metrics` endpoint with HTTP request metrics, configurable via `[plugins.scale.metrics]` in `jac.toml`.
 - Update jaseci scale k8s pipeline to support parellel test cases.

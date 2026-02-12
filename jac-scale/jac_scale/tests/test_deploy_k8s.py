@@ -41,7 +41,6 @@ def _get_git_config() -> tuple[str, str, str]:
         repo_url = None
         branch = None
         commit = None
-        is_fork_pr = False
 
         # Check if this is a Pull Request with event data available
         if (
@@ -63,10 +62,7 @@ def _get_git_config() -> tuple[str, str, str]:
                         head_full_name = head_repo.get("full_name", "")
                         base_full_name = base_repo.get("full_name", "")
 
-                        # This is a fork if the repo names are different
-                        is_fork_pr = head_full_name != base_full_name
-
-                        if is_fork_pr:
+                        if head_full_name != base_full_name:
                             # Use fork repository details
                             repo_url = head_repo.get("clone_url")
                             branch = os.environ.get("GITHUB_HEAD_REF")
@@ -103,16 +99,6 @@ def _get_git_config() -> tuple[str, str, str]:
                     branch = ref.replace("refs/heads/", "")
                 elif ref.startswith("refs/tags/"):
                     branch = ref.replace("refs/tags/", "")
-
-            # Fallback to other CI systems
-            if not branch:
-                branch = os.environ.get("CI_COMMIT_REF_NAME")
-            if not branch:
-                branch = os.environ.get("GIT_BRANCH", "").replace("origin/", "")
-            if not branch:
-                branch = os.environ.get("CIRCLE_BRANCH")
-            if not branch:
-                branch = os.environ.get("TRAVIS_BRANCH")
 
             # Fallback to git commands
             if not branch:
@@ -259,6 +245,9 @@ def test_deploy_all_in_one():
 
     # Get current git configuration
     repo_url, branch, commit = _get_git_config()
+    assert repo_url, "repo_url must be a non-empty string"
+    assert branch, "branch must be a non-empty string"
+    assert commit, "commit must be a non-empty string"
     target_config["jaseci_repo_url"] = repo_url
     target_config["jaseci_branch"] = branch
     target_config["jaseci_commit"] = commit
