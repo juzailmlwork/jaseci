@@ -36,10 +36,12 @@ class MonitoringDeployer {
         app_name: str,
         namespace: str,
         apps_v1: Any,
-        core_v1: Any
+        core_v1: Any,
+        is_aws: bool
     ) -> None {
         prometheus_name = f"{app_name}-prometheus";
-        container_port = self.k8s_config.container_port;
+        # Use the service port (80 on AWS LoadBalancer, container_port on local NodePort)
+        service_port = 80 if is_aws else self.k8s_config.container_port;
 
         scrape_config = (
             "global:\n"
@@ -48,7 +50,7 @@ class MonitoringDeployer {
             "scrape_configs:\n"
             f"  - job_name: '{app_name}'\n"
             "    static_configs:\n"
-            f"      - targets: ['{app_name}-service:{container_port}']\n"
+            f"      - targets: ['{app_name}-service:{service_port}']\n"
             "    metrics_path: '/metrics'\n"
         );
 
@@ -302,10 +304,15 @@ class MonitoringDeployer {
             }
         }
 
-        # Dashboard JSON ConfigMap – pre-built panels for jac_scale metrics
-        # datasource uses {"type":"prometheus","uid":"prometheus"} to match the
-        # auto-provisioned datasource (Grafana assigns uid="prometheus" by default
-        # when the name is "Prometheus" and it is the only prometheus source).
+        # Dashboard JSON ConfigMap – pre-built panels matching the app's metrics.
+        # The metric prefix is derived from the K8s namespace (same logic as
+        # config_loader's sanitize_prometheus_namespace).
+        import re;
+        pfx = re.sub(r'[^a-zA-Z0-9]', '_', namespace);
+        pfx = re.sub(r'_+', '_', pfx).strip('_');
+        if pfx and pfx[0].isdigit() {
+            pfx = f"_{pfx}";
+        }
         ds = '{"type":"prometheus","uid":"prometheus"}';
         dashboard_json = (
             '{"title":"Jac Scale - App Metrics","uid":"jac-scale-app",'
@@ -315,43 +322,43 @@ class MonitoringDeployer {
             '"gridPos":{"x":0,"y":0,"w":12,"h":8},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (method,path)",'
+            f'"expr":"sum(rate({pfx}_http_requests_total[1m])) by (method,path)",'
             '"legendFormat":"{{method}} {{path}}",'
             f'"datasource":{ds}' + '}]},'
             '{"id":2,"type":"timeseries","title":"Error Rate (5xx req/s)",'
             '"gridPos":{"x":12,"y":0,"w":12,"h":8},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"sum(rate(jac_scale_http_requests_total{status_code=~\\"5..\\"}[1m]))",'
+            f'"expr":"sum(rate({pfx}_http_requests_total' + '{status_code=~\\"5..\\"}[1m]))",'
             '"legendFormat":"5xx errors",'
             f'"datasource":{ds}' + '}]},'
             '{"id":3,"type":"timeseries","title":"Request Latency p50/p95/p99",'
             '"gridPos":{"x":0,"y":8,"w":12,"h":8},'
             f'"datasource":{ds},'
             '"targets":['
-            '{"refId":"A","expr":"histogram_quantile(0.50,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'{{"refId":"A","expr":"histogram_quantile(0.50,rate({pfx}_http_request_duration_seconds_bucket[5m]))",'
             f'"legendFormat":"p50","datasource":{ds}' + '},'
-            '{"refId":"B","expr":"histogram_quantile(0.95,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'{{"refId":"B","expr":"histogram_quantile(0.95,rate({pfx}_http_request_duration_seconds_bucket[5m]))",'
             f'"legendFormat":"p95","datasource":{ds}' + '},'
-            '{"refId":"C","expr":"histogram_quantile(0.99,rate(jac_scale_http_request_duration_seconds_bucket[5m]))",'
+            f'{{"refId":"C","expr":"histogram_quantile(0.99,rate({pfx}_http_request_duration_seconds_bucket[5m]))",'
             f'"legendFormat":"p99","datasource":{ds}' + '}]},'
             '{"id":4,"type":"stat","title":"Active Requests",'
             '"gridPos":{"x":12,"y":8,"w":6,"h":8},'
             f'"datasource":{ds},'
-            '"targets":[{"refId":"A","expr":"jac_scale_http_requests_in_progress",'
+            f'"targets":[{{"refId":"A","expr":"{pfx}_http_requests_in_progress",'
             f'"legendFormat":"active","datasource":{ds}' + '}]},'
             '{"id":5,"type":"timeseries","title":"Requests by Status Code",'
             '"gridPos":{"x":0,"y":16,"w":12,"h":8},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (status_code)",'
-            f'"legendFormat":"{{status_code}}","datasource":{ds}' + '}]},'
+            f'"expr":"sum(rate({pfx}_http_requests_total[1m])) by (status_code)",'
+            f'"legendFormat":"{{{{status_code}}}}","datasource":{ds}' + '}]},'
             '{"id":6,"type":"timeseries","title":"Requests by Path",'
             '"gridPos":{"x":12,"y":16,"w":12,"h":8},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"sum(rate(jac_scale_http_requests_total[1m])) by (path)",'
-            f'"legendFormat":"{{path}}","datasource":{ds}' + '}]}' ']}'
+            f'"expr":"sum(rate({pfx}_http_requests_total[1m])) by (path)",'
+            f'"legendFormat":"{{{{path}}}}","datasource":{ds}' + '}]}' ']}'
         );
         grafana_dashboard_configmap = {
             'apiVersion': 'v1',
@@ -537,7 +544,7 @@ class MonitoringDeployer {
             return;
         }
 
-        self._deploy_prometheus(app_name, namespace, apps_v1, core_v1);
+        self._deploy_prometheus(app_name, namespace, apps_v1, core_v1, is_aws);
         self._deploy_grafana(app_name, namespace, apps_v1, core_v1, is_aws);
     }
 
