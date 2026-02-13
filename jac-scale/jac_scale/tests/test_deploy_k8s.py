@@ -236,9 +236,9 @@ def test_deploy_all_in_one():
         test_dir, "../../../jac-client/jac_client/examples/all-in-one"
     )
 
-    # Get configuration
-    scale_config = get_scale_config()
-    target_config = scale_config.get_kubernetes_config()
+    # Load configuration from the app's jac.toml (picks up [plugins.scale.monitoring] etc.)
+    app_scale_config = JacScaleConfig(Path(os.path.normpath(todo_app_path)))
+    target_config = app_scale_config.get_kubernetes_config()
     target_config["app_name"] = app_name
     target_config["namespace"] = namespace
     target_config["node_port"] = 30001
@@ -260,8 +260,7 @@ def test_deploy_all_in_one():
         "kubernetes", target_config, logger
     )
 
-    # Load secrets from the app's [plugins.scale.secrets] (not CWD)
-    app_scale_config = JacScaleConfig(Path(os.path.normpath(todo_app_path)))
+    # Load secrets from the app's jac.toml
     deployment_target.secrets = app_scale_config.get_secrets_config()
 
     # Create app config
