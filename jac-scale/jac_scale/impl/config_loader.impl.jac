@@ -62,6 +62,12 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'verify_signature': True,
             'api_key_expiry_days': 365
         },
+        'monitoring': {
+            'enabled': False,
+            'prometheus_admin_password': 'Adminpassword123',
+            'prometheus_node_port': 30090,
+            'grafana_node_port': 30300
+        },
         'metrics': {
             'enabled': False,
             'endpoint': '/metrics',
@@ -131,6 +137,12 @@ impl JacScaleConfig.get_kubernetes_config(self: JacScaleConfig) -> dict[str, Any
         app_name = k8s_config.get('app_name', 'jaseci');
         k8s_config['docker_image_name'] = f"{app_name}:latest";
     }
+    # Merge monitoring config into kubernetes config
+    monitoring = self.get_monitoring_config();
+    k8s_config['monitoring_enabled'] = monitoring['enabled'];
+    k8s_config['prometheus_admin_password'] = monitoring['prometheus_admin_password'];
+    k8s_config['prometheus_node_port'] = monitoring['prometheus_node_port'];
+    k8s_config['grafana_node_port'] = monitoring['grafana_node_port'];
     # Convert to dict using KubernetesConfig.from_dict() which handles all defaults
     import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
     k8s_config_obj = KubernetesConfig.from_dict(KubernetesConfig, k8s_config);
@@ -223,6 +235,22 @@ impl JacScaleConfig.get_metrics_config(self: JacScaleConfig) -> dict[str, Any] {
         'namespace': namespace,
         'walker_metrics': metrics_config.get('walker_metrics', False),
         'histogram_buckets': metrics_config.get('histogram_buckets', default_buckets)
+    };
+}
+
+"""Get monitoring configuration from jac.toml."""
+impl JacScaleConfig.get_monitoring_config(self: JacScaleConfig) -> dict[str, Any] {
+    config = self.load();
+    monitoring_config = config.get('monitoring', {});
+    return {
+        'enabled': monitoring_config.get('enabled', False),
+        'prometheus_admin_password': monitoring_config.get(
+            'prometheus_admin_password', 'Adminpassword123'
+        ),
+        'prometheus_node_port': int(
+            monitoring_config.get('prometheus_node_port', 30090)
+        ),
+        'grafana_node_port': int(monitoring_config.get('grafana_node_port', 30300))
     };
 }
 

@@ -40,7 +40,7 @@ class KubernetesConfig(BaseConfig) {
         install_jaseci: bool = True,
         additional_packages: list[str] = [],
         plugin_versions: dict[str, str] = {},
-        monitoring_enabled: bool = True,
+        monitoring_enabled: bool = False,
         prometheus_admin_password: str = 'Adminpassword123',
         prometheus_node_port: int = 30090,
         grafana_node_port: int = 30300;
@@ -81,7 +81,7 @@ class KubernetesConfig(BaseConfig) {
         install_jaseci: bool = True,
         additional_packages: list[str] = [],
         plugin_versions: dict[str, str] = {},
-        monitoring_enabled: bool = True,
+        monitoring_enabled: bool = False,
         prometheus_admin_password: str = 'Adminpassword123',
         prometheus_node_port: int = 30090,
         grafana_node_port: int = 30300
@@ -222,7 +222,7 @@ class KubernetesConfig(BaseConfig) {
             install_jaseci=config.get('install_jaseci', True),
             additional_packages=config.get('additional_packages', []),
             plugin_versions=config.get('plugin_versions', {}),
-            monitoring_enabled=config.get('monitoring_enabled', True),
+            monitoring_enabled=config.get('monitoring_enabled', False),
             prometheus_admin_password=config.get(
                 'prometheus_admin_password', 'Adminpassword123'
             ),

@@ -580,7 +580,6 @@ def test_early_exit():
     target_config["app_name"] = app_name
     target_config["namespace"] = namespace
     target_config["node_port"] = 30002
-    target_config["monitoring_enabled"] = False
 
     # Create logger
     logger = UtilityFactory.create_logger("standard")
