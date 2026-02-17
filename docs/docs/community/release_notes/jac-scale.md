@@ -4,13 +4,14 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.1.10 (Unreleased)
 
+- **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
+
 ## jac-scale 0.1.9 (Latest Release)
 
 - 1 Minor refactors/changes.
 
 ## jac-scale 0.1.8
 
-- **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
 - Internal: K8s integration tests now install jac plugins from fork PRs instead of always using main
 - **.jac folder is excluded when creating the zip folder that is uploaded into jaseci deployment pods.Fasten up deployment**
 - **Fix: `jac start` Startup Banner**: Server now displays the startup banner (URLs, network IPs, mode info) correctly via `on_ready` callback, consistent with stdlib server behavior.
