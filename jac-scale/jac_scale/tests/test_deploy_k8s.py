@@ -320,6 +320,21 @@ def test_deploy_all_in_one():
     )
     assert redis_service.spec.ports[0].port == 6379
 
+    # Validate code-server Deployment and Service
+    code_server_deploy = apps_v1.read_namespaced_deployment(
+        name=f"{app_name}-code-server", namespace=namespace
+    )
+    assert code_server_deploy.metadata.name == f"{app_name}-code-server"
+    assert code_server_deploy.spec.replicas == 1
+    print(f"✓ Code-server deployment verified: {app_name}-code-server")
+
+    code_server_service = core_v1.read_namespaced_service(
+        name=f"{app_name}-code-server", namespace=namespace
+    )
+    assert code_server_service.spec.type == "ClusterIP"
+    assert code_server_service.spec.ports[0].port == 8080
+    print("✓ Code-server service verified: ClusterIP on port 8080")
+
     # Validate K8s Secret was created with correct data
     secret = core_v1.read_namespaced_secret(
         name=f"{app_name}-secrets", namespace=namespace
@@ -425,6 +440,21 @@ def test_deploy_all_in_one():
             f"{app_name}-redis-service", namespace=namespace
         )
         raise AssertionError("Redis Service should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
+
+    # Verify code-server cleanup
+    try:
+        apps_v1.read_namespaced_deployment(
+            f"{app_name}-code-server", namespace=namespace
+        )
+        raise AssertionError("Code-server Deployment should have been deleted")
+    except ApiException as e:
+        assert e.status == 404, f"Expected 404, got {e.status}"
+
+    try:
+        core_v1.read_namespaced_service(f"{app_name}-code-server", namespace=namespace)
+        raise AssertionError("Code-server Service should have been deleted")
     except ApiException as e:
         assert e.status == 404, f"Expected 404, got {e.status}"
 
