@@ -16,6 +16,7 @@ import from jac_scale.targets.kubernetes.utils.kubernetes_utils {
     create_k8s_secret,
     delete_k8s_secret,
     delete_if_exists,
+    delete_namespace,
     check_K8s_status,
     ensure_namespace_exists,
     ensure_pvc_exists,
@@ -1097,6 +1098,14 @@ class KubernetesTarget(DeploymentTarget) {
                 );
             }
             self._wait_for_deletion(app_name, namespace, apps_v1, core_v1);
+
+            # Delete namespace if not the default one
+            if namespace != 'default' {
+                delete_namespace(namespace);
+                if self.logger {
+                    self.logger.info(f"Namespace '{namespace}' deleted");
+                }
+            }
 
             if self.logger {
                 self.logger.info(f"Application '{app_name}' destroyed successfully");
