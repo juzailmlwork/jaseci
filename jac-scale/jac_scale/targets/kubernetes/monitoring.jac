@@ -11,7 +11,7 @@ import from kubernetes.client.exceptions { ApiException }
 
 """Deploys and destroys a Prometheus + Grafana monitoring stack scoped to an app namespace.
 
-Prometheus is always exposed as ClusterIP (internal â€“ scraped by Grafana).
+Prometheus is always exposed as ClusterIP (internal – scraped by Grafana).
 Grafana is exposed as:
   - NodePort      (non-AWS): accessible via <node-ip>:<grafana_node_port>
   - LoadBalancer  (AWS):     its own NLB, accessible at <grafana-nlb-url> (port 80)
@@ -31,7 +31,7 @@ class MonitoringDeployer {
         self.logger = logger;
     }
 
-    """Deploy Prometheus â€“ ConfigMap with scrape config + Deployment + ClusterIP Service."""
+    """Deploy Prometheus – ConfigMap with scrape config + Deployment + ClusterIP Service."""
     def _deploy_prometheus(
         self: MonitoringDeployer,
         app_name: str,
@@ -141,7 +141,7 @@ class MonitoringDeployer {
             }
         }
 
-        # Prometheus is ClusterIP â€“ Grafana scrapes it internally at prometheus-service:9090
+        # Prometheus is ClusterIP – Grafana scrapes it internally at prometheus-service:9090
         prometheus_service = {
             'apiVersion': 'v1',
             'kind': 'Service',
@@ -175,7 +175,7 @@ class MonitoringDeployer {
         }
     }
 
-    """Deploy Grafana â€“ admin Secret, datasource ConfigMap, Deployment and Service.
+    """Deploy Grafana – admin Secret, datasource ConfigMap, Deployment and Service.
 
     On AWS a dedicated LoadBalancer (NLB) is created on port 80.
     On non-AWS a NodePort is used.
@@ -192,7 +192,7 @@ class MonitoringDeployer {
         prometheus_name = f"{app_name}-prometheus";
         grafana_secret_name = f"{grafana_name}-secret";
 
-        # Admin credentials â€“ password sourced from prometheus_admin_password config field
+        # Admin credentials – password sourced from prometheus_admin_password config field
         grafana_secret = {
             'apiVersion': 'v1',
             'kind': 'Secret',
@@ -221,7 +221,7 @@ class MonitoringDeployer {
             }
         }
 
-        # Datasource ConfigMap â€“ Prometheus is always ClusterIP at port 9090
+        # Datasource ConfigMap – Prometheus is always ClusterIP at port 9090
         prometheus_url = f"http://{prometheus_name}-service:9090";
         datasource_yaml = (
             "apiVersion: 1\n"
@@ -263,7 +263,7 @@ class MonitoringDeployer {
             }
         }
 
-        # Dashboard provider ConfigMap â€“ tells Grafana where to find dashboards
+        # Dashboard provider ConfigMap – tells Grafana where to find dashboards
         dashboard_provider_yaml = (
             "apiVersion: 1\n"
             "providers:\n"
@@ -305,7 +305,7 @@ class MonitoringDeployer {
             }
         }
 
-        # Dashboard JSON ConfigMap â€“ pre-built panels matching the app's metrics.
+        # Dashboard JSON ConfigMap – pre-built panels matching the app's metrics.
         # The metric prefix is derived from the K8s namespace (same logic as
         # config_loader's sanitize_prometheus_namespace).
         pfx = re.sub(r'[^a-zA-Z0-9]', '_', namespace);
@@ -366,7 +366,7 @@ class MonitoringDeployer {
             f'"legendFormat":"{{{{path}}}}","datasource":{ds}' + '}]},'
             # --- Additional latency panels ---
 
-            # 7. p95 Latency by Path â€“ which endpoints are slowest
+            # 7. p95 Latency by Path – which endpoints are slowest
             '{"id":7,"type":"timeseries","title":"p95 Latency by Path",'
             '"gridPos":{"x":0,"y":24,"w":12,"h":8},'
             f'"datasource":{ds},'
@@ -374,7 +374,7 @@ class MonitoringDeployer {
             '"targets":[{"refId":"A",'
             f'"expr":"histogram_quantile(0.95,sum(rate({pfx}_http_request_duration_seconds_bucket[5m])) by (le,path))",'
             f'"legendFormat":"{{{{path}}}}","datasource":{ds}' + '}]},'
-            # 8. p95 Latency by Method â€“ GET vs POST etc
+            # 8. p95 Latency by Method – GET vs POST etc
             '{"id":8,"type":"timeseries","title":"p95 Latency by Method",'
             '"gridPos":{"x":12,"y":24,"w":12,"h":8},'
             f'"datasource":{ds},'
@@ -568,12 +568,10 @@ class MonitoringDeployer {
 
         if self.logger {
             if is_aws {
-                self.logger.info(
-                    f"Grafana deployed for '{app_name}'"
-                );
+                self.logger.info(f"Grafana deployed for '{app_name}'");
             } else {
                 self.logger.info(
-                    f"Grafana deployed for '{app_name}' â€“ accessible at localhost:{self.k8s_config.grafana_node_port}"
+                    f"Grafana deployed for '{app_name}' – accessible at localhost:{self.k8s_config.grafana_node_port}"
                 );
             }
         }
