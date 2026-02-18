@@ -1103,6 +1103,26 @@ class KubernetesTarget(DeploymentTarget) {
             if namespace != 'default' {
                 delete_namespace(namespace);
                 if self.logger {
+                    self.logger.info(
+                        f"Waiting for namespace '{namespace}' to be deleted..."
+                    );
+                }
+                ns_elapsed = 0.0;
+                ns_max_wait = 120;
+                ns_poll = 2.0;
+                while ns_elapsed < ns_max_wait {
+                    try {
+                        core_v1.read_namespace(name=namespace);
+                        time.sleep(ns_poll);
+                        ns_elapsed = ns_elapsed + ns_poll;
+                    } except ApiException as e {
+                        if e.status == 404 {
+                            break;
+                        }
+                        raise ;
+                    }
+                }
+                if self.logger {
                     self.logger.info(f"Namespace '{namespace}' deleted");
                 }
             }
