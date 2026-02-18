@@ -461,7 +461,9 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404 for namespace, got {e.status}";
     }
 
-    print("Cleanup verification complete - all resources and namespace properly deleted");
+    print(
+        "Cleanup verification complete - all resources and namespace properly deleted"
+    );
 }
 
 """Test deployment early exit on failure."""
