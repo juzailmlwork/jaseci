@@ -577,7 +577,11 @@ impl create_k8s_secret(
     secret_body = {
         'apiVersion': 'v1',
         'kind': 'Secret',
-        'metadata': {'name': secret_name, 'namespace': namespace, 'labels': {'managed': 'jac-scale'}},
+        'metadata': {
+            'name': secret_name,
+            'namespace': namespace,
+            'labels': {'managed': 'jac-scale'}
+        },
         'type': 'Opaque',
         'stringData': secret_data
     };

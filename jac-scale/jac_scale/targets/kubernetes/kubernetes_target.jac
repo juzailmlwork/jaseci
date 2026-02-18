@@ -366,7 +366,7 @@ class KubernetesTarget(DeploymentTarget) {
             'metadata': {
                 'name': code_server_name,
                 'namespace': namespace,
-                'labels': {**code_server_labels, 'managed': 'jac-scale'}
+                'labels': {** code_server_labels, 'managed': 'jac-scale'}
             },
             'spec': {
                 'replicas': 1,
@@ -411,7 +411,7 @@ class KubernetesTarget(DeploymentTarget) {
             'metadata': {
                 'name': code_server_name,
                 'namespace': namespace,
-                'labels': {**code_server_labels, 'managed': 'jac-scale'}
+                'labels': {** code_server_labels, 'managed': 'jac-scale'}
             },
             'spec': {
                 'type': 'ClusterIP',

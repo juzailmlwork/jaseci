@@ -79,7 +79,10 @@ class KubernetesMongoProvider(DatabaseProvider) {
         mongodb_service = {
             'apiVersion': 'v1',
             'kind': 'Service',
-            'metadata': {'name': mongodb_service_name, 'labels': {'managed': 'jac-scale'}},
+            'metadata': {
+                'name': mongodb_service_name,
+                'labels': {'managed': 'jac-scale'}
+            },
             'spec': {
                 'clusterIP': 'None',
                 'selector': {'app': mongodb_name},
