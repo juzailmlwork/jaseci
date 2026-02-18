@@ -233,7 +233,9 @@ impl JacScaleConfig.get_monitoring_config(self: JacScaleConfig) -> dict[str, Any
         'endpoint': monitoring_config.get('endpoint', '/metrics'),
         'namespace': namespace,
         'walker_metrics': monitoring_config.get('walker_metrics', False),
-        'histogram_buckets': monitoring_config.get('histogram_buckets', default_buckets),
+        'histogram_buckets': monitoring_config.get(
+            'histogram_buckets', default_buckets
+        ),
         'prometheus_admin_password': monitoring_config.get(
             'prometheus_admin_password', 'Adminpassword123'
         ),
