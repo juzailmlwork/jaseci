@@ -61,8 +61,5 @@ TEST_SECRET_KEY = "${TEST_SECRET_KEY}"
 
 [plugins.scale.monitoring]
 enabled = true
-
-[plugins.scale.metrics]
-enabled = true
 namespace = "default"
 walker_metrics = true
