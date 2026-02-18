@@ -569,7 +569,7 @@ class MonitoringDeployer {
         if self.logger {
             if is_aws {
                 self.logger.info(
-                    f"Grafana deployed for '{app_name}' – accessible via LoadBalancer on port 80"
+                    f"Grafana deployed for '{app_name}'"
                 );
             } else {
                 self.logger.info(
