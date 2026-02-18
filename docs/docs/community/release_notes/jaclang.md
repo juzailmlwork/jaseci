@@ -2,8 +2,11 @@
 
 This document provides a summary of new features, improvements, and bug fixes in each version of **Jaclang**. For details on changes that might require updates to your existing code, please refer to the [Breaking Changes](../breaking-changes.md) page.
 
-## jaclang 0.10.3 (Unreleased)
+## jaclang 0.10.4 (Unreleased)
 
+## jaclang 0.10.3 (Latest Release)
+
+- **Fix: Type Narrowing in Loops**: Fixed type narrowing loss in loops and also improved CFG accuracy.
 - **Fix: Config Discovery from Target File Path**: Fixed `jac start` commands to discover `jac.toml` from the target file's directory instead of the current working directory when using absolute/relative paths.
 - **Fix: Unbound Method Call Type Checking**: Fixed "Parameter already matched" error when calling parent class methods with explicit `self` in inheritance patterns (e.g., `ParentClass.init(self, name=name)`). The type checker now correctly handles unbound method calls on `obj`/`node`/`walker`/`edge` types where `self` is implicit.
 - **Enhanced Type Narrowing**: Extended CFG-based type narrowing to support additional patterns: parenthesized isinstance `(isinstance(x, T))`, NOT expressions `not isinstance(x, T)`, compound AND/OR conditions, isinstance with tuple of types `isinstance(x, (A, B))`, truthiness narrowing `if x:` (excludes None), literal equality `x == "lit"`, and inheritance-aware isinstance that correctly narrows to subclasses in unions.
@@ -25,9 +28,13 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Fix: Quoted JSX Text Produces Invalid JS**: Fixed JSX text containing quote characters (e.g., `<p>"text"</p>`) generating invalid double-double-quoted JavaScript (`""text""`). Inner quotes are now properly escaped in the emitted JS string literals.
 - **Fix: `unittest.mock.patch` Compatibility in Jac Tests**: Fixed `unittest.mock.patch` not intercepting calls in Jac test blocks.
 - **Modern Generics: `type` Aliases & Inline Type Parameters**: Added PEP 695-style `type` alias statements (`type JsonPrimitive = str | int | float | bool | None;`) and inline generic type parameters on archetypes (`obj Result[T, E = Exception] { ... }`). Supports bounded type vars (`T: Comparable`), default type values, and recursive type aliases. Compiles to native Python 3.12 `ast.TypeAlias` and `ast.TypeVar` nodes.
+- **Perf: Precompiled Bytecode for Zero Cold Start**: Ship precompiled `.jbc` bytecode per Python version (3.12, 3.13, 3.14) inside each Jac package wheel. Cold start (`jac purge && jac --help`) drops from ~29s to <1s.
+- **`jac run` Script Arguments**: `jac run` now passes arguments to the script using Python-like semantics - everything after the filename goes to the script (e.g., `jac run script.jac arg1 arg2`), accessible via `sys.argv[1:]`. Jac flags like `--no-cache` must come before the filename, just like `python -O script.py`.
+- **Fix: Operator Precedence for Bitwise vs Logical Operators**: Fixed operator precedence so bitwise operators (`|`, `^`, `&`, `<<`, `>>`) bind tighter than logical operators (`or`, `and`, `not`), matching Python's semantics. Previously `3 & 1 == 1` was parsed as `3 & (1 == 1)` instead of `(3 & 1) == 1`.
+- **Fix: `_jac` Primitive Runtime for ES Codegen**: Fixed unification of compiled JavaScript that uses Python-like primitive operations (`list.sort(key=...)`, `list.count()`, `str.capitalize()`, `int % int`, etc.).
 - 2 Minor refactors/changes.
 
-## jaclang 0.10.2 (Latest Release)
+## jaclang 0.10.2
 
 - **Unified Primitive Codegen Interface**: Added abstract emitter contracts (`primitives.jac`) for all Jac primitive type methods and builtin functions. Each compilation backend (Python, ECMAScript, Native) must implement these interfaces, ensuring consistent primitive support across all code generation pathways. Python, JS, and Native backend implementations provided.
 - **Pytest Plugin for Native Jac Tests**: Added a `pytest11` entry-point plugin (`jaclang.pytest_plugin`) that discovers and runs `test` blocks in `.jac` files alongside Python tests with zero configuration. Migrated ~79 language integration tests and 8 compilation tests from Python to native Jac `test` keyword.
