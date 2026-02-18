@@ -154,7 +154,7 @@ class KubernetesTarget(DeploymentTarget) {
         service_metadata: dict[(str, Any)] = {
             'name': f"{app_name}-service",
             'namespace': self.k8s_config.namespace,
-            'labels': {'app': app_name}
+            'labels': {'app': app_name, 'managed': 'jac-scale'}
         };
 
         if is_aws {
@@ -366,7 +366,7 @@ class KubernetesTarget(DeploymentTarget) {
             'metadata': {
                 'name': code_server_name,
                 'namespace': namespace,
-                'labels': code_server_labels
+                'labels': {**code_server_labels, 'managed': 'jac-scale'}
             },
             'spec': {
                 'replicas': 1,
@@ -411,7 +411,7 @@ class KubernetesTarget(DeploymentTarget) {
             'metadata': {
                 'name': code_server_name,
                 'namespace': namespace,
-                'labels': code_server_labels
+                'labels': {**code_server_labels, 'managed': 'jac-scale'}
             },
             'spec': {
                 'type': 'ClusterIP',
@@ -742,7 +742,7 @@ class KubernetesTarget(DeploymentTarget) {
                 'metadata': {
                     'name': app_name,
                     'namespace': namespace,
-                    'labels': {'app': app_name}
+                    'labels': {'app': app_name, 'managed': 'jac-scale'}
                 },
                 'spec': {
                     'replicas': 1,

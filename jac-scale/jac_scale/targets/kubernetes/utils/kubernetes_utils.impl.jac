@@ -104,7 +104,7 @@ impl sync_code_to_pvc(
     pod_body = {
         'apiVersion': 'v1',
         'kind': 'Pod',
-        'metadata': {'name': sync_pod_name},
+        'metadata': {'name': sync_pod_name, 'labels': {'managed': 'jac-scale'}},
         'spec': {
             'restartPolicy': 'Never',
             'containers': [
@@ -304,7 +304,7 @@ impl ensure_pvc_exists(
     pvc_body: dict[(str, Any)] = {
         'apiVersion': 'v1',
         'kind': 'PersistentVolumeClaim',
-        'metadata': {'name': pvc_name},
+        'metadata': {'name': pvc_name, 'labels': {'managed': 'jac-scale'}},
         'spec': {
             'accessModes': [access_mode],
             'resources': {'requests': {'storage': storage_size}}
@@ -577,7 +577,7 @@ impl create_k8s_secret(
     secret_body = {
         'apiVersion': 'v1',
         'kind': 'Secret',
-        'metadata': {'name': secret_name, 'namespace': namespace},
+        'metadata': {'name': secret_name, 'namespace': namespace, 'labels': {'managed': 'jac-scale'}},
         'type': 'Opaque',
         'stringData': secret_data
     };
