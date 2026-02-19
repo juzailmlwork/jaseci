@@ -339,7 +339,6 @@ impl check_node_ports_available(
     import from kubernetes { client }
     v1 = client.CoreV1Api();
     all_services = v1.list_service_for_all_namespaces();
-
     # Build a map: port_number -> "namespace/service-name"
     # Only include services from OTHER namespaces.
     used_ports: dict[int, str] = {};
@@ -354,7 +353,6 @@ impl check_node_ports_available(
             }
         }
     }
-
     requested: dict[str, int] = {'node_port': node_port};
     if prometheus_node_port is not None {
         requested['prometheus_node_port'] = prometheus_node_port;
@@ -362,7 +360,6 @@ impl check_node_ports_available(
     if grafana_node_port is not None {
         requested['grafana_node_port'] = grafana_node_port;
     }
-
     conflicts: list[str] = [];
     for (param_name, port_val) in requested.items() {
         if port_val in used_ports {
@@ -371,7 +368,6 @@ impl check_node_ports_available(
             );
         }
     }
-
     if conflicts {
         conflict_lines = '\n'.join(conflicts);
         raise ValueError(
@@ -379,7 +375,8 @@ impl check_node_ports_available(
             f"The following requested ports are already bound:\n{conflict_lines}\n"
             f"Please choose different port values in your KubernetesConfig "
             f"(node_port, prometheus_node_port, grafana_node_port) and try again."
-        );
+        ) ;
+    }
 }
 
 impl cluster_type -> str {

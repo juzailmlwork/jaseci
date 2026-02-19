@@ -687,11 +687,13 @@ class KubernetesTarget(DeploymentTarget) {
                     node_port=self.k8s_config.node_port,
                     prometheus_node_port=(
                         self.k8s_config.prometheus_node_port
-                        if self.k8s_config.monitoring_enabled else None
+                        if self.k8s_config.monitoring_enabled
+                        else None
                     ),
                     grafana_node_port=(
                         self.k8s_config.grafana_node_port
-                        if self.k8s_config.monitoring_enabled else None
+                        if self.k8s_config.monitoring_enabled
+                        else None
                     ),
                     current_namespace=namespace
                 );
