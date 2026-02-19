@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.1.11 (Unreleased)
 
 - Before deploying to the local Kubernetes cluster, check whether the required NodePorts are already in use in any namespace; if they are, throw an error.
+
 ## jac-scale 0.1.10 (Latest Release)
 
 - **support horizontal scaling**:  based on average cpu usage k8s pods are horizontally scaled
