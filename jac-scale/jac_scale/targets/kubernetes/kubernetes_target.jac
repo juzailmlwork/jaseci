@@ -677,7 +677,7 @@ class KubernetesTarget(DeploymentTarget) {
 
             # 4. Determine cluster type
             cluster_env = cluster_type();
-            is_aws = cluster_env == 'aws';
+            is_aws: bool = cluster_env == 'aws';
             service_type = 'LoadBalancer' if is_aws else 'NodePort';
 
             # 4b. On local clusters, verify that the requested NodePorts are not
