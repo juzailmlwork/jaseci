@@ -12,6 +12,7 @@ import from jac_scale.abstractions.logger { Logger }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
 import from jac_scale.targets.kubernetes.utils.kubernetes_utils {
     check_deployment_status,
+    check_node_ports_available,
     cluster_type,
     create_k8s_secret,
     delete_k8s_secret,
@@ -678,6 +679,23 @@ class KubernetesTarget(DeploymentTarget) {
             cluster_env = cluster_type();
             is_aws = cluster_env == 'aws';
             service_type = 'LoadBalancer' if is_aws else 'NodePort';
+
+            # 4b. On local clusters, verify that the requested NodePorts are not
+            #     already bound by a service in another namespace.
+            if not is_aws {
+                check_node_ports_available(
+                    node_port=self.k8s_config.node_port,
+                    prometheus_node_port=(
+                        self.k8s_config.prometheus_node_port
+                        if self.k8s_config.monitoring_enabled else None
+                    ),
+                    grafana_node_port=(
+                        self.k8s_config.grafana_node_port
+                        if self.k8s_config.monitoring_enabled else None
+                    ),
+                    current_namespace=namespace
+                );
+            }
 
             # 5. Handle image registry if build is requested
             repository_name = self._handle_image_registry(app_name, app_config);
