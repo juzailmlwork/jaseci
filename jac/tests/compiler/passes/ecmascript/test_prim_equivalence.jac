@@ -143,13 +143,93 @@ test "builtin functions match across backends" {
     compare_results(py_result, js_result, "builtins");
 }
 
-test "jac runtime primitives match across backends" {
-    # Operations that emit _jac.* calls (list.sort with key, list.count,
-    # list.remove, str.capitalize) require the _jac runtime object to be
-    # defined in the JS output.  This test will fail with
-    # "ReferenceError: _jac is not defined" until the runtime is provided.
-    py_result = run_py_fixture("prim_jac_runtime", "jac_runtime_py");
+test "jac runtime int methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_int_py");
     js_code = compile_fixture_to_js("prim_jac_runtime.jac");
-    js_result = run_js_function(js_code, "jac_runtime_cl");
-    compare_results(py_result, js_result, "jac_runtime");
+    js_result = run_js_function(js_code, "jac_rt_int_cl");
+    compare_results(py_result, js_result, "jac_rt_int");
+}
+
+test "jac runtime float methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_float_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_float_cl");
+    compare_results(py_result, js_result, "jac_rt_float");
+}
+
+test "jac runtime str methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_str_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_str_cl");
+    compare_results(py_result, js_result, "jac_rt_str");
+}
+
+test "jac runtime list methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_list_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_list_cl");
+    compare_results(py_result, js_result, "jac_rt_list");
+}
+
+test "jac runtime dict methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_dict_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_dict_cl");
+    compare_results(py_result, js_result, "jac_rt_dict");
+}
+
+test "jac runtime set methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_set_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_set_cl");
+    compare_results(py_result, js_result, "jac_rt_set");
+}
+
+test "jac runtime tuple methods match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_tuple_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_tuple_cl");
+    compare_results(py_result, js_result, "jac_rt_tuple");
+}
+
+test "jac runtime builtin functions match across backends" {
+    py_result = run_py_fixture("prim_jac_runtime", "jac_rt_builtin_py");
+    js_code = compile_fixture_to_js("prim_jac_runtime.jac");
+    js_result = run_js_function(js_code, "jac_rt_builtin_cl");
+    compare_results(py_result, js_result, "jac_rt_builtin");
+}
+
+test "bool truthiness matches Python semantics" {
+    py_result = run_py_fixture("prim_new_primitives", "bool_truthiness_py");
+    js_code = compile_fixture_to_js("prim_new_primitives.jac");
+    js_result = run_js_function(js_code, "bool_truthiness_cl");
+    compare_results(py_result, js_result, "bool_truthiness");
+}
+
+test "range builtin matches across backends" {
+    py_result = run_py_fixture("prim_new_primitives", "range_builtin_py");
+    js_code = compile_fixture_to_js("prim_new_primitives.jac");
+    js_result = run_js_function(js_code, "range_builtin_cl");
+    compare_results(py_result, js_result, "range_builtin");
+}
+
+test "bool bitwise operators match across backends" {
+    py_result = run_py_fixture("prim_new_primitives", "bool_bitwise_py");
+    js_code = compile_fixture_to_js("prim_new_primitives.jac");
+    js_result = run_js_function(js_code, "bool_bitwise_cl");
+    compare_results(py_result, js_result, "bool_bitwise");
+}
+
+test "format builtin matches across backends" {
+    py_result = run_py_fixture("prim_new_primitives", "format_builtin_py");
+    js_code = compile_fixture_to_js("prim_new_primitives.jac");
+    js_result = run_js_function(js_code, "format_builtin_cl");
+    compare_results(py_result, js_result, "format_builtin");
+}
+
+test "slice builtin matches across backends" {
+    py_result = run_py_fixture("prim_new_primitives", "slice_builtin_py");
+    js_code = compile_fixture_to_js("prim_new_primitives.jac");
+    js_result = run_js_function(js_code, "slice_builtin_cl");
+    compare_results(py_result, js_result, "slice_builtin");
 }
