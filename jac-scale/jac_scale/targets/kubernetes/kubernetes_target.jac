@@ -682,7 +682,8 @@ class KubernetesTarget(DeploymentTarget) {
 
             # 4b. On local clusters, verify that the requested NodePorts are not
             #     already bound by a service in another namespace.
-            if not is_aws {
+            is_local: bool = not is_aws;
+            if is_local {
                 check_node_ports_available(
                     node_port=self.k8s_config.node_port,
                     prometheus_node_port=(
