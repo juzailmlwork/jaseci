@@ -1162,6 +1162,7 @@ class KubernetesTarget(DeploymentTarget) {
                         f"Waiting for namespace '{namespace}' to be deleted..."
                     );
                 }
+                ns_deleted = False;
                 ns_elapsed = 0.0;
                 ns_max_wait = 120;
                 ns_poll = 2.0;
@@ -1172,13 +1173,20 @@ class KubernetesTarget(DeploymentTarget) {
                         ns_elapsed = ns_elapsed + ns_poll;
                     } except ApiException as e {
                         if e.status == 404 {
+                            ns_deleted = True;
                             break;
                         }
                         raise ;
                     }
                 }
                 if self.logger {
-                    self.logger.info(f"Namespace '{namespace}' deleted");
+                    if ns_deleted {
+                        self.logger.info(f"Namespace '{namespace}' deleted");
+                    } else {
+                        self.logger.warning(
+                            f"Timed out waiting for namespace '{namespace}' to be deleted"
+                        );
+                    }
                 }
             }
 

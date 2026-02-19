@@ -483,10 +483,7 @@ impl create_tarball(source_dir: str, tar_path: str) -> None {
     }
 }
 
-"""
-    Ensure that a given namespace exists in the Kubernetes cluster.
-    If it doesn't exist and is not 'default', it will be created.
-"""
+"""Delete a namespace from the Kubernetes cluster if it exists and is not 'default'."""
 impl delete_namespace(namespace: str) -> None {
     if (namespace == 'default') {
         return;
@@ -505,6 +502,10 @@ impl delete_namespace(namespace: str) -> None {
     }
 }
 
+"""
+    Ensure that a given namespace exists in the Kubernetes cluster.
+    If it doesn't exist and is not 'default', it will be created.
+"""
 impl ensure_namespace_exists(namespace: str) -> None {
     if (namespace == 'default') {
         return;
