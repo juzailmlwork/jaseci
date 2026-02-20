@@ -1264,4 +1264,196 @@ class KubernetesTarget(DeploymentTarget) {
         }
         return None;
     }
+
+    """Return status dict for a single Deployment or StatefulSet.
+
+    Returns dict with keys: status, ready, total.
+    status values: 'running', 'degraded', 'pending', 'not_deployed', 'unknown'.
+    """
+    def _get_component_status(
+        self: KubernetesTarget,
+        apps_v1: Any,
+        namespace: str,
+        name: str,
+        is_statefulset: bool = False
+    ) -> dict {
+        try {
+            if is_statefulset {
+                resource = apps_v1.read_namespaced_stateful_set(
+                    name=name, namespace=namespace
+                );
+            } else {
+                resource = apps_v1.read_namespaced_deployment(
+                    name=name, namespace=namespace
+                );
+            }
+            replicas = resource.spec.replicas or 0;
+            ready = resource.status.ready_replicas or 0;
+            if ready == replicas and replicas > 0 {
+                status = 'running';
+            } elif ready > 0 {
+                status = 'degraded';
+            } else {
+                status = 'pending';
+            }
+            return {'status': status, 'ready': ready, 'total': replicas};
+        } except ApiException as e {
+            if e.status == 404 {
+                return {'status': 'not_deployed', 'ready': 0, 'total': 0};
+            }
+            return {'status': 'unknown', 'ready': 0, 'total': 0};
+        } except Exception {
+            return {'status': 'unknown', 'ready': 0, 'total': 0};
+        }
+    }
+
+    """Get comprehensive status of all deployed components for this application.
+
+    Makes 4 bulk API calls instead of one per component:
+      1. list_namespaced_deployment
+      2. list_namespaced_stateful_set
+      3. list_namespaced_pod  (to detect crash-looping pods)
+      4. read_namespaced_service  (app URL)
+    """
+    def get_full_status(self: KubernetesTarget, app_name: str) -> dict {
+        try {
+            k8s_config.load_kube_config();
+            apps_v1 = client.AppsV1Api();
+            core_v1 = client.CoreV1Api();
+        } except Exception as e {
+            return {
+                'app_name': app_name,
+                'namespace': self.k8s_config.namespace,
+                'error': str(e),
+                'components': [],
+                'urls': {}
+            };
+        }
+
+        namespace = self.k8s_config.namespace;
+        components = [];
+        urls = {};
+
+        # 1. Bulk-fetch all Deployments
+        dep_map = {};
+        try {
+            for d in apps_v1.list_namespaced_deployment(namespace=namespace).items {
+                dep_map[d.metadata.name] = d;
+            }
+        } except Exception { }
+
+        # 2. Bulk-fetch all StatefulSets
+        sts_map = {};
+        try {
+            for s in apps_v1.list_namespaced_stateful_set(namespace=namespace).items {
+                sts_map[s.metadata.name] = s;
+            }
+        } except Exception { }
+
+        # 3. Bulk-fetch pods to detect crash-looping (restart_count > 0)
+        #    Keyed by the pod's 'app' label → True if any container has restarts
+        restarting_apps = {};
+        try {
+            for pod in core_v1.list_namespaced_pod(namespace=namespace).items {
+                pod_labels = pod.metadata.labels;
+                if pod_labels and 'app' in pod_labels {
+                    pod_app = pod_labels['app'];
+                    if pod.status and pod.status.container_statuses {
+                        for cs in pod.status.container_statuses {
+                            if cs.restart_count and cs.restart_count > 0 {
+                                restarting_apps[pod_app] = True;
+                            }
+                        }
+                    }
+                }
+            }
+        } except Exception { }
+
+        # Resolve status for each component from the cached maps
+        component_defs = [
+            {'k8s_name': app_name,                  'display': 'Jaseci App', 'is_sts': False},
+            {'k8s_name': f"{app_name}-redis",       'display': 'Redis',      'is_sts': False},
+            {'k8s_name': f"{app_name}-mongodb",     'display': 'MongoDB',    'is_sts': True},
+            {'k8s_name': f"{app_name}-prometheus",  'display': 'Prometheus', 'is_sts': False},
+            {'k8s_name': f"{app_name}-grafana",     'display': 'Grafana',    'is_sts': False},
+        ];
+
+        grafana_running = False;
+        for cdef in component_defs {
+            k8s_name = cdef['k8s_name'];
+            display_name = cdef['display'];
+            if cdef['is_sts'] {
+                resource_map = sts_map;
+            } else {
+                resource_map = dep_map;
+            }
+            if k8s_name in resource_map {
+                r = resource_map[k8s_name];
+                replicas = r.spec.replicas or 0;
+                ready = r.status.ready_replicas or 0;
+                if ready == replicas and replicas > 0 {
+                    status = 'running';
+                } elif ready > 0 {
+                    status = 'degraded';
+                } elif k8s_name in restarting_apps {
+                    # Pods exist but are crash-looping
+                    status = 'restarting';
+                } else {
+                    status = 'pending';
+                }
+                components.append(
+                    {'name': display_name, 'status': status, 'ready': ready, 'total': replicas}
+                );
+                if display_name == 'Grafana' {
+                    grafana_running = True;
+                }
+            } else {
+                components.append(
+                    {'name': display_name, 'status': 'not_deployed', 'ready': 0, 'total': 0}
+                );
+            }
+        }
+
+        # 4. Application service URL
+        is_aws = cluster_type() == 'aws';
+        try {
+            svc = core_v1.read_namespaced_service(
+                name=f"{app_name}-service", namespace=namespace
+            );
+            if is_aws {
+                ingress = svc.status.load_balancer.ingress;
+                if ingress and len(ingress) > 0 {
+                    endpoint = ingress[0].hostname or ingress[0].ip;
+                    urls['app'] = f"http://{endpoint}";
+                }
+            } else {
+                urls['app'] = f"http://localhost:{self.k8s_config.node_port}";
+            }
+        } except Exception { }
+
+        # Grafana URL (NodePort on local, LoadBalancer on AWS)
+        if grafana_running {
+            if is_aws {
+                try {
+                    svc = core_v1.read_namespaced_service(
+                        name=f"{app_name}-grafana-service", namespace=namespace
+                    );
+                    ingress = svc.status.load_balancer.ingress;
+                    if ingress and len(ingress) > 0 {
+                        endpoint = ingress[0].hostname or ingress[0].ip;
+                        urls['grafana'] = f"http://{endpoint}";
+                    }
+                } except Exception { }
+            } else {
+                urls['grafana'] = f"http://localhost:{self.k8s_config.grafana_node_port}";
+            }
+        }
+
+        return {
+            'app_name': app_name,
+            'namespace': namespace,
+            'components': components,
+            'urls': urls
+        };
+    }
 }
