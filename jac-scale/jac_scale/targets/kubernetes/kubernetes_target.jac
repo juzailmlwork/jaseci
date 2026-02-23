@@ -139,9 +139,9 @@ class KubernetesTarget(DeploymentTarget) {
         self: KubernetesTarget,
         app_name: str,
         cluster_env: str,
-        health_check_path: str,
-        service_type: str
+        health_check_path: str
     ) -> dict[(str, Any)] {
+        service_type = 'LoadBalancer' if cluster_env == 'aws' else 'NodePort';
         service_port = 80 if cluster_env == 'aws' else self.k8s_config.container_port;
         port_config: dict[(str, Any)] = {
             'protocol': 'TCP',
@@ -676,7 +676,6 @@ class KubernetesTarget(DeploymentTarget) {
 
             # 4. Determine cluster type
             cluster_env = cluster_type();
-            service_type = 'LoadBalancer' if cluster_env == 'aws' else 'NodePort';
 
             # 5. Handle image registry if build is requested
             repository_name = self._handle_image_registry(app_name, app_config);
@@ -733,7 +732,7 @@ class KubernetesTarget(DeploymentTarget) {
 
             # 11. Build service and deployment
             service = self._build_service_config(
-                app_name, cluster_env, health_check_path, service_type
+                app_name, cluster_env, health_check_path
             );
             deployment = {
                 'apiVersion': 'apps/v1',
