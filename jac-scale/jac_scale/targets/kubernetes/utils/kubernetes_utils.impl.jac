@@ -349,7 +349,7 @@ impl check_node_ports_available(
         }
         svc_id = f"{svc.metadata.namespace}/{svc.metadata.name}";
         for port_obj in (svc.spec.ports or []) {
-            if port_obj.node_port {
+            if port_obj.node_port is not None {
                 used_ports[port_obj.node_port] = svc_id;
             }
         }
