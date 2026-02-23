@@ -683,9 +683,7 @@ class KubernetesTarget(DeploymentTarget) {
             repository_name = self._handle_image_registry(app_name, app_config);
 
             # 6. Get health check path
-            health_check_path = os.getenv(
-                'K8s_HEALTHCHECK_PATH', self.k8s_config.health_check_path
-            );
+            health_check_path = self.k8s_config.health_check_path;
 
             # 7. Get database init containers
             init_containers = self._get_database_init_containers(app_name);
