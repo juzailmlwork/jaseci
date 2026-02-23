@@ -1,6 +1,7 @@
 import os;
 import pathlib;
 import from jaclang.cli.console { console }
+import from kubernetes { client }
 
 impl parse_cpu_quantity(quantity: str) -> float {
     trimmed = quantity.strip();
@@ -336,7 +337,7 @@ impl check_node_ports_available(
     are excluded because they will be replaced by this deployment.
     Raises ValueError listing every conflicting port and the service that owns it.
     """
-    import from kubernetes { client }
+    
     v1 = client.CoreV1Api();
     all_services = v1.list_service_for_all_namespaces();
     # Build a map: port_number -> "namespace/service-name"
@@ -381,7 +382,6 @@ impl check_node_ports_available(
 
 impl cluster_type -> str {
     try {
-        import from kubernetes { client }
         v1 = client.CoreV1Api();
         nodes = v1.list_node();
         if not nodes.items {
