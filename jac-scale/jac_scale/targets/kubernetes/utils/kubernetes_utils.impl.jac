@@ -337,7 +337,7 @@ impl check_node_ports_available(
     are excluded because they will be replaced by this deployment.
     Raises ValueError listing every conflicting port and the service that owns it.
     """
-    
+
     v1 = client.CoreV1Api();
     all_services = v1.list_service_for_all_namespaces();
     # Build a map: port_number -> "namespace/service-name"
