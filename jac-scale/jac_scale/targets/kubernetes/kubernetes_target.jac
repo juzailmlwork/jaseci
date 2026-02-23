@@ -136,10 +136,7 @@ class KubernetesTarget(DeploymentTarget) {
 
     """Build Kubernetes service configuration."""
     def _build_service_config(
-        self: KubernetesTarget,
-        app_name: str,
-        cluster_env: str,
-        health_check_path: str
+        self: KubernetesTarget, app_name: str, cluster_env: str, health_check_path: str
     ) -> dict[(str, Any)] {
         service_type = 'LoadBalancer' if cluster_env == 'aws' else 'NodePort';
         service_port = 80 if cluster_env == 'aws' else self.k8s_config.container_port;
