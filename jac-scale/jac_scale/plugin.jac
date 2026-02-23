@@ -186,7 +186,8 @@ class JacCmd {
             }
 
             app_name = os.getenv('APP_NAME') or target_config.get('app_name', 'jaseci');
-            namespace = os.getenv('K8s_NAMESPACE') or target_config.get('namespace', 'default');
+            namespace = os.getenv('K8s_NAMESPACE')
+            or target_config.get('namespace', 'default');
 
             # Warn user and require confirmation before proceeding
             console.print(
