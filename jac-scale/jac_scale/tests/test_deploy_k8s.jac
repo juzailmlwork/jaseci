@@ -243,6 +243,11 @@ test "deploy all in one" {
     assert result.success is True;
     print(f"Deployment successful: {result.message}");
 
+    full_status = deployment_target.get_full_status(app_name);
+    assert full_status is not None;
+    assert full_status["app_name"] == app_name;
+    print(f"Full status: {full_status}");
+
     time.sleep(5);
 
     # Validate the main deployment exists
