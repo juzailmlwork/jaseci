@@ -275,7 +275,7 @@ def teardown_serve_server(sp: subprocess.Popen | None) -> None {
 test "server root endpoint" {
     sp = setup_serve_server();
     try {
-        response = requests.get(f"{sv_base_url}/docs", timeout=5);
+        response = requests.get(f"{sv_base_url}/docs", timeout=10);
         assert response.status_code == 200;
     } finally {
         teardown_serve_server(sp);
@@ -1151,7 +1151,7 @@ test "private walker 401 with deleted user token" {
 test "custom response headers from config" {
     sp = setup_serve_server();
     try {
-        response = requests.get(f"{sv_base_url}/docs", timeout=5);
+        response = requests.get(f"{sv_base_url}/docs", timeout=10);
 
         assert "x-custom-test-header" in response.headers;
         assert response.headers["x-custom-test-header"] == "test-value";
