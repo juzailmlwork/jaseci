@@ -675,13 +675,14 @@ class KubernetesTarget(DeploymentTarget) {
 
             # 4. Determine cluster type
             cluster_env = cluster_type();
-            is_aws: bool = cluster_env == 'aws';
-            service_type = 'LoadBalancer' if is_aws else 'NodePort';
+            service_type = 'LoadBalancer'
+            if cluster_env in ('aws', 'gcp', 'azure')
+            else 'NodePort';
+            ;
 
             # 4b. On local clusters, verify that the requested NodePorts are not
             #     already bound by a service in another namespace.
-            is_local: bool = not is_aws;
-            if is_local {
+            if cluster_env == 'local' {
                 check_node_ports_available(
                     node_port=self.k8s_config.node_port,
                     prometheus_node_port=(
