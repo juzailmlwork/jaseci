@@ -428,10 +428,7 @@ test "deploy all in one" {
     duplicate_app_name = duplicate_namespace;
 
     os.environ.update(
-        {
-            "APP_NAME": duplicate_app_name,
-            "K8s_NAMESPACE": duplicate_namespace
-        }
+        {"APP_NAME": duplicate_app_name, "K8s_NAMESPACE": duplicate_namespace}
     );
 
     duplicate_target_config = app_scale_config.get_kubernetes_config();
