@@ -678,7 +678,6 @@ class KubernetesTarget(DeploymentTarget) {
             service_type = 'LoadBalancer'
             if cluster_env in ('aws', 'gcp', 'azure')
             else 'NodePort';
-            ;
 
             # 4b. On local clusters, verify that the requested NodePorts are not
             #     already bound by a service in another namespace.
