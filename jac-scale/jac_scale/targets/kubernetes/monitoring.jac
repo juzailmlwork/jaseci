@@ -1231,7 +1231,6 @@ class MonitoringDeployer {
                     raise ;
                 }
             }
-
             # node-exporter resources (DaemonSet)
             try {
                 apps_v1.delete_namespaced_daemon_set(name=ne_name, namespace=namespace);
