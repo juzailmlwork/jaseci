@@ -67,15 +67,19 @@ class MonitoringDeployer {
             "    static_configs:\n"
             f"      - targets: ['{app_name}-service:{service_port}']\n"
             "    metrics_path: '/metrics'\n"
-            f"  - job_name: 'kube-state-metrics'\n"
-            "    static_configs:\n"
-            f"      - targets: ['{ksm_name}-service:8080']\n"
-            "    metrics_path: '/metrics'\n"
-            f"  - job_name: 'node-exporter'\n"
-            "    static_configs:\n"
-            f"      - targets: ['{ne_name}-service:9100']\n"
-            "    metrics_path: '/metrics'\n"
         );
+        if self.k8s_config.k8s_metrics_enabled {
+            scrape_config = scrape_config + (
+                f"  - job_name: 'kube-state-metrics'\n"
+                "    static_configs:\n"
+                f"      - targets: ['{ksm_name}-service:8080']\n"
+                "    metrics_path: '/metrics'\n"
+                f"  - job_name: 'node-exporter'\n"
+                "    static_configs:\n"
+                f"      - targets: ['{ne_name}-service:9100']\n"
+                "    metrics_path: '/metrics'\n"
+            );
+        }
 
         # Hash the scrape config so a pod-template annotation change triggers a rollout
         # whenever the scrape targets change (Kubernetes only rolls pods on spec changes).
@@ -920,7 +924,7 @@ class MonitoringDeployer {
             '"fieldConfig":{"defaults":{"unit":"short"}},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"count(kube_pod_info' + '{phase!=\\"\\",node!=\\"\\"}) by (node)",'
+            '"expr":"count(kube_pod_info' + '{node!=\\"\\"}) by (node)",'
             f'"legendFormat":"{{{{node}}}}","datasource":{ds}' + '}]},'
             # Node CPU usage % (node-exporter — per node)
             '{"id":16,"type":"timeseries","title":"Node CPU Usage (%) per Node",'
@@ -964,10 +968,14 @@ class MonitoringDeployer {
                 'namespace': namespace,
                 'labels': {'app': grafana_name}
             },
-            'data': {
-                'jac-scale.json': app_dashboard_json,
-                'k8s-metrics.json': k8s_dashboard_json
-            }
+            'data': (
+                {
+                    'jac-scale.json': app_dashboard_json,
+                    'k8s-metrics.json': k8s_dashboard_json
+                }
+                if self.k8s_config.k8s_metrics_enabled
+                else {'jac-scale.json': app_dashboard_json}
+            )
         };
         try {
             core_v1.read_namespaced_config_map(
@@ -1141,8 +1149,10 @@ class MonitoringDeployer {
             return;
         }
 
-        self._deploy_kube_state_metrics(app_name, namespace, apps_v1, core_v1);
-        self._deploy_node_exporter(app_name, namespace, apps_v1, core_v1);
+        if self.k8s_config.k8s_metrics_enabled {
+            self._deploy_kube_state_metrics(app_name, namespace, apps_v1, core_v1);
+            self._deploy_node_exporter(app_name, namespace, apps_v1, core_v1);
+        }
         self._deploy_prometheus(app_name, namespace, apps_v1, core_v1, is_aws);
         self._deploy_grafana(app_name, namespace, apps_v1, core_v1, is_aws);
     }
@@ -1185,56 +1195,58 @@ class MonitoringDeployer {
             }
         }
 
-        # kube-state-metrics resources
-        delete_if_exists(
-            apps_v1.delete_namespaced_deployment, ksm_name, namespace, 'Deployment'
-        );
-        delete_if_exists(
-            core_v1.delete_namespaced_service,
-            f"{ksm_name}-service",
-            namespace,
-            'Service'
-        );
-        try {
-            core_v1.delete_namespaced_service_account(
-                name=f"{ksm_name}-sa", namespace=namespace
+        if self.k8s_config.k8s_metrics_enabled {
+            # kube-state-metrics resources
+            delete_if_exists(
+                apps_v1.delete_namespaced_deployment, ksm_name, namespace, 'Deployment'
             );
-        } except ApiException as e {
-            if e.status != 404 {
-                raise ;
+            delete_if_exists(
+                core_v1.delete_namespaced_service,
+                f"{ksm_name}-service",
+                namespace,
+                'Service'
+            );
+            try {
+                core_v1.delete_namespaced_service_account(
+                    name=f"{ksm_name}-sa", namespace=namespace
+                );
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise ;
+                }
             }
-        }
-        # ClusterRole and ClusterRoleBinding are cluster-scoped (no namespace param)
-        rbac_v1 = client.RbacAuthorizationV1Api();
-        try {
-            rbac_v1.delete_cluster_role(name=cluster_role_name);
-        } except ApiException as e {
-            if e.status != 404 {
-                raise ;
+            # ClusterRole and ClusterRoleBinding are cluster-scoped (no namespace param)
+            rbac_v1 = client.RbacAuthorizationV1Api();
+            try {
+                rbac_v1.delete_cluster_role(name=cluster_role_name);
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise ;
+                }
             }
-        }
-        try {
-            rbac_v1.delete_cluster_role_binding(name=cluster_role_binding_name);
-        } except ApiException as e {
-            if e.status != 404 {
-                raise ;
+            try {
+                rbac_v1.delete_cluster_role_binding(name=cluster_role_binding_name);
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise ;
+                }
             }
-        }
 
-        # node-exporter resources (DaemonSet)
-        try {
-            apps_v1.delete_namespaced_daemon_set(name=ne_name, namespace=namespace);
-        } except ApiException as e {
-            if e.status != 404 {
-                raise ;
+            # node-exporter resources (DaemonSet)
+            try {
+                apps_v1.delete_namespaced_daemon_set(name=ne_name, namespace=namespace);
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise ;
+                }
             }
+            delete_if_exists(
+                core_v1.delete_namespaced_service,
+                f"{ne_name}-service",
+                namespace,
+                'Service'
+            );
         }
-        delete_if_exists(
-            core_v1.delete_namespaced_service,
-            f"{ne_name}-service",
-            namespace,
-            'Service'
-        );
 
         # Grafana resources
         delete_if_exists(
