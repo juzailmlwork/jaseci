@@ -439,8 +439,10 @@ class MonitoringDeployer {
     """Deploy node-exporter as a DaemonSet + ClusterIP Service.
 
     node-exporter runs on every cluster node and exposes host-level metrics
-    (CPU, memory, disk I/O, network) at port 9100. The DaemonSet uses
-    hostPID/hostIPC/hostNetwork and mounts /proc, /sys, and / from the host.
+    (CPU, memory, disk I/O, network) at port 9100. Host paths /proc, /sys, and /
+    are volume-mounted so node-exporter can read them without hostNetwork — this
+    ensures the pod gets a normal overlay IP and the ClusterIP service can route
+    to it correctly.
     """
     def _deploy_node_exporter(
         self: MonitoringDeployer,
@@ -464,9 +466,6 @@ class MonitoringDeployer {
                 'template': {
                     'metadata': {'labels': {'app': ne_name}},
                     'spec': {
-                        'hostPID': True,
-                        'hostIPC': True,
-                        'hostNetwork': True,
                         'tolerations': [
                             {
                                 'operator': 'Exists',
@@ -485,11 +484,9 @@ class MonitoringDeployer {
                                 'ports': [
                                     {
                                         'containerPort': 9100,
-                                        'hostPort': 9100,
                                         'name': 'metrics'
                                     }
                                 ],
-                                'securityContext': {'privileged': True},
                                 'volumeMounts': [
                                     {
                                         'name': 'proc',
@@ -831,19 +828,19 @@ class MonitoringDeployer {
             '"gridPos":{"x":0,"y":8,"w":6,"h":4},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Running\\"}) or vector(0)",'
+            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Running\\"} == 1) or vector(0)",'
             f'"legendFormat":"Running","datasource":{ds}' + '}]},'
             '{"id":4,"type":"stat","title":"Pending Pods",'
             '"gridPos":{"x":6,"y":8,"w":6,"h":4},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Pending\\"}) or vector(0)",'
+            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Pending\\"} == 1) or vector(0)",'
             f'"legendFormat":"Pending","datasource":{ds}' + '}]},'
             '{"id":5,"type":"stat","title":"Failed Pods",'
             '"gridPos":{"x":12,"y":8,"w":6,"h":4},'
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
-            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Failed\\"}) or vector(0)",'
+            '"expr":"count(kube_pod_status_phase' + '{phase=\\"Failed\\"} == 1) or vector(0)",'
             f'"legendFormat":"Failed","datasource":{ds}' + '}]},'
             # Deployment replica status (kube-state-metrics)
             '{"id":6,"type":"timeseries","title":"Deployment Available Replicas",'
