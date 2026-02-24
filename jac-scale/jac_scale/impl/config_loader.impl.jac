@@ -45,9 +45,9 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'redis_enabled': True,
             # Resource requests/limits
             'cpu_request': None,
-            'cpu_limit': None,
+            'cpu_limit': '4',
             'memory_request': None,
-            'memory_limit': None,
+            'memory_limit': '12Gi',
             # Probe timings
             'readiness_initial_delay': 10,
             'readiness_period': 20,
