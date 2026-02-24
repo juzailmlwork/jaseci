@@ -258,25 +258,33 @@ class MonitoringDeployer {
         cluster_role_body = {
             'apiVersion': 'rbac.authorization.k8s.io/v1',
             'kind': 'ClusterRole',
-            'metadata': {
-                'name': cluster_role_name,
-                'labels': {'app': ksm_name}
-            },
+            'metadata': {'name': cluster_role_name, 'labels': {'app': ksm_name}},
             'rules': [
                 {
                     'apiGroups': [''],
                     'resources': [
-                        'configmaps', 'secrets', 'nodes', 'pods', 'services',
-                        'resourcequotas', 'replicationcontrollers', 'limitranges',
-                        'persistentvolumeclaims', 'persistentvolumes',
-                        'namespaces', 'endpoints'
+                        'configmaps',
+                        'secrets',
+                        'nodes',
+                        'pods',
+                        'services',
+                        'resourcequotas',
+                        'replicationcontrollers',
+                        'limitranges',
+                        'persistentvolumeclaims',
+                        'persistentvolumes',
+                        'namespaces',
+                        'endpoints'
                     ],
                     'verbs': ['list', 'watch']
                 },
                 {
                     'apiGroups': ['apps'],
                     'resources': [
-                        'statefulsets', 'daemonsets', 'deployments', 'replicasets'
+                        'statefulsets',
+                        'daemonsets',
+                        'deployments',
+                        'replicasets'
                     ],
                     'verbs': ['list', 'watch']
                 },
@@ -326,11 +334,7 @@ class MonitoringDeployer {
                 'name': cluster_role_name
             },
             'subjects': [
-                {
-                    'kind': 'ServiceAccount',
-                    'name': ksm_sa_name,
-                    'namespace': namespace
-                }
+                {'kind': 'ServiceAccount', 'name': ksm_sa_name, 'namespace': namespace}
             ]
         };
         try {
@@ -466,12 +470,7 @@ class MonitoringDeployer {
                 'template': {
                     'metadata': {'labels': {'app': ne_name}},
                     'spec': {
-                        'tolerations': [
-                            {
-                                'operator': 'Exists',
-                                'effect': 'NoSchedule'
-                            }
-                        ],
+                        'tolerations': [{'operator': 'Exists', 'effect': 'NoSchedule'}],
                         'containers': [
                             {
                                 'name': 'node-exporter',
@@ -481,12 +480,7 @@ class MonitoringDeployer {
                                     '--path.sysfs=/host/sys',
                                     '--path.rootfs=/host/root'
                                 ],
-                                'ports': [
-                                    {
-                                        'containerPort': 9100,
-                                        'name': 'metrics'
-                                    }
-                                ],
+                                'ports': [{'containerPort': 9100, 'name': 'metrics'}],
                                 'volumeMounts': [
                                     {
                                         'name': 'proc',
@@ -556,9 +550,7 @@ class MonitoringDeployer {
             );
         } except ApiException as e {
             if e.status == 404 {
-                core_v1.create_namespaced_service(
-                    namespace=namespace, body=ne_service
-                );
+                core_v1.create_namespaced_service(namespace=namespace, body=ne_service);
             } else {
                 raise ;
             }
@@ -895,8 +887,73 @@ class MonitoringDeployer {
             f'"datasource":{ds},'
             '"targets":[{"refId":"A",'
             '"expr":"sum(kube_pod_container_resource_requests' + '{resource=\\"memory\\"}) by (pod)",'
-            f'"legendFormat":"{{{{pod}}}}","datasource":{ds}' + '}]}'
-            ']}'
+            f'"legendFormat":"{{{{pod}}}}","datasource":{ds}' + '}]},'
+            # ── Node-level statistics ──────────────────────────────────────────
+            # Total node count (kube-state-metrics)
+            '{"id":12,"type":"stat","title":"Total Nodes",'
+            '"gridPos":{"x":0,"y":36,"w":6,"h":4},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"count(kube_node_info) or vector(0)",'
+            f'"legendFormat":"nodes","datasource":{ds}' + '}]},'
+            # Ready node count (kube-state-metrics)
+            '{"id":13,"type":"stat","title":"Ready Nodes",'
+            '"gridPos":{"x":6,"y":36,"w":6,"h":4},'
+            '"fieldConfig":{"defaults":{"color":{"mode":"thresholds"},'
+            '"thresholds":{"steps":[{"color":"red","value":0},{"color":"green","value":1}]}}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"count(kube_node_status_condition' + '{condition=\\"Ready\\",status=\\"true\\"} == 1) or vector(0)",'
+            f'"legendFormat":"ready","datasource":{ds}' + '}]},'
+            # Not-ready nodes alert stat
+            '{"id":14,"type":"stat","title":"Not-Ready Nodes",'
+            '"gridPos":{"x":12,"y":36,"w":6,"h":4},'
+            '"fieldConfig":{"defaults":{"color":{"mode":"thresholds"},'
+            '"thresholds":{"steps":[{"color":"green","value":0},{"color":"red","value":1}]}}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"count(kube_node_status_condition' + '{condition=\\"Ready\\",status=\\"false\\"} == 1) or vector(0)",'
+            f'"legendFormat":"not-ready","datasource":{ds}' + '}]},'
+            # Pods scheduled per node (kube-state-metrics)
+            '{"id":15,"type":"timeseries","title":"Pods per Node",'
+            '"gridPos":{"x":0,"y":40,"w":24,"h":8},'
+            '"fieldConfig":{"defaults":{"unit":"short"}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"count(kube_pod_info' + '{phase!=\\"\\",node!=\\"\\"}) by (node)",'
+            f'"legendFormat":"{{{{node}}}}","datasource":{ds}' + '}]},'
+            # Node CPU usage % (node-exporter — per node)
+            '{"id":16,"type":"timeseries","title":"Node CPU Usage (%) per Node",'
+            '"gridPos":{"x":0,"y":48,"w":12,"h":8},'
+            '"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"(1 - avg(rate(node_cpu_seconds_total' + '{mode=\\"idle\\"}[5m])) by (instance)) * 100",'
+            f'"legendFormat":"{{{{instance}}}}","datasource":{ds}' + '}]},'
+            # Node memory usage % (node-exporter — per node)
+            '{"id":17,"type":"timeseries","title":"Node Memory Usage (%) per Node",'
+            '"gridPos":{"x":12,"y":48,"w":12,"h":8},'
+            '"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",'
+            f'"legendFormat":"{{{{instance}}}}","datasource":{ds}' + '}]},'
+            # CPU requests per node summed across all pods (kube-state-metrics)
+            '{"id":18,"type":"timeseries","title":"CPU Requests per Node (cores)",'
+            '"gridPos":{"x":0,"y":56,"w":12,"h":8},'
+            '"fieldConfig":{"defaults":{"unit":"short"}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(kube_pod_container_resource_requests' + '{resource=\\"cpu\\"}) by (node)",'
+            f'"legendFormat":"{{{{node}}}}","datasource":{ds}' + '}]},'
+            # Memory requests per node summed across all pods (kube-state-metrics)
+            '{"id":19,"type":"timeseries","title":"Memory Requests per Node (bytes)",'
+            '"gridPos":{"x":12,"y":56,"w":12,"h":8},'
+            '"fieldConfig":{"defaults":{"unit":"bytes"}},'
+            f'"datasource":{ds},'
+            '"targets":[{"refId":"A",'
+            '"expr":"sum(kube_pod_container_resource_requests' + '{resource=\\"memory\\"}) by (node)",'
+            f'"legendFormat":"{{{{node}}}}","datasource":{ds}' + '}]}' ']}'
         );
 
         grafana_dashboard_configmap = {
