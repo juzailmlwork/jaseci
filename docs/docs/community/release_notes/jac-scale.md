@@ -4,6 +4,8 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.2.1 (Unreleased)
 
+- Set maximum cpu and memory limit of k8s pods from unlimited to 4 and 12Gb respectively 
+
 ## jac-scale 0.2.0 (Latest Release)
 
 - **SSO Frontend Callback Redirect**: SSO callback endpoints now support automatic redirection to frontend applications. Configure `client_auth_callback_url` in `jac.toml` to redirect with token/error parameters instead of returning JSON, enabling seamless browser-based OAuth flows.
