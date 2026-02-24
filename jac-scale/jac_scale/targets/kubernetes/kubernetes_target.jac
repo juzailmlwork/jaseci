@@ -1369,11 +1369,16 @@ class KubernetesTarget(DeploymentTarget) {
 
         # Resolve status for each component from the cached maps
         component_defs = [
-            {'k8s_name': app_name,                  'display': 'Jaseci App', 'is_sts': False},
-            {'k8s_name': f"{app_name}-redis",       'display': 'Redis',      'is_sts': False},
-            {'k8s_name': f"{app_name}-mongodb",     'display': 'MongoDB',    'is_sts': True},
-            {'k8s_name': f"{app_name}-prometheus",  'display': 'Prometheus', 'is_sts': False},
-            {'k8s_name': f"{app_name}-grafana",     'display': 'Grafana',    'is_sts': False},
+            {'k8s_name': app_name, 'display': 'Jaseci App', 'is_sts': False},
+            {'k8s_name': f"{app_name}-redis", 'display': 'Redis', 'is_sts': False},
+            {'k8s_name': f"{app_name}-mongodb", 'display': 'MongoDB', 'is_sts': True},
+            {
+                'k8s_name': f"{app_name}-prometheus",
+                'display': 'Prometheus',
+                'is_sts': False
+            },
+            {'k8s_name': f"{app_name}-grafana", 'display': 'Grafana', 'is_sts': False},
+
         ];
 
         grafana_running = False;
@@ -1400,14 +1405,24 @@ class KubernetesTarget(DeploymentTarget) {
                     status = 'pending';
                 }
                 components.append(
-                    {'name': display_name, 'status': status, 'ready': ready, 'total': replicas}
+                    {
+                        'name': display_name,
+                        'status': status,
+                        'ready': ready,
+                        'total': replicas
+                    }
                 );
                 if display_name == 'Grafana' {
                     grafana_running = True;
                 }
             } else {
                 components.append(
-                    {'name': display_name, 'status': 'not_deployed', 'ready': 0, 'total': 0}
+                    {
+                        'name': display_name,
+                        'status': 'not_deployed',
+                        'ready': 0,
+                        'total': 0
+                    }
                 );
             }
         }

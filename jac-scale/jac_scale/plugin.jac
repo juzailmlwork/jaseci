@@ -103,7 +103,9 @@ def _print_deployment_status(status_data: dict) -> None {
 
     console.print();
     console.print("[bold cyan]  Jac Scale — Deployment Status[/bold cyan]");
-    console.print(f"  [bold]App:[/bold] {app_name}   [bold]Namespace:[/bold] {namespace}");
+    console.print(
+        f"  [bold]App:[/bold] {app_name}   [bold]Namespace:[/bold] {namespace}"
+    );
     console.print();
 
     if error {
@@ -118,13 +120,14 @@ def _print_deployment_status(status_data: dict) -> None {
     table.add_column("Pods", justify="right", min_width=6);
 
     status_display = {
-        'running':      '[bold green]● Running[/bold green]',
-        'degraded':     '[bold yellow]◑ Degraded[/bold yellow]',
-        'pending':      '[bold yellow]⟳ Pending[/bold yellow]',
-        'restarting':   '[bold red]↺ Restarting[/bold red]',
-        'failed':       '[bold red]✗ Failed[/bold red]',
+        'running': '[bold green]● Running[/bold green]',
+        'degraded': '[bold yellow]◑ Degraded[/bold yellow]',
+        'pending': '[bold yellow]⟳ Pending[/bold yellow]',
+        'restarting': '[bold red]↺ Restarting[/bold red]',
+        'failed': '[bold red]✗ Failed[/bold red]',
         'not_deployed': '[dim]○ Not Deployed[/dim]',
-        'unknown':      '[dim]? Unknown[/dim]',
+        'unknown': '[dim]? Unknown[/dim]',
+
     };
 
     for comp in components {
@@ -274,6 +277,7 @@ class JacCmd {
                     default="kubernetes",
                     help="Deployment target (kubernetes, aws, gcp, etc.)",
                 ),
+
             ],
             examples=[("jac status app.jac", "Show deployment status of app"), ],
             group="deployment",
