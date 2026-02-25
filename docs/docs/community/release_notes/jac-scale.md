@@ -9,6 +9,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - Before deploying to the local Kubernetes cluster, check whether the required NodePorts are already in use in any namespace; if they are, throw an error.
 - jac destroy command deletes non default namespace
 - 1 Minor refactor
+- Internal: check whether redis,mongodb,grafana and promethius are also restarted when checking deployment status
 
 ## jac-scale 0.2.0 (Latest Release)
 
