@@ -5,6 +5,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 ## jac-scale 0.2.2 (Unreleased)
 
 - Set default maximum memory limit of k8s pods from unlimited to 12Gb
+
 ## jac-scale 0.2.1 (Latest Release)
 
 - **Admin Portal**: Added a built-in `/admin` dashboard for user management and administration. Features include user CRUD operations (list, create, edit, delete), role-based access control with `admin`, `moderator`, and `user` roles, force password reset, and SSO account management view.
