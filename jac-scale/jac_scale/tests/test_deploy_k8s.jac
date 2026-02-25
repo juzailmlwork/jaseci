@@ -310,7 +310,9 @@ test "deploy all in one" {
     assert f"{app_name}-service" in scrape_cfg;
     assert f"{ksm_name}-service:8080" in scrape_cfg;
     assert f"{ne_name}-service:9100" in scrape_cfg;
-    print(f"Prometheus ConfigMap '{prometheus_name}-config' exists with all three scrape targets");
+    print(
+        f"Prometheus ConfigMap '{prometheus_name}-config' exists with all three scrape targets"
+    );
 
     # Validate Grafana Deployment, Service, Secret, and ConfigMaps
     grafana_name = f"{app_name}-grafana";
@@ -351,7 +353,9 @@ test "deploy all in one" {
     assert "Jac Scale - App Metrics" in grafana_dashboard.data["jac-scale.json"];
     assert "k8s-metrics.json" in grafana_dashboard.data;
     assert "Kubernetes Cluster Metrics" in grafana_dashboard.data["k8s-metrics.json"];
-    print("Grafana dashboard ConfigMap exists with Jac Scale + Kubernetes Cluster Metrics dashboards");
+    print(
+        "Grafana dashboard ConfigMap exists with Jac Scale + Kubernetes Cluster Metrics dashboards"
+    );
 
     grafana_provider = core_v1.read_namespaced_config_map(
         name=f"{grafana_name}-dashboard-provider", namespace=namespace
@@ -388,7 +392,9 @@ test "deploy all in one" {
     print(f"kube-state-metrics ClusterRoleBinding '{cluster_role_name}' exists");
 
     # Validate node-exporter DaemonSet and Service
-    ne_daemonset = apps_v1.read_namespaced_daemon_set(name=ne_name, namespace=namespace);
+    ne_daemonset = apps_v1.read_namespaced_daemon_set(
+        name=ne_name, namespace=namespace
+    );
     assert ne_daemonset.metadata.name == ne_name;
     print(f"node-exporter DaemonSet '{ne_name}' exists");
 
@@ -630,7 +636,9 @@ test "deploy all in one" {
         core_v1.read_namespaced_service_account(
             name=f"{ksm_name}-sa", namespace=namespace
         );
-        raise AssertionError("kube-state-metrics ServiceAccount should have been deleted") ;
+        raise AssertionError(
+            "kube-state-metrics ServiceAccount should have been deleted"
+        ) ;
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
