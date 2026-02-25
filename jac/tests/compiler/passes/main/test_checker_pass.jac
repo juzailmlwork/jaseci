@@ -1327,6 +1327,18 @@ test "impl_body_type_checking" {
     assert "checker_impl_body.impl.jac" in program.errors_had[2].loc.mod_path;
 }
 
+"""Test that self.x = value in impl files creates valid archetype attributes."""
+test "impl_self_member_assignment" {
+    program = JacProgram();
+    path = os.path.join(FIXTURES, "checker_impl", "checker_impl_self_member.jac");
+    mod = program.compile(path);
+    TypeCheckPass(ir_in=mod, prog=program);
+
+    assert len(program.errors_had) == 0 , f"Expected 0 type errors, but got {len(
+        program.errors_had
+    )}: " + "\n".join([err.pretty_print() for err in program.errors_had]);
+}
+
 test "super_init_with_has_vars" {
     program = JacProgram();
     path = os.path.join(FIXTURES, "checker_super_init_has_vars.jac");
@@ -1588,6 +1600,32 @@ test "type_narrowing_none_assignment_errors" {
     assert_error_pretty_found(
         """
         b: str = data;  # <-- Error: None cannot be assigned to str
+    """,
+        program.errors_had[1].pretty_print()
+    );
+}
+
+"""Test match case type narrowing - validates type narrowing inside match cases."""
+test "match_type_narrowing" {
+    program = JacProgram();
+    mod = program.compile(os.path.join(FIXTURES, "checker_match_type_narrowing.jac"));
+    TypeCheckPass(ir_in=mod, prog=program);
+
+    # Should have exactly 2 errors (E1 and E2 in the test file)
+    assert len(program.errors_had) == 2 , f"Expected exactly 2 type errors, but got " + f"{len(
+        program.errors_had
+    )}:\n" + "\n---\n".join(err.pretty_print() for err in program.errors_had);
+
+    assert_error_pretty_found(
+        """
+        i: IntVal = val;  # <-- Error: StringVal cannot assign to IntVal
+    """,
+        program.errors_had[0].pretty_print()
+    );
+
+    assert_error_pretty_found(
+        """
+        s: StringVal = val;  # <-- Error: StringVal | IntVal cannot assign to StringVal
     """,
         program.errors_had[1].pretty_print()
     );
