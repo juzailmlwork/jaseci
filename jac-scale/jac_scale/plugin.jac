@@ -299,38 +299,38 @@ class JacCmd {
             priority=CommandPriority.PLUGIN,
             source="jac-scale"
         )
-        # def status(file_path: str, target: str = "kubernetes") -> int {
-        #     if not os.path.exists(file_path) {
-        #         raise FileNotFoundError(f"File not found: '{file_path}'") ;
-        #     }
-        #     code_folder = pathlib.Path(file_path).parent;
-        #     dotenv_path = os.path.join(code_folder, '.env');
-        #     load_dotenv(dotenv_path);
+        def status(file_path: str, target: str = "kubernetes") -> int {
+            if not os.path.exists(file_path) {
+                raise FileNotFoundError(f"File not found: '{file_path}'") ;
+            }
+            code_folder = os.path.dirname(filename) or '.';
+            dotenv_path = os.path.join(code_folder, '.env');
+            load_dotenv(dotenv_path);
 
-        #     # Get configuration
-        #     scale_config = get_scale_config();
+            # Get configuration
+            scale_config = get_scale_config();
 
-        #     # Create logger
-        #     logger = UtilityFactory.create_logger('standard');
+            # Create logger
+            logger = UtilityFactory.create_logger('standard');
 
-        #     # Get target-specific config
-        #     if target == 'kubernetes' {
-        #         target_config = scale_config.get_kubernetes_config();
-        #     } else {
-        #         target_config = scale_config.get_kubernetes_config();  # Default for now
-        #     }
+            # Get target-specific config
+            if target == 'kubernetes' {
+                target_config = scale_config.get_kubernetes_config();
+            } else {
+                target_config = scale_config.get_kubernetes_config();  # Default for now
+            }
 
-        #     # Create deployment target
-        #     deployment_target = DeploymentTargetFactory.create(
-        #         target, target_config, logger
-        #     );
-        #     app_name = os.getenv('APP_NAME') or target_config.get('app_name', 'jaseci');
+            # Create deployment target
+            deployment_target = DeploymentTargetFactory.create(
+                target, target_config, logger
+            );
+            app_name = os.getenv('APP_NAME') or target_config.get('app_name', 'jaseci');
 
-        #     # Get and display status
-        #     status_data = deployment_target.get_full_status(app_name);
-        #     _print_deployment_status(status_data);
-        #     return 0;
-        # }
+            # Get and display status
+            status_data = deployment_target.get_full_status(app_name);
+            _print_deployment_status(status_data);
+            return 0;
+        }
     }
 }
 
