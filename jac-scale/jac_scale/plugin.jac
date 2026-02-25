@@ -94,70 +94,70 @@ def _scale_pre_hook(context: HookContext) -> None {
     }
 }
 
-# """Print deployment status as a formatted table."""
-# def _print_deployment_status(status_data: dict) -> None {
-#     app_name = status_data.get('app_name', 'unknown');
-#     namespace = status_data.get('namespace', 'default');
-#     components = status_data.get('components', []);
-#     urls = status_data.get('urls', {});
-#     error = status_data.get('error');
+"""Print deployment status as a formatted table."""
+def _print_deployment_status(status_data: dict) -> None {
+    app_name = status_data.get('app_name', 'unknown');
+    namespace = status_data.get('namespace', 'default');
+    components = status_data.get('components', []);
+    urls = status_data.get('urls', {});
+    error = status_data.get('error');
 
-#     console.print();
-#     console.print("[bold cyan]  Jac Scale — Deployment Status[/bold cyan]");
-#     console.print(
-#         f"  [bold]App:[/bold] {app_name}   [bold]Namespace:[/bold] {namespace}"
-#     );
-#     console.print();
+    console.print();
+    console.print("[bold cyan]  Jac Scale — Deployment Status[/bold cyan]");
+    console.print(
+        f"  [bold]App:[/bold] {app_name}   [bold]Namespace:[/bold] {namespace}"
+    );
+    console.print();
 
-#     if error {
-#         console.print(f"  [bold red]Cannot connect to cluster:[/bold red] {error}");
-#         console.print();
-#         return;
-#     }
+    if error {
+        console.print(f"  [bold red]Cannot connect to cluster:[/bold red] {error}");
+        console.print();
+        return;
+    }
 
-#     table = Table(show_header=True, header_style="bold dim", box=None, padding=(0, 2));
-#     table.add_column("Component", min_width=18);
-#     table.add_column("Status", min_width=22);
-#     table.add_column("Pods", justify="right", min_width=6);
+    table = Table(show_header=True, header_style="bold dim", box=None, padding=(0, 2));
+    table.add_column("Component", min_width=18);
+    table.add_column("Status", min_width=22);
+    table.add_column("Pods", justify="right", min_width=6);
 
-#     status_display = {
-#         'running': '[bold green]● Running[/bold green]',
-#         'degraded': '[bold yellow]◑ Degraded[/bold yellow]',
-#         'pending': '[bold yellow]⟳ Pending[/bold yellow]',
-#         'restarting': '[bold red]↺ Restarting[/bold red]',
-#         'failed': '[bold red]✗ Failed[/bold red]',
-#         'not_deployed': '[dim]○ Not Deployed[/dim]',
-#         'unknown': '[dim]? Unknown[/dim]',
+    status_display = {
+        'running': '[bold green]● Running[/bold green]',
+        'degraded': '[bold yellow]◑ Degraded[/bold yellow]',
+        'pending': '[bold yellow]⟳ Pending[/bold yellow]',
+        'restarting': '[bold red]↺ Restarting[/bold red]',
+        'failed': '[bold red]✗ Failed[/bold red]',
+        'not_deployed': '[dim]○ Not Deployed[/dim]',
+        'unknown': '[dim]? Unknown[/dim]',
 
-#     };
+    };
 
-#     for comp in components {
-#         s = comp.get('status', 'unknown');
-#         ready = comp.get('ready', 0);
-#         total = comp.get('total', 0);
-#         icon = status_display.get(s, s);
-#         if s in ['not_deployed', 'unknown'] {
-#             pods_str = '—';
-#         } else {
-#             pods_str = f"{ready}/{total}";
-#         }
-#         table.add_row(comp.get('name', ''), icon, pods_str);
-#     }
+    for comp in components {
+        s = comp.get('status', 'unknown');
+        ready = comp.get('ready', 0);
+        total = comp.get('total', 0);
+        icon = status_display.get(s, s);
+        if s in ['not_deployed', 'unknown'] {
+            pods_str = '—';
+        } else {
+            pods_str = f"{ready}/{total}";
+        }
+        table.add_row(comp.get('name', ''), icon, pods_str);
+    }
 
-#     console.print(table);
+    console.print(table);
 
-#     if urls {
-#         console.print("  [bold]Service URLs[/bold]");
-#         console.print(f"  [dim]{'─' * 48}[/dim]");
-#         if 'app' in urls {
-#             console.print(f"  [bold]Application:[/bold]  {urls['app']}");
-#         }
-#         if 'grafana' in urls {
-#             console.print(f"  [bold]Grafana:[/bold]      {urls['grafana']}");
-#         }
-#         console.print();
-#     }
-# }
+    if urls {
+        console.print("  [bold]Service URLs[/bold]");
+        console.print(f"  [dim]{'─' * 48}[/dim]");
+        if 'app' in urls {
+            console.print(f"  [bold]Application:[/bold]  {urls['app']}");
+        }
+        if 'grafana' in urls {
+            console.print(f"  [bold]Grafana:[/bold]      {urls['grafana']}");
+        }
+        console.print();
+    }
+}
 
 """Jac CLI."""
 class JacCmd {
