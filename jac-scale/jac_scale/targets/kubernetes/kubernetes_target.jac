@@ -33,7 +33,7 @@ import from jac_scale.factories.registry_factory { ImageRegistryFactory }
 import from jac_scale.targets.kubernetes.monitoring { MonitoringDeployer }
 import from jac_scale.targets.kubernetes.hpa.hpa { create_hpa }
 import time;
-import from kubernetes { client, config as k8s_config }
+import from kubernetes { client, config as k8s_cluster_config }
 import from kubernetes.client.exceptions { ApiException }
 
 """Kubernetes deployment target implementation."""
@@ -552,7 +552,11 @@ class KubernetesTarget(DeploymentTarget) {
             time.sleep(self.k8s_config.aws_nlb_wait);
             nlb_url = None;
             try {
-                config.load_kube_config();
+                try {
+                    k8s_cluster_config.load_kube_config();
+                } except ConfigException {
+                    k8s_cluster_config.load_incluster_config();
+                }
                 core_v1 = client.CoreV1Api();
                 service_obj = core_v1.read_namespaced_service(
                     f"{app_name}-service", namespace
@@ -652,7 +656,11 @@ class KubernetesTarget(DeploymentTarget) {
             );
             details["validate_resource_limits"] = "Successful";
             # 2. Initialize Kubernetes clients
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             check_K8s_status();
@@ -1096,7 +1104,11 @@ class KubernetesTarget(DeploymentTarget) {
         }
 
         try {
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             autoscaling_v2 = client.AutoscalingV2Api();
@@ -1223,7 +1235,11 @@ class KubernetesTarget(DeploymentTarget) {
 
     def get_status(self: KubernetesTarget, app_name: str) -> ResourceStatusInfo {
         try {
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             namespace = self.k8s_config.namespace;
@@ -1262,7 +1278,11 @@ class KubernetesTarget(DeploymentTarget) {
         }
 
         try {
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             apps_v1 = client.AppsV1Api();
             namespace = self.k8s_config.namespace;
 
@@ -1290,7 +1310,11 @@ class KubernetesTarget(DeploymentTarget) {
 
     def get_service_url(self: KubernetesTarget, app_name: str) -> (str | None) {
         try {
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             core_v1 = client.CoreV1Api();
             namespace = self.k8s_config.namespace;
             service_name = f"{app_name}-service";
@@ -1331,7 +1355,11 @@ class KubernetesTarget(DeploymentTarget) {
     """
     def get_full_status(self: KubernetesTarget, app_name: str) -> dict {
         try {
-            config.load_kube_config();
+            try {
+                k8s_cluster_config.load_kube_config();
+            } except ConfigException {
+                k8s_cluster_config.load_incluster_config();
+            }
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
         } except Exception as e {
