@@ -552,7 +552,7 @@ class KubernetesTarget(DeploymentTarget) {
             time.sleep(self.k8s_config.aws_nlb_wait);
             nlb_url = None;
             try {
-                k8s_config.load_kube_config();
+                config.load_kube_config();
                 core_v1 = client.CoreV1Api();
                 service_obj = core_v1.read_namespaced_service(
                     f"{app_name}-service", namespace
@@ -652,7 +652,7 @@ class KubernetesTarget(DeploymentTarget) {
             );
             details["validate_resource_limits"] = "Successful";
             # 2. Initialize Kubernetes clients
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             check_K8s_status();
@@ -1096,7 +1096,7 @@ class KubernetesTarget(DeploymentTarget) {
         }
 
         try {
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             autoscaling_v2 = client.AutoscalingV2Api();
@@ -1223,7 +1223,7 @@ class KubernetesTarget(DeploymentTarget) {
 
     def get_status(self: KubernetesTarget, app_name: str) -> ResourceStatusInfo {
         try {
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
             namespace = self.k8s_config.namespace;
@@ -1262,7 +1262,7 @@ class KubernetesTarget(DeploymentTarget) {
         }
 
         try {
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             namespace = self.k8s_config.namespace;
 
@@ -1290,7 +1290,7 @@ class KubernetesTarget(DeploymentTarget) {
 
     def get_service_url(self: KubernetesTarget, app_name: str) -> (str | None) {
         try {
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             core_v1 = client.CoreV1Api();
             namespace = self.k8s_config.namespace;
             service_name = f"{app_name}-service";
@@ -1331,7 +1331,7 @@ class KubernetesTarget(DeploymentTarget) {
     """
     def get_full_status(self: KubernetesTarget, app_name: str) -> dict {
         try {
-            k8s_config.load_kube_config();
+            config.load_kube_config();
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
         } except Exception as e {

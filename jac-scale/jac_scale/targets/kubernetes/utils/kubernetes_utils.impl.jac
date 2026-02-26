@@ -420,11 +420,7 @@ impl cluster_type -> str {
 }
 
 impl check_pods_restarted(namespace: str, app_name: str) -> bool {
-    try {
-        config.load_kube_config();
-    } except Exception {
-        config.load_incluster_config();
-    }
+    config.load_kube_config();
     v1 = client.CoreV1Api();
     pods = v1.list_namespaced_pod(
         namespace=namespace, label_selector="app={}".format(app_name)
