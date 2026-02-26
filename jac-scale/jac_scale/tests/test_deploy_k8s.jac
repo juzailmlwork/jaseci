@@ -392,9 +392,7 @@ test "deploy all in one" {
     print(f"kube-state-metrics ClusterRoleBinding '{cluster_role_name}' exists");
 
     # Validate node-exporter DaemonSet and Service
-    ne_daemonset = apps_v1.read_namespaced_daemon_set(
-        name=ne_name, namespace=namespace
-    );
+    ne_daemonset = apps_v1.read_namespaced_daemon_set(name=ne_name, namespace=namespace);
     assert ne_daemonset.metadata.name == ne_name;
     print(f"node-exporter DaemonSet '{ne_name}' exists");
 
@@ -645,7 +643,9 @@ test "deploy all in one" {
 
     try {
         rbac_v1.read_cluster_role(name=cluster_role_name);
-        raise AssertionError("kube-state-metrics ClusterRole should have been deleted") ;
+        raise AssertionError(
+            "kube-state-metrics ClusterRole should have been deleted"
+        ) ;
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
