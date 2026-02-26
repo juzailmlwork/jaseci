@@ -973,8 +973,8 @@ class MonitoringDeployer {
                     'jac-scale.json': app_dashboard_json,
                     'k8s-metrics.json': k8s_dashboard_json
                 }
-                if self.k8s_config.k8s_metrics_enabled
-                else {'jac-scale.json': app_dashboard_json}
+                    if self.k8s_config.k8s_metrics_enabled
+                    else {'jac-scale.json': app_dashboard_json}
             )
         };
         try {
