@@ -87,7 +87,6 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'prometheus_node_port': 30090,
             'grafana_node_port': 30300,
             'k8s_metrics_enabled': True
-            'grafana_node_port': 30300
         },
         'admin': {
             'enabled': True,
