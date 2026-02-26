@@ -453,13 +453,14 @@ class KubernetesTarget(DeploymentTarget) {
         }
     }
 
-    """Deploy all enabled databases."""
+    """Deploy all enabled databases and their optional dashboards."""
     def _deploy_databases(
         self: KubernetesTarget,
         app_name: str,
         namespace: str,
         apps_v1: Any,
-        core_v1: Any
+        core_v1: Any,
+        cluster_env: str
     ) -> None {
         if self.k8s_config.mongodb_enabled {
             mongodb_name = f"{app_name}-mongodb";
@@ -495,6 +496,26 @@ class KubernetesTarget(DeploymentTarget) {
                     );
                 } else {
                     raise ;
+                }
+            }
+            if self.k8s_config.mongodb_dashboard {
+                mongo_provider.deploy_dashboard(
+                    namespace=namespace,
+                    apps_v1=apps_v1,
+                    core_v1=core_v1,
+                    cluster_env=cluster_env,
+                    node_port=self.k8s_config.mongo_express_node_port
+                );
+                if self.logger {
+                    if cluster_env == 'aws' {
+                        self.logger.info(
+                            f"mongo-express dashboard deployed for '{app_name}' (LoadBalancer)"
+                        );
+                    } else {
+                        self.logger.info(
+                            f"mongo-express dashboard deployed for '{app_name}' at localhost:{self.k8s_config.mongo_express_node_port}"
+                        );
+                    }
                 }
             }
         }
@@ -533,6 +554,26 @@ class KubernetesTarget(DeploymentTarget) {
                     );
                 } else {
                     raise ;
+                }
+            }
+            if self.k8s_config.redis_dashboard {
+                redis_provider.deploy_dashboard(
+                    namespace=namespace,
+                    apps_v1=apps_v1,
+                    core_v1=core_v1,
+                    cluster_env=cluster_env,
+                    node_port=self.k8s_config.redis_insight_node_port
+                );
+                if self.logger {
+                    if cluster_env == 'aws' {
+                        self.logger.info(
+                            f"RedisInsight dashboard deployed for '{app_name}' (LoadBalancer)"
+                        );
+                    } else {
+                        self.logger.info(
+                            f"RedisInsight dashboard deployed for '{app_name}' at localhost:{self.k8s_config.redis_insight_node_port}"
+                        );
+                    }
                 }
             }
         }
@@ -698,7 +739,17 @@ class KubernetesTarget(DeploymentTarget) {
                             if self.k8s_config.monitoring_enabled
                             else None
                     ),
-                    current_namespace=namespace
+                    current_namespace=namespace,
+                    redis_insight_node_port=(
+                        self.k8s_config.redis_insight_node_port
+                            if (self.k8s_config.redis_enabled and self.k8s_config.redis_dashboard)
+                            else None
+                    ),
+                    mongo_express_node_port=(
+                        self.k8s_config.mongo_express_node_port
+                            if (self.k8s_config.mongodb_enabled and self.k8s_config.mongodb_dashboard)
+                            else None
+                    )
                 );
             }
 
@@ -789,7 +840,7 @@ class KubernetesTarget(DeploymentTarget) {
             time.sleep(self.k8s_config.resource_deletion_wait);
 
             # 13. Deploy databases
-            self._deploy_databases(app_name, namespace, apps_v1, core_v1);
+            self._deploy_databases(app_name, namespace, apps_v1, core_v1, cluster_env);
             details["deploy_databases"] = "Successful";
             # 14. Deploy main application
             if self.logger {
@@ -1051,7 +1102,7 @@ class KubernetesTarget(DeploymentTarget) {
         }
     }
 
-    """Destroy all enabled databases."""
+    """Destroy all enabled databases and their dashboards."""
     def _destroy_databases(
         self: KubernetesTarget,
         app_name: str,
@@ -1073,6 +1124,21 @@ class KubernetesTarget(DeploymentTarget) {
                 namespace,
                 'Service'
             );
+            if self.k8s_config.mongodb_dashboard {
+                express_name = f"{app_name}-mongo-express";
+                delete_if_exists(
+                    apps_v1.delete_namespaced_deployment,
+                    express_name,
+                    namespace,
+                    'Deployment'
+                );
+                delete_if_exists(
+                    core_v1.delete_namespaced_service,
+                    f"{express_name}-service",
+                    namespace,
+                    'Service'
+                );
+            }
         }
 
         if self.k8s_config.redis_enabled {
@@ -1089,6 +1155,21 @@ class KubernetesTarget(DeploymentTarget) {
                 namespace,
                 'Service'
             );
+            if self.k8s_config.redis_dashboard {
+                insight_name = f"{app_name}-redis-insight";
+                delete_if_exists(
+                    apps_v1.delete_namespaced_deployment,
+                    insight_name,
+                    namespace,
+                    'Deployment'
+                );
+                delete_if_exists(
+                    core_v1.delete_namespaced_service,
+                    f"{insight_name}-service",
+                    namespace,
+                    'Service'
+                );
+            }
         }
     }
 
