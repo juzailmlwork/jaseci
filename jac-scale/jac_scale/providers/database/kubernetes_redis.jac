@@ -144,9 +144,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
                                 'name': 'redisinsight',
                                 'image': 'redislabs/redisinsight:1.14.0',
                                 'ports': [{'containerPort': 8001}],
-                                'env': [
-                                    {'name': 'REDIS_HOSTS', 'value': redis_hosts}
-                                ],
+                                'env': [{'name': 'REDIS_HOSTS', 'value': redis_hosts}],
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},
                                     'limits': {'cpu': '500m', 'memory': '512Mi'}

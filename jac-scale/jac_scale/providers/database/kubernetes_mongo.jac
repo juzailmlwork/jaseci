@@ -201,9 +201,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
         };
 
         try {
-            apps_v1.read_namespaced_deployment(
-                name=express_name, namespace=namespace
-            );
+            apps_v1.read_namespaced_deployment(name=express_name, namespace=namespace);
         } except ApiException as e {
             if e.status == 404 {
                 apps_v1.create_namespaced_deployment(

@@ -742,12 +742,18 @@ class KubernetesTarget(DeploymentTarget) {
                     current_namespace=namespace,
                     redis_insight_node_port=(
                         self.k8s_config.redis_insight_node_port
-                            if (self.k8s_config.redis_enabled and self.k8s_config.redis_dashboard)
+                            if (
+                                self.k8s_config.redis_enabled
+                                and self.k8s_config.redis_dashboard
+                            )
                             else None
                     ),
                     mongo_express_node_port=(
                         self.k8s_config.mongo_express_node_port
-                            if (self.k8s_config.mongodb_enabled and self.k8s_config.mongodb_dashboard)
+                            if (
+                                self.k8s_config.mongodb_enabled
+                                and self.k8s_config.mongodb_dashboard
+                            )
                             else None
                     )
                 );
