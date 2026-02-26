@@ -4,7 +4,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.2.2 (Unreleased)
 
-- k8s metrics dashboard in promethius and grafana
+- k8s metrics dashboard in prometheus and grafana
 - **Chore: Codebase Reformatted**: All `.jac` files reformatted with improved `jac format` (better line-breaking, comment spacing, and ternary indentation).
 
 ## jac-scale 0.2.1 (Latest Release)

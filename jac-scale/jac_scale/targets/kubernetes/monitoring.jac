@@ -478,7 +478,7 @@ class MonitoringDeployer {
                         'containers': [
                             {
                                 'name': 'node-exporter',
-                                'image': 'prom/node-exporter:latest',
+                                'image': 'prom/node-exporter:v1.10.2',
                                 'args': [
                                     '--path.procfs=/host/proc',
                                     '--path.sysfs=/host/sys',
@@ -1195,57 +1195,55 @@ class MonitoringDeployer {
             }
         }
 
-        if self.k8s_config.k8s_metrics_enabled {
-            # kube-state-metrics resources
-            delete_if_exists(
-                apps_v1.delete_namespaced_deployment, ksm_name, namespace, 'Deployment'
+        # kube-state-metrics resources
+        delete_if_exists(
+            apps_v1.delete_namespaced_deployment, ksm_name, namespace, 'Deployment'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_service,
+            f"{ksm_name}-service",
+            namespace,
+            'Service'
+        );
+        try {
+            core_v1.delete_namespaced_service_account(
+                name=f"{ksm_name}-sa", namespace=namespace
             );
-            delete_if_exists(
-                core_v1.delete_namespaced_service,
-                f"{ksm_name}-service",
-                namespace,
-                'Service'
-            );
-            try {
-                core_v1.delete_namespaced_service_account(
-                    name=f"{ksm_name}-sa", namespace=namespace
-                );
-            } except ApiException as e {
-                if e.status != 404 {
-                    raise ;
-                }
+        } except ApiException as e {
+            if e.status != 404 {
+                raise ;
             }
-            # ClusterRole and ClusterRoleBinding are cluster-scoped (no namespace param)
-            rbac_v1 = client.RbacAuthorizationV1Api();
-            try {
-                rbac_v1.delete_cluster_role(name=cluster_role_name);
-            } except ApiException as e {
-                if e.status != 404 {
-                    raise ;
-                }
-            }
-            try {
-                rbac_v1.delete_cluster_role_binding(name=cluster_role_binding_name);
-            } except ApiException as e {
-                if e.status != 404 {
-                    raise ;
-                }
-            }
-            # node-exporter resources (DaemonSet)
-            try {
-                apps_v1.delete_namespaced_daemon_set(name=ne_name, namespace=namespace);
-            } except ApiException as e {
-                if e.status != 404 {
-                    raise ;
-                }
-            }
-            delete_if_exists(
-                core_v1.delete_namespaced_service,
-                f"{ne_name}-service",
-                namespace,
-                'Service'
-            );
         }
+        # ClusterRole and ClusterRoleBinding are cluster-scoped (no namespace param)
+        rbac_v1 = client.RbacAuthorizationV1Api();
+        try {
+            rbac_v1.delete_cluster_role(name=cluster_role_name);
+        } except ApiException as e {
+            if e.status != 404 {
+                raise ;
+            }
+        }
+        try {
+            rbac_v1.delete_cluster_role_binding(name=cluster_role_binding_name);
+        } except ApiException as e {
+            if e.status != 404 {
+                raise ;
+            }
+        }
+        # node-exporter resources (DaemonSet)
+        try {
+            apps_v1.delete_namespaced_daemon_set(name=ne_name, namespace=namespace);
+        } except ApiException as e {
+            if e.status != 404 {
+                raise ;
+            }
+        }
+        delete_if_exists(
+            core_v1.delete_namespaced_service,
+            f"{ne_name}-service",
+            namespace,
+            'Service'
+        );
 
         # Grafana resources
         delete_if_exists(
