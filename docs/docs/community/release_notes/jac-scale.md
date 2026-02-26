@@ -6,6 +6,8 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - **Chore: Codebase Reformatted**: All `.jac` files reformatted with improved `jac format` (better line-breaking, comment spacing, and ternary indentation).
 
+- Automatically deploy Redis (RedisInsight) and MongoDB (MongoDB Dashboard) dashboards in Kubernetes when the redis_dashboard and mongodb_dashboard flags are enabled.
+
 ## jac-scale 0.2.1 (Latest Release)
 
 - **Admin Portal**: Added a built-in `/admin` dashboard for user management and administration. Features include user CRUD operations (list, create, edit, delete), role-based access control with `admin`, `moderator`, and `user` roles, force password reset, and SSO account management view.
