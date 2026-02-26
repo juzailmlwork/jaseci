@@ -2,6 +2,7 @@
 import from typing { Any }
 import from jac_scale.abstractions.database_provider { DatabaseProvider }
 import from jac_scale.abstractions.deployment_target { DeploymentTarget }
+import from kubernetes.client.exceptions { ApiException }
 
 """Redis provider for Kubernetes deployments."""
 class KubernetesRedisProvider(DatabaseProvider) {
@@ -106,5 +107,123 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 f"until nc -z {app_name}-redis-service 6379; do echo waiting for redis; sleep 3; done"
             ]
         };
+    }
+
+    """Deploy RedisInsight dashboard pre-configured with the Redis connection."""
+    def deploy_dashboard(
+        self: KubernetesRedisProvider,
+        namespace: str,
+        apps_v1: Any,
+        core_v1: Any,
+        cluster_env: str,
+        node_port: int
+    ) -> None {
+        redis_service_name = f"{self.app_name}-redis-service";
+        insight_name = f"{self.app_name}-redis-insight";
+
+        # RedisInsight v1 supports REDIS_HOSTS env var for auto-seeding databases:
+        # format: label:host:port  (or label:host:port:password if auth is set)
+        redis_hosts = f"local:{redis_service_name}:6379";
+
+        insight_deployment = {
+            'apiVersion': 'apps/v1',
+            'kind': 'Deployment',
+            'metadata': {
+                'name': insight_name,
+                'namespace': namespace,
+                'labels': {'app': insight_name}
+            },
+            'spec': {
+                'replicas': 1,
+                'selector': {'matchLabels': {'app': insight_name}},
+                'template': {
+                    'metadata': {'labels': {'app': insight_name}},
+                    'spec': {
+                        'containers': [
+                            {
+                                'name': 'redisinsight',
+                                'image': 'redislabs/redisinsight:1.14.0',
+                                'ports': [{'containerPort': 8001}],
+                                'env': [
+                                    {'name': 'REDIS_HOSTS', 'value': redis_hosts}
+                                ],
+                                'resources': {
+                                    'requests': {'cpu': '100m', 'memory': '128Mi'},
+                                    'limits': {'cpu': '500m', 'memory': '512Mi'}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        try {
+            apps_v1.read_namespaced_deployment(name=insight_name, namespace=namespace);
+        } except ApiException as e {
+            if e.status == 404 {
+                apps_v1.create_namespaced_deployment(
+                    namespace=namespace, body=insight_deployment
+                );
+            } else {
+                raise ;
+            }
+        }
+
+        if cluster_env == 'aws' {
+            insight_service = {
+                'apiVersion': 'v1',
+                'kind': 'Service',
+                'metadata': {
+                    'name': f"{insight_name}-service",
+                    'namespace': namespace,
+                    'labels': {'app': insight_name},
+                    'annotations': {
+                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
+                    }
+                },
+                'spec': {
+                    'type': 'LoadBalancer',
+                    'selector': {'app': insight_name},
+                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 8001}]
+                }
+            };
+        } else {
+            insight_service = {
+                'apiVersion': 'v1',
+                'kind': 'Service',
+                'metadata': {
+                    'name': f"{insight_name}-service",
+                    'namespace': namespace,
+                    'labels': {'app': insight_name}
+                },
+                'spec': {
+                    'type': 'NodePort',
+                    'selector': {'app': insight_name},
+                    'ports': [
+                        {
+                            'protocol': 'TCP',
+                            'port': 8001,
+                            'targetPort': 8001,
+                            'nodePort': node_port
+                        }
+                    ]
+                }
+            };
+        }
+
+        try {
+            core_v1.read_namespaced_service(
+                name=f"{insight_name}-service", namespace=namespace
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_service(
+                    namespace=namespace, body=insight_service
+                );
+            } else {
+                raise ;
+            }
+        }
     }
 }

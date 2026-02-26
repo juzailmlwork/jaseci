@@ -2,6 +2,7 @@
 import from typing { Any }
 import from jac_scale.abstractions.database_provider { DatabaseProvider }
 import from jac_scale.abstractions.deployment_target { DeploymentTarget }
+import from kubernetes.client.exceptions { ApiException }
 
 """MongoDB provider for Kubernetes deployments."""
 class KubernetesMongoProvider(DatabaseProvider) {
@@ -133,5 +134,140 @@ class KubernetesMongoProvider(DatabaseProvider) {
                 f"until nc -z {app_name}-mongodb-service 27017; do echo waiting for mongodb; sleep 3; done"
             ]
         };
+    }
+
+    """Deploy mongo-express dashboard pre-configured with MongoDB credentials."""
+    def deploy_dashboard(
+        self: KubernetesMongoProvider,
+        namespace: str,
+        apps_v1: Any,
+        core_v1: Any,
+        cluster_env: str,
+        node_port: int
+    ) -> None {
+        mongodb_service_name = f"{self.app_name}-mongodb-service";
+        express_name = f"{self.app_name}-mongo-express";
+
+        express_deployment = {
+            'apiVersion': 'apps/v1',
+            'kind': 'Deployment',
+            'metadata': {
+                'name': express_name,
+                'namespace': namespace,
+                'labels': {'app': express_name}
+            },
+            'spec': {
+                'replicas': 1,
+                'selector': {'matchLabels': {'app': express_name}},
+                'template': {
+                    'metadata': {'labels': {'app': express_name}},
+                    'spec': {
+                        'containers': [
+                            {
+                                'name': 'mongo-express',
+                                'image': 'mongo-express:latest',
+                                'ports': [{'containerPort': 8081}],
+                                'env': [
+                                    {
+                                        'name': 'ME_CONFIG_MONGODB_SERVER',
+                                        'value': mongodb_service_name
+                                    },
+                                    {
+                                        'name': 'ME_CONFIG_MONGODB_PORT',
+                                        'value': '27017'
+                                    },
+                                    {
+                                        'name': 'ME_CONFIG_MONGODB_ADMINUSERNAME',
+                                        'value': 'admin'
+                                    },
+                                    {
+                                        'name': 'ME_CONFIG_MONGODB_ADMINPASSWORD',
+                                        'value': 'password'
+                                    },
+                                    {
+                                        'name': 'ME_CONFIG_BASICAUTH_ENABLED',
+                                        'value': 'false'
+                                    }
+                                ],
+                                'resources': {
+                                    'requests': {'cpu': '100m', 'memory': '128Mi'},
+                                    'limits': {'cpu': '500m', 'memory': '256Mi'}
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        try {
+            apps_v1.read_namespaced_deployment(
+                name=express_name, namespace=namespace
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                apps_v1.create_namespaced_deployment(
+                    namespace=namespace, body=express_deployment
+                );
+            } else {
+                raise ;
+            }
+        }
+
+        if cluster_env == 'aws' {
+            express_service = {
+                'apiVersion': 'v1',
+                'kind': 'Service',
+                'metadata': {
+                    'name': f"{express_name}-service",
+                    'namespace': namespace,
+                    'labels': {'app': express_name},
+                    'annotations': {
+                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
+                    }
+                },
+                'spec': {
+                    'type': 'LoadBalancer',
+                    'selector': {'app': express_name},
+                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 8081}]
+                }
+            };
+        } else {
+            express_service = {
+                'apiVersion': 'v1',
+                'kind': 'Service',
+                'metadata': {
+                    'name': f"{express_name}-service",
+                    'namespace': namespace,
+                    'labels': {'app': express_name}
+                },
+                'spec': {
+                    'type': 'NodePort',
+                    'selector': {'app': express_name},
+                    'ports': [
+                        {
+                            'protocol': 'TCP',
+                            'port': 8081,
+                            'targetPort': 8081,
+                            'nodePort': node_port
+                        }
+                    ]
+                }
+            };
+        }
+
+        try {
+            core_v1.read_namespaced_service(
+                name=f"{express_name}-service", namespace=namespace
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_service(
+                    namespace=namespace, body=express_service
+                );
+            } else {
+                raise ;
+            }
+        }
     }
 }
