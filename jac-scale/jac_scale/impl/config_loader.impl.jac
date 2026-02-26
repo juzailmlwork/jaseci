@@ -43,6 +43,10 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'node_port': 30001,
             'mongodb_enabled': True,
             'redis_enabled': True,
+            'redis_dashboard': False,
+            'mongodb_dashboard': False,
+            'redis_insight_node_port': 30032,
+            'mongo_express_node_port': 30033,
             # Resource requests/limits
             'cpu_request': None,
             'cpu_limit': None,

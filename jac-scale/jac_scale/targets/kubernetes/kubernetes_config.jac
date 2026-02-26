@@ -46,7 +46,12 @@ class KubernetesConfig(BaseConfig) {
         monitoring_enabled: bool = False,
         prometheus_admin_password: str = 'Adminpassword123',
         prometheus_node_port: int = 30090,
-        grafana_node_port: int = 30300;
+        grafana_node_port: int = 30300,
+        # Dashboard configuration
+        redis_dashboard: bool = False,
+        mongodb_dashboard: bool = False,
+        redis_insight_node_port: int = 30032,
+        mongo_express_node_port: int = 30033;
 
     def init(
         self: KubernetesConfig,
@@ -90,7 +95,11 @@ class KubernetesConfig(BaseConfig) {
         monitoring_enabled: bool = False,
         prometheus_admin_password: str = 'Adminpassword123',
         prometheus_node_port: int = 30090,
-        grafana_node_port: int = 30300
+        grafana_node_port: int = 30300,
+        redis_dashboard: bool = False,
+        mongodb_dashboard: bool = False,
+        redis_insight_node_port: int = 30032,
+        mongo_express_node_port: int = 30033
     ) -> None {
         self.app_name = app_name;
         self.namespace = namespace;
@@ -140,6 +149,11 @@ class KubernetesConfig(BaseConfig) {
         self.prometheus_admin_password = prometheus_admin_password;
         self.prometheus_node_port = prometheus_node_port;
         self.grafana_node_port = grafana_node_port;
+        # Dashboard configuration
+        self.redis_dashboard = redis_dashboard;
+        self.mongodb_dashboard = mongodb_dashboard;
+        self.redis_insight_node_port = redis_insight_node_port;
+        self.mongo_express_node_port = mongo_express_node_port;
     }
 
     override def to_dict(self: KubernetesConfig) -> dict[str, Any] {
@@ -190,7 +204,12 @@ class KubernetesConfig(BaseConfig) {
                 'monitoring_enabled': self.monitoring_enabled,
                 'prometheus_admin_password': self.prometheus_admin_password,
                 'prometheus_node_port': self.prometheus_node_port,
-                'grafana_node_port': self.grafana_node_port
+                'grafana_node_port': self.grafana_node_port,
+                # Dashboard configuration
+                'redis_dashboard': self.redis_dashboard,
+                'mongodb_dashboard': self.mongodb_dashboard,
+                'redis_insight_node_port': self.redis_insight_node_port,
+                'mongo_express_node_port': self.mongo_express_node_port
             }
         );
         return base;
@@ -242,7 +261,11 @@ class KubernetesConfig(BaseConfig) {
                 'prometheus_admin_password', 'Adminpassword123'
             ),
             prometheus_node_port=config.get('prometheus_node_port', 30090),
-            grafana_node_port=config.get('grafana_node_port', 30300)
+            grafana_node_port=config.get('grafana_node_port', 30300),
+            redis_dashboard=config.get('redis_dashboard', False),
+            mongodb_dashboard=config.get('mongodb_dashboard', False),
+            redis_insight_node_port=config.get('redis_insight_node_port', 30032),
+            mongo_express_node_port=config.get('mongo_express_node_port', 30033)
         );
     }
 }
