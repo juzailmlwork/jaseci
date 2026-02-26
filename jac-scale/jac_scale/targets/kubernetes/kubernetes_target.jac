@@ -1321,48 +1321,6 @@ class KubernetesTarget(DeploymentTarget) {
         return None;
     }
 
-    """Return status dict for a single Deployment or StatefulSet.
-
-    Returns dict with keys: status, ready, total.
-    status values: 'running', 'degraded', 'pending', 'not_deployed', 'unknown'.
-    """
-    def _get_component_status(
-        self: KubernetesTarget,
-        apps_v1: Any,
-        namespace: str,
-        name: str,
-        is_statefulset: bool = False
-    ) -> dict {
-        try {
-            if is_statefulset {
-                resource = apps_v1.read_namespaced_stateful_set(
-                    name=name, namespace=namespace
-                );
-            } else {
-                resource = apps_v1.read_namespaced_deployment(
-                    name=name, namespace=namespace
-                );
-            }
-            replicas = resource.spec.replicas or 0;
-            ready = resource.status.ready_replicas or 0;
-            if ready == replicas and replicas > 0 {
-                status = 'running';
-            } elif ready > 0 {
-                status = 'degraded';
-            } else {
-                status = 'pending';
-            }
-            return {'status': status, 'ready': ready, 'total': replicas};
-        } except ApiException as e {
-            if e.status == 404 {
-                return {'status': 'not_deployed', 'ready': 0, 'total': 0};
-            }
-            return {'status': 'unknown', 'ready': 0, 'total': 0};
-        } except Exception {
-            return {'status': 'unknown', 'ready': 0, 'total': 0};
-        }
-    }
-
     """Get comprehensive status of all deployed components for this application.
 
     Makes 4 bulk API calls instead of one per component:

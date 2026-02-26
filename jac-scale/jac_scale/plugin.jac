@@ -34,7 +34,6 @@ def _scale_pre_hook(context: HookContext) -> None {
         if not os.path.exists(filename) {
             raise FileNotFoundError(f"File not found: '{filename}'") ;
         }
-        # code_folder = pathlib.Path(filename).parent;
         code_folder = os.path.dirname(filename) or '.';
         dotenv_path = os.path.join(code_folder, '.env');
         load_dotenv(dotenv_path);
@@ -234,7 +233,6 @@ class JacCmd {
             if not os.path.exists(file_path) {
                 raise FileNotFoundError(f"File not found: '{file_path}'") ;
             }
-            # code_folder = pathlib.Path(file_path).parent;
             code_folder = os.path.dirname(file_path) or '.';
             dotenv_path = os.path.join(code_folder, '.env');
             load_dotenv(dotenv_path);
@@ -305,7 +303,7 @@ class JacCmd {
             if not os.path.exists(file_path) {
                 raise FileNotFoundError(f"File not found: '{file_path}'") ;
             }
-            code_folder = os.path.dirname(filename) or '.';
+            code_folder = os.path.dirname(file_path) or '.';
             dotenv_path = os.path.join(code_folder, '.env');
             load_dotenv(dotenv_path);
 
