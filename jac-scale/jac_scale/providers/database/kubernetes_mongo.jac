@@ -187,10 +187,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
                                         'name': 'ME_CONFIG_MONGODB_ADMINPASSWORD',
                                         'value': 'password'
                                     },
-                                    {
-                                        'name': 'ME_CONFIG_BASICAUTH',
-                                        'value': 'false'
-                                    }
+                                    {'name': 'ME_CONFIG_BASICAUTH', 'value': 'false'}
                                 ],
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},

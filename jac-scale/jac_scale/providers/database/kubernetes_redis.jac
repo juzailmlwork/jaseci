@@ -146,7 +146,10 @@ class KubernetesRedisProvider(DatabaseProvider) {
                                 'image': 'redis/redisinsight:3.2.0',
                                 'ports': [{'containerPort': 5540}],
                                 'env': [
-                                    {'name': 'RI_REDIS_HOST', 'value': redis_service_name},
+                                    {
+                                        'name': 'RI_REDIS_HOST',
+                                        'value': redis_service_name
+                                    },
                                     {'name': 'RI_REDIS_PORT', 'value': '6379'},
                                     {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'}
                                 ],

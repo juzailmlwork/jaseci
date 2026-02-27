@@ -323,11 +323,19 @@ test "deploy all in one" {
     insight_container = insight_deploy.spec.template.spec.containers[0];
     assert insight_container.image == "redis/redisinsight:3.2.0";
     ri_host_env = next(
-        (e.value for e in insight_container.env if e.name == "RI_REDIS_HOST"),
+        (
+            e.value
+            for e in insight_container.env
+            if e.name == "RI_REDIS_HOST"
+        ),
         None
     );
     ri_port_env = next(
-        (e.value for e in insight_container.env if e.name == "RI_REDIS_PORT"),
+        (
+            e.value
+            for e in insight_container.env
+            if e.name == "RI_REDIS_PORT"
+        ),
         None
     );
     assert ri_host_env == f"{app_name}-redis-service";
