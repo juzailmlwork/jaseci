@@ -1035,14 +1035,52 @@ with entry {
 
 ## Database Configuration
 
-### Environment Variables
+### Configuration via `jac.toml`
+
+Database and Kubernetes deployment settings are configured in your project's `jac.toml` file. Environment variables can override individual settings but `jac.toml` is the primary configuration source.
+
+```toml
+# jac.toml
+
+[plugins.scale.kubernetes]
+redis_dashboard  = true   # Deploy Redis Commander UI (default: true)
+mongodb_dashboard = true  # Deploy Mongo Express UI (default: true)
+```
+
+#### Connection URIs
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection URI | None |
-| `REDIS_URL` | Redis connection URL | None |
-| `K8s_MONGODB` | Enable MongoDB deployment | `false` |
-| `K8s_REDIS` | Enable Redis deployment | `false` |
+| `MONGODB_URI` | MongoDB connection URI (env override) | None |
+| `REDIS_URL` | Redis connection URL (env override) | None |
+
+#### Kubernetes Deployment Flags
+
+By default, jac-scale automatically deploys both MongoDB and Redis when running in Kubernetes mode. These can be disabled if you provide external URIs instead.
+
+| `jac.toml` key | Env Override | Description | Default |
+|----------------|-------------|-------------|---------|
+| _(set via K8s mode)_ | `K8s_MONGODB` | Deploy MongoDB in-cluster | `true` |
+| _(set via K8s mode)_ | `K8s_REDIS` | Deploy Redis in-cluster | `true` |
+| `redis_dashboard` | — | Deploy Redis Commander dashboard UI | `true` |
+| `mongodb_dashboard` | — | Deploy Mongo Express dashboard UI | `true` |
+
+**Example** — disable dashboards and use external databases:
+
+```toml
+# jac.toml
+[plugins.scale.kubernetes]
+redis_dashboard   = false
+mongodb_dashboard = false
+```
+
+```env
+# .env (or shell environment)
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/mydb
+REDIS_URL=rediss://user:pass@my-redis-host:6380
+K8s_MONGODB=false
+K8s_REDIS=false
+```
 
 ### Memory Hierarchy
 
