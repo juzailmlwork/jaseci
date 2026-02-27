@@ -124,9 +124,14 @@ class KubernetesRedisProvider(DatabaseProvider) {
         redis_service_name = f"{self.app_name}-redis-service";
         insight_name = f"{self.app_name}-redis-insight";
 
-        # RedisInsight v1 supports REDIS_HOSTS env var for auto-seeding databases:
-        # format: label:host:port  (or label:host:port:password if auth is set)
-        redis_hosts = f"local:{redis_service_name}:6379";
+        # RedisInsight v3 removed REDIS_HOSTS. Use a postStart lifecycle hook to call
+        # the v3 REST API and auto-add the connection after the server is ready.
+        auto_add_cmd = (
+            f"nohup sh -c 'sleep 30 && curl -sf -X POST http://localhost:5540/api/databases"
+            f" -H \"Content-Type: application/json\""
+            f" -d \"{{\\\"host\\\":\\\"{redis_service_name}\\\",\\\"port\\\":6379,\\\"name\\\":\\\"Jaseci Redis\\\"}}\"'"
+            f" >/dev/null 2>&1 &"
+        );
 
         insight_deployment = {
             'apiVersion': 'apps/v1',
@@ -145,9 +150,15 @@ class KubernetesRedisProvider(DatabaseProvider) {
                         'containers': [
                             {
                                 'name': 'redisinsight',
-                                'image': 'redislabs/redisinsight:1.14.0',
-                                'ports': [{'containerPort': 8001}],
-                                'env': [{'name': 'REDIS_HOSTS', 'value': redis_hosts}],
+                                'image': 'redis/redisinsight:3.2.0',
+                                'ports': [{'containerPort': 5540}],
+                                'lifecycle': {
+                                    'postStart': {
+                                        'exec': {
+                                            'command': ['/bin/sh', '-c', auto_add_cmd]
+                                        }
+                                    }
+                                },
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},
                                     'limits': {'cpu': '500m', 'memory': '512Mi'}
@@ -186,7 +197,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'spec': {
                     'type': 'LoadBalancer',
                     'selector': {'app': insight_name},
-                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 8001}]
+                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 5540}]
                 }
             };
         } else {
@@ -204,8 +215,8 @@ class KubernetesRedisProvider(DatabaseProvider) {
                     'ports': [
                         {
                             'protocol': 'TCP',
-                            'port': 8001,
-                            'targetPort': 8001,
+                            'port': 5540,
+                            'targetPort': 5540,
                             'nodePort': node_port
                         }
                     ]
