@@ -124,15 +124,8 @@ class KubernetesRedisProvider(DatabaseProvider) {
         redis_service_name = f"{self.app_name}-redis-service";
         insight_name = f"{self.app_name}-redis-insight";
 
-        # RedisInsight v3 removed REDIS_HOSTS. Use a postStart lifecycle hook to call
-        # the v3 REST API and auto-add the connection after the server is ready.
-        auto_add_cmd = (
-            f"nohup sh -c 'sleep 30 && curl -sf -X POST http://localhost:5540/api/databases"
-            f" -H \"Content-Type: application/json\""
-            f" -d \"{{\\\"host\\\":\\\"{redis_service_name}\\\",\\\"port\\\":6379,\\\"name\\\":\\\"Jaseci Redis\\\"}}\"'"
-            f" >/dev/null 2>&1 &"
-        );
-
+        # RedisInsight v3 supports RI_REDIS_HOST / RI_REDIS_PORT env vars to
+        # pre-seed a database connection on first start (no manual setup needed).
         insight_deployment = {
             'apiVersion': 'apps/v1',
             'kind': 'Deployment',
@@ -152,13 +145,11 @@ class KubernetesRedisProvider(DatabaseProvider) {
                                 'name': 'redisinsight',
                                 'image': 'redis/redisinsight:3.2.0',
                                 'ports': [{'containerPort': 5540}],
-                                'lifecycle': {
-                                    'postStart': {
-                                        'exec': {
-                                            'command': ['/bin/sh', '-c', auto_add_cmd]
-                                        }
-                                    }
-                                },
+                                'env': [
+                                    {'name': 'RI_REDIS_HOST', 'value': redis_service_name},
+                                    {'name': 'RI_REDIS_PORT', 'value': '6379'},
+                                    {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'}
+                                ],
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},
                                     'limits': {'cpu': '500m', 'memory': '512Mi'}

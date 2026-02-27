@@ -322,14 +322,18 @@ test "deploy all in one" {
     assert insight_deploy.spec.replicas == 1;
     insight_container = insight_deploy.spec.template.spec.containers[0];
     assert insight_container.image == "redis/redisinsight:3.2.0";
-    assert insight_container.lifecycle is not None;
-    assert insight_container.lifecycle.post_start is not None;
-    post_start_cmd = insight_container.lifecycle.post_start.exec.command;
-    assert '/bin/sh' in post_start_cmd;
-    assert f"{app_name}-redis-service" in post_start_cmd[2];
-    assert '5540' in post_start_cmd[2];
+    ri_host_env = next(
+        (e.value for e in insight_container.env if e.name == "RI_REDIS_HOST"),
+        None
+    );
+    ri_port_env = next(
+        (e.value for e in insight_container.env if e.name == "RI_REDIS_PORT"),
+        None
+    );
+    assert ri_host_env == f"{app_name}-redis-service";
+    assert ri_port_env == "6379";
     print(
-        f"RedisInsight Deployment '{insight_name}' exists with postStart hook pre-configured"
+        f"RedisInsight Deployment '{insight_name}' exists with RI_REDIS_HOST/PORT pre-configured"
     );
 
     insight_service = core_v1.read_namespaced_service(
