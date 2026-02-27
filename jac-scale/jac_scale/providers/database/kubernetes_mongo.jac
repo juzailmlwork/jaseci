@@ -188,7 +188,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
                                         'value': 'password'
                                     },
                                     {
-                                        'name': 'ME_CONFIG_BASICAUTH_ENABLED',
+                                        'name': 'ME_CONFIG_BASICAUTH',
                                         'value': 'false'
                                     }
                                 ],
