@@ -359,7 +359,7 @@ test "deploy all in one" {
     assert express_deploy.metadata.name == express_name;
     assert express_deploy.spec.replicas == 1;
     express_container = express_deploy.spec.template.spec.containers[0];
-    assert express_container.image == "mongo-express:latest";
+    assert express_container.image == 'mongo-express:1.0.2-20';
     mongo_server_env = next(
         (
             e.value
