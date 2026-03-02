@@ -47,6 +47,8 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'mongodb_dashboard': False,
             'redis_insight_node_port': 30032,
             'mongo_express_node_port': 30033,
+            'mongo_express_username': 'admin',
+            'mongo_express_password': 'admin',
             # Resource requests/limits
             'cpu_request': None,
             'cpu_limit': None,

@@ -146,7 +146,9 @@ class KubernetesMongoProvider(DatabaseProvider) {
         apps_v1: Any,
         core_v1: Any,
         cluster_env: str,
-        node_port: int
+        node_port: int,
+        username: str = 'admin',
+        password: str = 'admin'
     ) -> None {
         mongodb_service_name = f"{self.app_name}-mongodb-service";
         express_name = f"{self.app_name}-mongo-express";
@@ -187,7 +189,15 @@ class KubernetesMongoProvider(DatabaseProvider) {
                                         'name': 'ME_CONFIG_MONGODB_ADMINPASSWORD',
                                         'value': 'password'
                                     },
-                                    {'name': 'ME_CONFIG_BASICAUTH', 'value': 'false'}
+                                    {'name': 'ME_CONFIG_BASICAUTH', 'value': 'true'},
+                                    {
+                                        'name': 'ME_CONFIG_BASICAUTH_USERNAME',
+                                        'value': username
+                                    },
+                                    {
+                                        'name': 'ME_CONFIG_BASICAUTH_PASSWORD',
+                                        'value': password
+                                    }
                                 ],
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},

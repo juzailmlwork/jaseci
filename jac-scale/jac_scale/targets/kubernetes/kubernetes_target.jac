@@ -504,7 +504,9 @@ class KubernetesTarget(DeploymentTarget) {
                     apps_v1=apps_v1,
                     core_v1=core_v1,
                     cluster_env=cluster_env,
-                    node_port=self.k8s_config.mongo_express_node_port
+                    node_port=self.k8s_config.mongo_express_node_port,
+                    username=self.k8s_config.mongo_express_username,
+                    password=self.k8s_config.mongo_express_password
                 );
                 if self.logger {
                     if cluster_env == 'aws' {
