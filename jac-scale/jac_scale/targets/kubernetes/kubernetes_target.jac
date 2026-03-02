@@ -1565,6 +1565,7 @@ class KubernetesTarget(DeploymentTarget) {
                 'display': 'Mongo Express',
                 'is_sts': False
             },
+
         ];
 
         grafana_running = False;

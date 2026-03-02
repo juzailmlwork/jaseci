@@ -117,9 +117,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
     Follows the same pattern as deploy(): pure spec construction, no API calls.
     """
     def deploy_dashboard(
-        self: KubernetesRedisProvider,
-        cluster_env: str,
-        node_port: int
+        self: KubernetesRedisProvider, cluster_env: str, node_port: int
     ) -> dict[str, Any] {
         redis_service_name = f"{self.app_name}-redis-service";
         insight_name = f"{self.app_name}-redis-insight";
