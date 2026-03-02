@@ -2,7 +2,6 @@
 import from typing { Any }
 import from jac_scale.abstractions.database_provider { DatabaseProvider }
 import from jac_scale.abstractions.deployment_target { DeploymentTarget }
-import from kubernetes.client.exceptions { ApiException }
 
 """Redis provider for Kubernetes deployments."""
 class KubernetesRedisProvider(DatabaseProvider) {
@@ -112,15 +111,16 @@ class KubernetesRedisProvider(DatabaseProvider) {
         };
     }
 
-    """Deploy RedisInsight dashboard pre-configured with the Redis connection."""
+    """Return RedisInsight dashboard resource specs.
+
+    Returns deployment and service specs for the caller to apply via the K8s API.
+    Follows the same pattern as deploy(): pure spec construction, no API calls.
+    """
     def deploy_dashboard(
         self: KubernetesRedisProvider,
-        namespace: str,
-        apps_v1: Any,
-        core_v1: Any,
         cluster_env: str,
         node_port: int
-    ) -> None {
+    ) -> dict[str, Any] {
         redis_service_name = f"{self.app_name}-redis-service";
         insight_name = f"{self.app_name}-redis-insight";
 
@@ -131,7 +131,6 @@ class KubernetesRedisProvider(DatabaseProvider) {
             'kind': 'Deployment',
             'metadata': {
                 'name': insight_name,
-                'namespace': namespace,
                 'labels': {'app': insight_name, 'managed': 'jac-scale'}
             },
             'spec': {
@@ -164,25 +163,12 @@ class KubernetesRedisProvider(DatabaseProvider) {
             }
         };
 
-        try {
-            apps_v1.read_namespaced_deployment(name=insight_name, namespace=namespace);
-        } except ApiException as e {
-            if e.status == 404 {
-                apps_v1.create_namespaced_deployment(
-                    namespace=namespace, body=insight_deployment
-                );
-            } else {
-                raise ;
-            }
-        }
-
         if cluster_env == 'aws' {
             insight_service = {
                 'apiVersion': 'v1',
                 'kind': 'Service',
                 'metadata': {
                     'name': f"{insight_name}-service",
-                    'namespace': namespace,
                     'labels': {'app': insight_name, 'managed': 'jac-scale'},
                     'annotations': {
                         'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
@@ -200,7 +186,6 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'kind': 'Service',
                 'metadata': {
                     'name': f"{insight_name}-service",
-                    'namespace': namespace,
                     'labels': {'app': insight_name, 'managed': 'jac-scale'}
                 },
                 'spec': {
@@ -218,18 +203,11 @@ class KubernetesRedisProvider(DatabaseProvider) {
             };
         }
 
-        try {
-            core_v1.read_namespaced_service(
-                name=f"{insight_name}-service", namespace=namespace
-            );
-        } except ApiException as e {
-            if e.status == 404 {
-                core_v1.create_namespaced_service(
-                    namespace=namespace, body=insight_service
-                );
-            } else {
-                raise ;
-            }
-        }
+        return {
+            'deployment': insight_deployment,
+            'service': insight_service,
+            'deployment_name': insight_name,
+            'service_name': f"{insight_name}-service"
+        };
     }
 }

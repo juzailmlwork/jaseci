@@ -2,7 +2,6 @@
 import from typing { Any }
 import from jac_scale.abstractions.database_provider { DatabaseProvider }
 import from jac_scale.abstractions.deployment_target { DeploymentTarget }
-import from kubernetes.client.exceptions { ApiException }
 
 """MongoDB provider for Kubernetes deployments."""
 class KubernetesMongoProvider(DatabaseProvider) {
@@ -139,17 +138,18 @@ class KubernetesMongoProvider(DatabaseProvider) {
         };
     }
 
-    """Deploy mongo-express dashboard pre-configured with MongoDB credentials."""
+    """Return mongo-express dashboard resource specs.
+
+    Returns deployment and service specs for the caller to apply via the K8s API.
+    Follows the same pattern as deploy(): pure spec construction, no API calls.
+    """
     def deploy_dashboard(
         self: KubernetesMongoProvider,
-        namespace: str,
-        apps_v1: Any,
-        core_v1: Any,
         cluster_env: str,
         node_port: int,
         username: str = 'admin',
         password: str = 'admin'
-    ) -> None {
+    ) -> dict[str, Any] {
         mongodb_service_name = f"{self.app_name}-mongodb-service";
         express_name = f"{self.app_name}-mongo-express";
 
@@ -158,7 +158,6 @@ class KubernetesMongoProvider(DatabaseProvider) {
             'kind': 'Deployment',
             'metadata': {
                 'name': express_name,
-                'namespace': namespace,
                 'labels': {'app': express_name, 'managed': 'jac-scale'}
             },
             'spec': {
@@ -210,25 +209,12 @@ class KubernetesMongoProvider(DatabaseProvider) {
             }
         };
 
-        try {
-            apps_v1.read_namespaced_deployment(name=express_name, namespace=namespace);
-        } except ApiException as e {
-            if e.status == 404 {
-                apps_v1.create_namespaced_deployment(
-                    namespace=namespace, body=express_deployment
-                );
-            } else {
-                raise ;
-            }
-        }
-
         if cluster_env == 'aws' {
             express_service = {
                 'apiVersion': 'v1',
                 'kind': 'Service',
                 'metadata': {
                     'name': f"{express_name}-service",
-                    'namespace': namespace,
                     'labels': {'app': express_name, 'managed': 'jac-scale'},
                     'annotations': {
                         'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
@@ -246,7 +232,6 @@ class KubernetesMongoProvider(DatabaseProvider) {
                 'kind': 'Service',
                 'metadata': {
                     'name': f"{express_name}-service",
-                    'namespace': namespace,
                     'labels': {'app': express_name, 'managed': 'jac-scale'}
                 },
                 'spec': {
@@ -264,18 +249,11 @@ class KubernetesMongoProvider(DatabaseProvider) {
             };
         }
 
-        try {
-            core_v1.read_namespaced_service(
-                name=f"{express_name}-service", namespace=namespace
-            );
-        } except ApiException as e {
-            if e.status == 404 {
-                core_v1.create_namespaced_service(
-                    namespace=namespace, body=express_service
-                );
-            } else {
-                raise ;
-            }
-        }
+        return {
+            'deployment': express_deployment,
+            'service': express_service,
+            'deployment_name': express_name,
+            'service_name': f"{express_name}-service"
+        };
     }
 }

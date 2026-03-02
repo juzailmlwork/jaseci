@@ -499,15 +499,38 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
             if self.k8s_config.mongodb_dashboard {
-                mongo_provider.deploy_dashboard(
-                    namespace=namespace,
-                    apps_v1=apps_v1,
-                    core_v1=core_v1,
+                express_result = mongo_provider.deploy_dashboard(
                     cluster_env=cluster_env,
                     node_port=self.k8s_config.mongo_express_node_port,
                     username=self.k8s_config.mongo_express_username,
                     password=self.k8s_config.mongo_express_password
                 );
+                try {
+                    apps_v1.read_namespaced_deployment(
+                        name=express_result['deployment_name'], namespace=namespace
+                    );
+                } except ApiException as e {
+                    if e.status == 404 {
+                        apps_v1.create_namespaced_deployment(
+                            namespace=namespace, body=express_result['deployment']
+                        );
+                    } else {
+                        raise ;
+                    }
+                }
+                try {
+                    core_v1.read_namespaced_service(
+                        name=express_result['service_name'], namespace=namespace
+                    );
+                } except ApiException as e {
+                    if e.status == 404 {
+                        core_v1.create_namespaced_service(
+                            namespace=namespace, body=express_result['service']
+                        );
+                    } else {
+                        raise ;
+                    }
+                }
                 if self.logger {
                     if cluster_env == 'aws' {
                         self.logger.info(
@@ -559,13 +582,36 @@ class KubernetesTarget(DeploymentTarget) {
                 }
             }
             if self.k8s_config.redis_dashboard {
-                redis_provider.deploy_dashboard(
-                    namespace=namespace,
-                    apps_v1=apps_v1,
-                    core_v1=core_v1,
+                insight_result = redis_provider.deploy_dashboard(
                     cluster_env=cluster_env,
                     node_port=self.k8s_config.redis_insight_node_port
                 );
+                try {
+                    apps_v1.read_namespaced_deployment(
+                        name=insight_result['deployment_name'], namespace=namespace
+                    );
+                } except ApiException as e {
+                    if e.status == 404 {
+                        apps_v1.create_namespaced_deployment(
+                            namespace=namespace, body=insight_result['deployment']
+                        );
+                    } else {
+                        raise ;
+                    }
+                }
+                try {
+                    core_v1.read_namespaced_service(
+                        name=insight_result['service_name'], namespace=namespace
+                    );
+                } except ApiException as e {
+                    if e.status == 404 {
+                        core_v1.create_namespaced_service(
+                            namespace=namespace, body=insight_result['service']
+                        );
+                    } else {
+                        raise ;
+                    }
+                }
                 if self.logger {
                     if cluster_env == 'aws' {
                         self.logger.info(
