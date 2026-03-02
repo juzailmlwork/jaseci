@@ -1136,21 +1136,19 @@ class KubernetesTarget(DeploymentTarget) {
                 namespace,
                 'Service'
             );
-            if self.k8s_config.mongodb_dashboard {
-                express_name = f"{app_name}-mongo-express";
-                delete_if_exists(
-                    apps_v1.delete_namespaced_deployment,
-                    express_name,
-                    namespace,
-                    'Deployment'
-                );
-                delete_if_exists(
-                    core_v1.delete_namespaced_service,
-                    f"{express_name}-service",
-                    namespace,
-                    'Service'
-                );
-            }
+            express_name = f"{app_name}-mongo-express";
+            delete_if_exists(
+                apps_v1.delete_namespaced_deployment,
+                express_name,
+                namespace,
+                'Deployment'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_service,
+                f"{express_name}-service",
+                namespace,
+                'Service'
+            );
         }
 
         if self.k8s_config.redis_enabled {
@@ -1509,10 +1507,21 @@ class KubernetesTarget(DeploymentTarget) {
                 'is_sts': False
             },
             {'k8s_name': f"{app_name}-grafana", 'display': 'Grafana', 'is_sts': False},
-
+            {
+                'k8s_name': f"{app_name}-redis-insight",
+                'display': 'RedisInsight',
+                'is_sts': False
+            },
+            {
+                'k8s_name': f"{app_name}-mongo-express",
+                'display': 'Mongo Express',
+                'is_sts': False
+            },
         ];
 
         grafana_running = False;
+        redis_insight_running = False;
+        mongo_express_running = False;
         for cdef in component_defs {
             k8s_name = cdef['k8s_name'];
             display_name = cdef['display'];
@@ -1545,6 +1554,10 @@ class KubernetesTarget(DeploymentTarget) {
                 );
                 if display_name == 'Grafana' {
                     grafana_running = True;
+                } elif display_name == 'RedisInsight' {
+                    redis_insight_running = True;
+                } elif display_name == 'Mongo Express' {
+                    mongo_express_running = True;
                 }
             } else {
                 components.append(
@@ -1590,6 +1603,42 @@ class KubernetesTarget(DeploymentTarget) {
                 } except Exception { }
             } else {
                 urls['grafana'] = f"http://localhost:{self.k8s_config.grafana_node_port}";
+            }
+        }
+
+        # RedisInsight URL
+        if redis_insight_running {
+            if is_aws {
+                try {
+                    svc = core_v1.read_namespaced_service(
+                        name=f"{app_name}-redis-insight-service", namespace=namespace
+                    );
+                    ingress = svc.status.load_balancer.ingress;
+                    if ingress and len(ingress) > 0 {
+                        endpoint = ingress[0].hostname or ingress[0].ip;
+                        urls['redis_insight'] = f"http://{endpoint}";
+                    }
+                } except Exception { }
+            } else {
+                urls['redis_insight'] = f"http://localhost:{self.k8s_config.redis_insight_node_port}";
+            }
+        }
+
+        # Mongo Express URL
+        if mongo_express_running {
+            if is_aws {
+                try {
+                    svc = core_v1.read_namespaced_service(
+                        name=f"{app_name}-mongo-express-service", namespace=namespace
+                    );
+                    ingress = svc.status.load_balancer.ingress;
+                    if ingress and len(ingress) > 0 {
+                        endpoint = ingress[0].hostname or ingress[0].ip;
+                        urls['mongo_express'] = f"http://{endpoint}";
+                    }
+                } except Exception { }
+            } else {
+                urls['mongo_express'] = f"http://localhost:{self.k8s_config.mongo_express_node_port}";
             }
         }
 

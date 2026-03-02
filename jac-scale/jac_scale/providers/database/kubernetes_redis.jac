@@ -132,7 +132,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
             'metadata': {
                 'name': insight_name,
                 'namespace': namespace,
-                'labels': {'app': insight_name}
+                'labels': {'app': insight_name, 'managed': 'jac-scale'}
             },
             'spec': {
                 'replicas': 1,
@@ -183,7 +183,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'metadata': {
                     'name': f"{insight_name}-service",
                     'namespace': namespace,
-                    'labels': {'app': insight_name},
+                    'labels': {'app': insight_name, 'managed': 'jac-scale'},
                     'annotations': {
                         'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
                     }
@@ -201,7 +201,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'metadata': {
                     'name': f"{insight_name}-service",
                     'namespace': namespace,
-                    'labels': {'app': insight_name}
+                    'labels': {'app': insight_name, 'managed': 'jac-scale'}
                 },
                 'spec': {
                     'type': 'NodePort',

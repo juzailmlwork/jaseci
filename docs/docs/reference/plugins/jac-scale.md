@@ -1043,8 +1043,8 @@ Database and Kubernetes deployment settings are configured in your project's `ja
 # jac.toml
 
 [plugins.scale.kubernetes]
-redis_dashboard  = true   # Deploy Redis Commander UI (default: true)
-mongodb_dashboard = true  # Deploy Mongo Express UI (default: true)
+redis_dashboard  = true   # Deploy RedisInsight UI (default: false)
+mongodb_dashboard = true  # Deploy Mongo Express UI (default: false)
 ```
 
 #### Connection URIs

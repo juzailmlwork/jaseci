@@ -157,7 +157,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
             'metadata': {
                 'name': express_name,
                 'namespace': namespace,
-                'labels': {'app': express_name}
+                'labels': {'app': express_name, 'managed': 'jac-scale'}
             },
             'spec': {
                 'replicas': 1,
@@ -168,7 +168,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
                         'containers': [
                             {
                                 'name': 'mongo-express',
-                                'image': 'mongo-express:latest',
+                                'image': 'mongo-express:1.0.2-20',
                                 'ports': [{'containerPort': 8081}],
                                 'env': [
                                     {
@@ -219,7 +219,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
                 'metadata': {
                     'name': f"{express_name}-service",
                     'namespace': namespace,
-                    'labels': {'app': express_name},
+                    'labels': {'app': express_name, 'managed': 'jac-scale'},
                     'annotations': {
                         'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
                     }
@@ -237,7 +237,7 @@ class KubernetesMongoProvider(DatabaseProvider) {
                 'metadata': {
                     'name': f"{express_name}-service",
                     'namespace': namespace,
-                    'labels': {'app': express_name}
+                    'labels': {'app': express_name, 'managed': 'jac-scale'}
                 },
                 'spec': {
                     'type': 'NodePort',
