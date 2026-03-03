@@ -1121,7 +1121,7 @@ Control how much memory Kubernetes allows for your application container.
 
 | Parameter | TOML Key | Default | Description |
 |-----------|----------|---------|-------------|
-| `K8s_MEMORY_LIMIT` | `memory_limit` | `12Gi` | Maximum memory the container may use before being OOM-killed |
+| `K8s_MEMORY_LIMIT` | `memory_limit` | None | Maximum memory the container may use before being OOM-killed |
 
 Override the default in your `jac.toml`:
 
