@@ -1258,6 +1258,7 @@ class KubernetesTarget(DeploymentTarget) {
                 f"{insight_name}-service",
                 namespace,
                 'Service'
+            );
             insight_name = f"{app_name}-redis-insight";
             delete_if_exists(
                 apps_v1.delete_namespaced_deployment,
