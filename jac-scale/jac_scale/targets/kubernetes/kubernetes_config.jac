@@ -54,7 +54,9 @@ class KubernetesConfig(BaseConfig) {
         redis_insight_node_port: int = 30032,
         mongo_express_node_port: int = 30033,
         mongo_express_username: str = 'admin',
-        mongo_express_password: str = 'admin';
+        mongo_express_password: str = 'admin',
+        redis_insight_username: str = 'admin',
+        redis_insight_password: str = 'admin';
 
     def init(
         self: KubernetesConfig,
@@ -105,7 +107,9 @@ class KubernetesConfig(BaseConfig) {
         redis_insight_node_port: int = 30032,
         mongo_express_node_port: int = 30033,
         mongo_express_username: str = 'admin',
-        mongo_express_password: str = 'admin'
+        mongo_express_password: str = 'admin',
+        redis_insight_username: str = 'admin',
+        redis_insight_password: str = 'admin'
     ) -> None {
         self.app_name = app_name;
         self.namespace = namespace;
@@ -163,6 +167,8 @@ class KubernetesConfig(BaseConfig) {
         self.mongo_express_node_port = mongo_express_node_port;
         self.mongo_express_username = mongo_express_username;
         self.mongo_express_password = mongo_express_password;
+        self.redis_insight_username = redis_insight_username;
+        self.redis_insight_password = redis_insight_password;
     }
 
     override def to_dict(self: KubernetesConfig) -> dict[str, Any] {
@@ -221,7 +227,9 @@ class KubernetesConfig(BaseConfig) {
                 'redis_insight_node_port': self.redis_insight_node_port,
                 'mongo_express_node_port': self.mongo_express_node_port,
                 'mongo_express_username': self.mongo_express_username,
-                'mongo_express_password': self.mongo_express_password
+                'mongo_express_password': self.mongo_express_password,
+                'redis_insight_username': self.redis_insight_username,
+                'redis_insight_password': self.redis_insight_password
             }
         );
         return base;
@@ -280,7 +288,9 @@ class KubernetesConfig(BaseConfig) {
             redis_insight_node_port=config.get('redis_insight_node_port', 30032),
             mongo_express_node_port=config.get('mongo_express_node_port', 30033),
             mongo_express_username=config.get('mongo_express_username', 'admin'),
-            mongo_express_password=config.get('mongo_express_password', 'admin')
+            mongo_express_password=config.get('mongo_express_password', 'admin'),
+            redis_insight_username=config.get('redis_insight_username', 'admin'),
+            redis_insight_password=config.get('redis_insight_password', 'admin')
         );
     }
 }

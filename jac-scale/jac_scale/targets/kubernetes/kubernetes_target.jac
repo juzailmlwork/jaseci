@@ -584,8 +584,40 @@ class KubernetesTarget(DeploymentTarget) {
             if self.k8s_config.redis_dashboard {
                 insight_result = redis_provider.deploy_dashboard(
                     cluster_env=cluster_env,
-                    node_port=self.k8s_config.redis_insight_node_port
+                    node_port=self.k8s_config.redis_insight_node_port,
+                    username=self.k8s_config.redis_insight_username,
+                    password=self.k8s_config.redis_insight_password
                 );
+                if 'auth_configmap' in insight_result {
+                    try {
+                        core_v1.read_namespaced_config_map(
+                            name=insight_result['auth_configmap']['metadata']['name'],
+                            namespace=namespace
+                        );
+                    } except ApiException as e {
+                        if e.status == 404 {
+                            core_v1.create_namespaced_config_map(
+                                namespace=namespace, body=insight_result['auth_configmap']
+                            );
+                        } else {
+                            raise ;
+                        }
+                    }
+                    try {
+                        core_v1.read_namespaced_secret(
+                            name=insight_result['auth_secret']['metadata']['name'],
+                            namespace=namespace
+                        );
+                    } except ApiException as e {
+                        if e.status == 404 {
+                            core_v1.create_namespaced_secret(
+                                namespace=namespace, body=insight_result['auth_secret']
+                            );
+                        } else {
+                            raise ;
+                        }
+                    }
+                }
                 try {
                     apps_v1.read_namespaced_deployment(
                         name=insight_result['deployment_name'], namespace=namespace
