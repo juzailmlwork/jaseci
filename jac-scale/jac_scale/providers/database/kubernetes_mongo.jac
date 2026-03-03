@@ -217,7 +217,8 @@ class KubernetesMongoProvider(DatabaseProvider) {
                     'name': f"{express_name}-service",
                     'labels': {'app': express_name, 'managed': 'jac-scale'},
                     'annotations': {
-                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb'
+                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
+                        'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
                     }
                 },
                 'spec': {
