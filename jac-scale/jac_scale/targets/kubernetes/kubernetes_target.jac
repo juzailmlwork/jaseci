@@ -1258,6 +1258,30 @@ class KubernetesTarget(DeploymentTarget) {
                 f"{insight_name}-service",
                 namespace,
                 'Service'
+            insight_name = f"{app_name}-redis-insight";
+            delete_if_exists(
+                apps_v1.delete_namespaced_deployment,
+                insight_name,
+                namespace,
+                'Deployment'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_service,
+                f"{insight_name}-service",
+                namespace,
+                'Service'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_config_map,
+                f"{insight_name}-nginx-config",
+                namespace,
+                'ConfigMap'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_secret,
+                f"{insight_name}-auth",
+                namespace,
+                'Secret'
             );
         }
     }
