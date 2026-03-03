@@ -211,7 +211,7 @@ class KubernetesRedisProvider(DatabaseProvider) {
             containers.append(
                 {
                     'name': 'nginx-auth',
-                    'image': 'nginx:alpine',
+                    'image': 'nginx:1.27-alpine',
                     'ports': [{'containerPort': 8080}],
                     'volumeMounts': [
                         {
