@@ -8,6 +8,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - Automatically deploy Redis (RedisInsight) and MongoDB (MongoDB Dashboard) dashboards in Kubernetes when the redis_dashboard and mongodb_dashboard flags are enabled.
 - Set default maximum memory limit of k8s pods from unlimited to 12Gb
+- 1 Minor refactor/change.
 
 ## jac-scale 0.2.2
 
