@@ -455,7 +455,9 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         "{}-redis".format(app_name),
         "{}-mongodb".format(app_name),
         "{}-grafana".format(app_name),
-        "{}-prometheus".format(app_name)
+        "{}-prometheus".format(app_name),
+        "{}-mongo-express".format(app_name),
+        "{}-redis-insight".format(app_name)
     ];
     for label in app_labels {
         pods = v1.list_namespaced_pod(
