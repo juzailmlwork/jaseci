@@ -1213,21 +1213,19 @@ class KubernetesTarget(DeploymentTarget) {
                 namespace,
                 'Service'
             );
-            if self.k8s_config.redis_dashboard {
-                insight_name = f"{app_name}-redis-insight";
-                delete_if_exists(
-                    apps_v1.delete_namespaced_deployment,
-                    insight_name,
-                    namespace,
-                    'Deployment'
-                );
-                delete_if_exists(
-                    core_v1.delete_namespaced_service,
-                    f"{insight_name}-service",
-                    namespace,
-                    'Service'
-                );
-            }
+            insight_name = f"{app_name}-redis-insight";
+            delete_if_exists(
+                apps_v1.delete_namespaced_deployment,
+                insight_name,
+                namespace,
+                'Deployment'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_service,
+                f"{insight_name}-service",
+                namespace,
+                'Service'
+            );
         }
     }
 
