@@ -1049,7 +1049,7 @@ shelf_db_path = ".jac/data/anchor_store.db"  # SQLite/shelf path for local dev
 |----------|---------|---------|-------------|
 | `mongodb_uri` | `MONGODB_URI` | None | External MongoDB URI. When set, K8s MongoDB StatefulSet is not provisioned. |
 | `redis_url` | `REDIS_URL` | None | External Redis URL. When set, K8s Redis is not provisioned. |
-| `shelf_db_path` | — | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
+| `shelf_db_path` | - | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
 
 ### Environment Variables
 
@@ -1085,7 +1085,7 @@ graph TD
 
 | Mode | Command | Description |
 |------|---------|-------------|
-| **Development** | `jac start app.jac --scale` | Deploy without building a Docker image — fast iteration |
+| **Development** | `jac start app.jac --scale` | Deploy without building a Docker image - fast iteration |
 | **Production** | `jac start app.jac --scale --build` | Build and push Docker image to registry, then deploy |
 
 **Production mode** requires Docker credentials in `.env`:
@@ -1126,8 +1126,8 @@ Controls how the application is exposed inside the cluster and externally via No
 
 | TOML Key | Env Var | Default | Description |
 |----------|---------|---------|-------------|
-| `container_port` | — | `8000` | Port your app listens on inside the pod |
-| `node_port` | `K8s_NODE_PORT` | `30001` | External NodePort — access app at `http://localhost:<node_port>` |
+| `container_port` | - | `8000` | Port your app listens on inside the pod |
+| `node_port` | `K8s_NODE_PORT` | `30001` | External NodePort - access app at `http://localhost:<node_port>` |
 
 **To change in `jac.toml`:**
 
@@ -1141,15 +1141,15 @@ node_port = 30080
 
 ### Database Auto-Provisioning
 
-On the first `jac start --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application — databases remain untouched.
+On the first `jac start --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application - databases remain untouched.
 
 **What gets provisioned:**
 
-- **MongoDB** — StatefulSet with PersistentVolumeClaim (graph persistence, `kvstore` backend)
-- **Redis** — Deployment with persistent storage (cache layer, session management)
-- **Application Deployment** — Your Jac app pod(s)
-- **Services** — NodePort service for external access
-- **ConfigMaps** — Application configuration
+- **MongoDB** - StatefulSet with PersistentVolumeClaim (graph persistence, `kvstore` backend)
+- **Redis** - Deployment with persistent storage (cache layer, session management)
+- **Application Deployment** - Your Jac app pod(s)
+- **Services** - NodePort service for external access
+- **ConfigMaps** - Application configuration
 
 **Defaults:**
 
@@ -1162,8 +1162,8 @@ On the first `jac start --scale`, jac-scale automatically deploys Redis and Mong
 
 ```toml
 [plugins.scale.kubernetes]
-mongodb_enabled = false   # Don't deploy MongoDB — use MONGODB_URI instead
-redis_enabled = false     # Don't deploy Redis — use REDIS_URL instead
+mongodb_enabled = false   # Don't deploy MongoDB - use MONGODB_URI instead
+redis_enabled = false     # Don't deploy Redis - use REDIS_URL instead
 
 [plugins.scale.database]
 mongodb_uri = "mongodb://user:pass@external-host:27017"
@@ -1183,7 +1183,7 @@ Controls CPU and memory requests/limits for the application container. Kubernete
 | `cpu_request` | `K8s_CPU_REQUEST` | None | CPU units reserved for scheduling (e.g. `"250m"`) |
 | `cpu_limit` | `K8s_CPU_LIMIT` | None | Maximum CPU the container may use (e.g. `"1000m"`) |
 | `memory_request` | `K8s_MEMORY_REQUEST` | None | Memory reserved for scheduling (e.g. `"256Mi"`) |
-| `memory_limit` | `K8s_MEMORY_LIMIT` | `12Gi` | Memory ceiling — container is OOM-killed if exceeded |
+| `memory_limit` | `K8s_MEMORY_LIMIT` | `12Gi` | Memory ceiling - container is OOM-killed if exceeded |
 
 Accepted suffixes: `Ki`, `Mi`, `Gi` (binary) or `K`, `M`, `G` (decimal).
 
@@ -1207,7 +1207,7 @@ Kubernetes uses readiness and liveness probes to decide when a pod is ready to s
 
 | TOML Key | Env Var | Default | Description |
 |----------|---------|---------|-------------|
-| `health_check_path` | — | `/docs` | Endpoint probed by both readiness and liveness checks |
+| `health_check_path` | - | `/docs` | Endpoint probed by both readiness and liveness checks |
 | `readiness_initial_delay` | `K8s_READINESS_INITIAL_DELAY` | `10` | Seconds to wait before first readiness check |
 | `readiness_period` | `K8s_READINESS_PERIOD` | `20` | Seconds between readiness checks |
 | `liveness_initial_delay` | `K8s_LIVENESS_INITIAL_DELAY` | `10` | Seconds to wait before first liveness check |
@@ -1263,7 +1263,7 @@ Controls the PersistentVolumeClaim (PVC) size for MongoDB and Redis StatefulSets
 
 | TOML Key | Env Var | Default | Description |
 |----------|---------|---------|-------------|
-| `pvc_size` | — | `5Gi` | Storage size for each database PVC |
+| `pvc_size` | - | `5Gi` | Storage size for each database PVC |
 
 **To change in `jac.toml`:**
 
@@ -1284,8 +1284,8 @@ Controls the base images used for the application pod and init containers. Overr
 
 | TOML Key | Env Var | Default | Description |
 |----------|---------|---------|-------------|
-| `python_image` | — | `python:3.12-slim` | Base image for the application pod |
-| `busybox_image` | — | `busybox:1.36` | Init container image used for dependency health checks |
+| `python_image` | - | `python:3.12-slim` | Base image for the application pod |
+| `busybox_image` | - | `busybox:1.36` | Init container image used for dependency health checks |
 
 **To change in `jac.toml`:**
 
@@ -1322,8 +1322,8 @@ When using `--experimental` mode, Jaseci packages are installed from the GitHub 
 
 | TOML Key | Env Var | Default | Description |
 |----------|---------|---------|-------------|
-| `jaseci_branch` | — | `main` | Repository branch to install from |
-| `jaseci_commit` | — | None | Specific commit SHA — leave empty for latest of the branch |
+| `jaseci_branch` | - | `main` | Repository branch to install from |
+| `jaseci_commit` | - | None | Specific commit SHA - leave empty for latest of the branch |
 
 **To change in `jac.toml`:**
 
@@ -1366,8 +1366,8 @@ jac-scale can deploy a full observability stack (Prometheus + Grafana + kube-sta
 
 | Component | Purpose |
 |-----------|---------|
-| **Prometheus** | Collects and stores metrics (ClusterIP — internal only, scraped by Grafana) |
-| **Grafana** | Dashboard UI — NodePort on local clusters, NLB on AWS |
+| **Prometheus** | Collects and stores metrics (ClusterIP - internal only, scraped by Grafana) |
+| **Grafana** | Dashboard UI - NodePort on local clusters, NLB on AWS |
 | **kube-state-metrics** | K8s object state: pod counts, replica health, restart counts |
 | **node-exporter** | Host-level metrics: CPU, memory, disk, network per node |
 
@@ -1394,7 +1394,7 @@ prometheus_admin_password = "StrongPassword123!"
 
 After deployment, access:
 
-- **Grafana:** `http://localhost:30300` — log in with `admin` / `<prometheus_admin_password>`
+- **Grafana:** `http://localhost:30300` - log in with `admin` / `<prometheus_admin_password>`
 - **Prometheus:** `http://localhost:30090` (for debugging scrape targets)
 
 On AWS clusters, Grafana is exposed via a Network Load Balancer (NLB) instead of NodePort.
@@ -1405,7 +1405,7 @@ On AWS clusters, Grafana is exposed via a Network Load Balancer (NLB) instead of
 - kube-state-metrics (pod, deployment, replica, restart state)
 - node-exporter (CPU, memory, disk, network per node)
 
-> To collect application metrics, also enable `[plugins.scale.metrics] enabled = true` — see [Prometheus Metrics](#prometheus-metrics).
+> To collect application metrics, also enable `[plugins.scale.metrics] enabled = true` - see [Prometheus Metrics](#prometheus-metrics).
 
 ---
 
@@ -1419,9 +1419,9 @@ jac status app.jac
 
 Displays a table with:
 
-- **Component health** — Jaseci App, Redis, MongoDB, Prometheus, Grafana
-- **Pod readiness** — `ready/total` replica count per component
-- **Service URLs** — application endpoint and Grafana URL
+- **Component health** - Jaseci App, Redis, MongoDB, Prometheus, Grafana
+- **Pod readiness** - `ready/total` replica count per component
+- **Service URLs** - application endpoint and Grafana URL
 
 Status values:
 
@@ -1456,7 +1456,7 @@ jac destroy app.jac
 ```
 
 !!! warning
-    You will be prompted to confirm with `y` before deletion proceeds. The command deletes the entire namespace and **all** its resources — including persistent volumes and database data.
+    You will be prompted to confirm with `y` before deletion proceeds. The command deletes the entire namespace and **all** its resources - including persistent volumes and database data.
 
 Removes:
 
