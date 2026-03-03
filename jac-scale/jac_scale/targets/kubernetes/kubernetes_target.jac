@@ -597,7 +597,8 @@ class KubernetesTarget(DeploymentTarget) {
                     } except ApiException as e {
                         if e.status == 404 {
                             core_v1.create_namespaced_config_map(
-                                namespace=namespace, body=insight_result['auth_configmap']
+                                namespace=namespace,
+                                body=insight_result['auth_configmap']
                             );
                         } else {
                             raise ;

@@ -140,7 +140,9 @@ class KubernetesRedisProvider(DatabaseProvider) {
         if auth_enabled {
             pw_hash = base64.b64encode(
                 hashlib.sha1(password.encode('utf-8')).digest()
-            ).decode('utf-8');
+            ).decode(
+                'utf-8'
+            );
             insight_htpasswd = f"{username}:{{SHA}}{pw_hash}";
         }
 
@@ -206,27 +208,29 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'stringData': {'.htpasswd': insight_htpasswd}
             };
 
-            containers.append({
-                'name': 'nginx-auth',
-                'image': 'nginx:alpine',
-                'ports': [{'containerPort': 8080}],
-                'volumeMounts': [
-                    {
-                        'name': 'nginx-config',
-                        'mountPath': '/etc/nginx/conf.d/default.conf',
-                        'subPath': 'nginx.conf'
-                    },
-                    {
-                        'name': 'htpasswd',
-                        'mountPath': '/etc/nginx/.htpasswd',
-                        'subPath': '.htpasswd'
+            containers.append(
+                {
+                    'name': 'nginx-auth',
+                    'image': 'nginx:alpine',
+                    'ports': [{'containerPort': 8080}],
+                    'volumeMounts': [
+                        {
+                            'name': 'nginx-config',
+                            'mountPath': '/etc/nginx/conf.d/default.conf',
+                            'subPath': 'nginx.conf'
+                        },
+                        {
+                            'name': 'htpasswd',
+                            'mountPath': '/etc/nginx/.htpasswd',
+                            'subPath': '.htpasswd'
+                        }
+                    ],
+                    'resources': {
+                        'requests': {'cpu': '50m', 'memory': '32Mi'},
+                        'limits': {'cpu': '100m', 'memory': '64Mi'}
                     }
-                ],
-                'resources': {
-                    'requests': {'cpu': '50m', 'memory': '32Mi'},
-                    'limits': {'cpu': '100m', 'memory': '64Mi'}
                 }
-            });
+            );
 
             pod_spec['volumes'] = [
                 {'name': 'nginx-config', 'configMap': {'name': nginx_config_name}},
@@ -262,7 +266,13 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'spec': {
                     'type': 'ClusterIP',
                     'selector': {'app': insight_name},
-                    'ports': [{'protocol': 'TCP', 'port': service_port, 'targetPort': service_port}]
+                    'ports': [
+                        {
+                            'protocol': 'TCP',
+                            'port': service_port,
+                            'targetPort': service_port
+                        }
+                    ]
                 }
             };
         } elif cluster_env == 'aws' {
@@ -279,7 +289,9 @@ class KubernetesRedisProvider(DatabaseProvider) {
                 'spec': {
                     'type': 'LoadBalancer',
                     'selector': {'app': insight_name},
-                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': service_port}]
+                    'ports': [
+                        {'protocol': 'TCP', 'port': 80, 'targetPort': service_port}
+                    ]
                 }
             };
         } else {
