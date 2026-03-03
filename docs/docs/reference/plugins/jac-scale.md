@@ -1037,7 +1037,7 @@ with entry {
 
 ### Configuration via `jac.toml`
 
-Database and Kubernetes deployment settings are configured in your project's `jac.toml` file. Environment variables can override individual settings but `jac.toml` is the primary configuration source.
+Database and Kubernetes deployment settings are configured in your project's `jac.toml` file.
 
 ```toml
 # jac.toml
@@ -1065,28 +1065,33 @@ By default, jac-scale automatically deploys both MongoDB and Redis when running 
 | `redis_dashboard` | Deploy RedisInsight dashboard UI | `false` |
 | `mongodb_dashboard` | Deploy Mongo Express dashboard UI | `false` |
 
-**Disable in-cluster databases** (use external URIs instead):
+#### Dashboard Credentials and Ports
+
+When dashboards are enabled, you can configure their access credentials and node ports:
+
+| `jac.toml` key | Description | Default |
+|----------------|-------------|---------|
+| `redis_insight_node_port` | NodePort for RedisInsight UI | `30032` |
+| `redis_insight_username` | RedisInsight login username | `admin` |
+| `redis_insight_password` | RedisInsight login password | `admin` |
+| `mongo_express_node_port` | NodePort for Mongo Express UI | `30033` |
+| `mongo_express_username` | Mongo Express login username | `admin` |
+| `mongo_express_password` | Mongo Express login password | `admin` |
+
+**Enable dashboards with custom credentials** (RedisInsight + Mongo Express):
 
 ```toml
 # jac.toml
 [plugins.scale.kubernetes]
-mongodb_enabled = false
-redis_enabled   = false
-```
+redis_dashboard          = true
+redis_insight_node_port  = 30032
+redis_insight_username   = "admin"
+redis_insight_password   = "strongpassword"
 
-```env
-# .env (or shell environment)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/mydb
-REDIS_URL=rediss://user:pass@my-redis-host:6380
-```
-
-**Enable dashboards** (RedisInsight + Mongo Express):
-
-```toml
-# jac.toml
-[plugins.scale.kubernetes]
-redis_dashboard   = true
-mongodb_dashboard = true
+mongodb_dashboard        = true
+mongo_express_node_port  = 30033
+mongo_express_username   = "admin"
+mongo_express_password   = "strongpassword"
 ```
 
 ### Memory Hierarchy
