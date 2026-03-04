@@ -204,11 +204,26 @@ test "connection pooling" {
 }
 
 test "config fallback" {
-    # Explicit URI param works
-    db = kvstore(db_name="test", db_type="mongodb", uri=MONGO_URI);
-    assert db.insert_one("test", {"data": "ok"}).inserted_id is not None;
+    # Explicit URI overrides env var
+    os.environ["MONGODB_URI"] = "mongodb://fake:27017";
+    try {
+        db = kvstore(db_name="test", db_type="mongodb", uri=MONGO_URI);
+        assert db.insert_one("test", {"data": "ok"}).inserted_id is not None;
+    } finally {
+        del os.environ["MONGODB_URI"];
+    }
 
-    # Missing URI raises error
+    # Env var fallback
+    os.environ["MONGODB_URI"] = MONGO_URI;
+    try {
+        db = kvstore(db_name="test", db_type="mongodb");
+        assert db.insert_one("test", {"data": "ok"}).inserted_id is not None;
+    } finally {
+        del os.environ["MONGODB_URI"];
+    }
+
+    # Missing config raises error
+    os.environ.pop("MONGODB_URI", None);
     raised = False;
     try {
         kvstore(db_name="test", db_type="mongodb");

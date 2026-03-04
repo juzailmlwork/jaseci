@@ -82,31 +82,6 @@ def post_request(base_url: str, path: str, payload: dict, token: str) -> dict[st
     return cast(dict[str, Any], extract_transport_response_data(res.json()));
 }
 
-"""Write a minimal jac.toml with database config for the test server."""
-def write_fixtures_db_config(
-    fixtures_dir: Path, mongodb_uri: str | None = None, redis_url: str | None = None
-) -> None {
-    lines = ["[plugins.scale.database]"];
-    if mongodb_uri {
-        lines.append(f'mongodb_uri = "{mongodb_uri}"');
-    }
-    if redis_url {
-        lines.append(f'redis_url = "{redis_url}"');
-    }
-    jac_toml_path = fixtures_dir / "jac.toml";
-    with open(str(jac_toml_path), 'w') as f {
-        f.write('\n'.join(lines) + '\n');
-    }
-}
-
-"""Remove the test jac.toml from the fixtures directory."""
-def remove_fixtures_db_config(fixtures_dir: Path) -> None {
-    jac_toml_path = fixtures_dir / "jac.toml";
-    with contextlib.suppress(Exception) {
-        jac_toml_path.unlink();
-    }
-}
-
 """Start jac server and wait for it to become ready."""
 def start_server(fixtures_dir: Path, jac_file: Path, port: int) -> subprocess.Popen {
     jac_executable = Path(sys.executable).parent / "jac";
@@ -173,7 +148,8 @@ test "read and write" {
     mongo_uri = mongo_container.get_connection_url();
     mongo_client = MongoClient(mongo_uri);
 
-    write_fixtures_db_config(FIXTURES_DIR, mongodb_uri=mongo_uri, redis_url=redis_url);
+    os.environ["MONGODB_URI"] = mongo_uri;
+    os.environ["REDIS_URL"] = redis_url;
 
     assert "jac_db" not in mongo_client.list_database_names();
 
@@ -245,7 +221,6 @@ test "read and write" {
         mongo_container.stop();
         redis_container.stop();
 
-        remove_fixtures_db_config(FIXTURES_DIR);
         time.sleep(0.5);
         gc.collect();
 
@@ -274,7 +249,7 @@ test "data persists after server restart for mongo db" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    write_fixtures_db_config(FIXTURES_DIR, mongodb_uri=mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
 
     port = get_free_port();
     base_url = f"http://localhost:{port}";
@@ -329,7 +304,6 @@ test "data persists after server restart for mongo db" {
             }
         }
         mongo_container.stop();
-        remove_fixtures_db_config(FIXTURES_DIR);
         time.sleep(0.5);
         gc.collect();
 
@@ -351,8 +325,14 @@ test "data persists after server restart for sqlite" {
         shutil.rmtree(data_dir);
     }
 
-    # Ensure no fixtures jac.toml with database URIs (SQLite-only mode)
-    remove_fixtures_db_config(FIXTURES_DIR);
+    # Ensure no MongoDB or Redis environment variables are set (SQLite-only mode)
+    env_backup = {};
+    for key in ["MONGODB_URI", "REDIS_URL"] {
+        if key in os.environ {
+            env_backup[key] = os.environ[key];
+            del os.environ[key];
+        }
+    }
 
     port = get_free_port();
     base_url = f"http://localhost:{port}";
@@ -410,6 +390,11 @@ test "data persists after server restart for sqlite" {
             with contextlib.suppress(Exception) {
                 server.wait(timeout=2);
             }
+        }
+
+        # Restore environment variables
+        for (key, value) in env_backup.items() {
+            os.environ[key] = value;
         }
 
         time.sleep(0.5);

@@ -168,22 +168,6 @@ def _start_server(
     return server_process;
 }
 
-"""Write a minimal jac.toml with mongodb_uri for the test server."""
-def _write_fixtures_db_config(fixtures_dir: Path, mongodb_uri: str) -> None {
-    jac_toml_path = fixtures_dir / "jac.toml";
-    with open(str(jac_toml_path), 'w') as f {
-        f.write(f'[plugins.scale.database]\nmongodb_uri = "{mongodb_uri}"\n');
-    }
-}
-
-"""Remove the test jac.toml from the fixtures directory."""
-def _remove_fixtures_db_config(fixtures_dir: Path) -> None {
-    jac_toml_path = fixtures_dir / "jac.toml";
-    with contextlib.suppress(Exception) {
-        jac_toml_path.unlink();
-    }
-}
-
 """Stop the server process."""
 def _stop_server(server_process: subprocess.Popen | None) -> None {
     if server_process {
@@ -516,6 +500,7 @@ glob wh_fixtures_dir: Path = Path(__file__).parent / "fixtures",
 test "webhook without mongo - endpoint exists" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -523,12 +508,16 @@ test "webhook without mongo - endpoint exists" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - normal walker not in webhook" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -536,12 +525,16 @@ test "webhook without mongo - normal walker not in webhook" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - normal walker accessible via walker endpoint" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -549,12 +542,16 @@ test "webhook without mongo - normal walker accessible via walker endpoint" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - requires api key" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -562,12 +559,16 @@ test "webhook without mongo - requires api key" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - invalid api key" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -575,12 +576,16 @@ test "webhook without mongo - invalid api key" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - minimal webhook with valid api key" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -588,12 +593,16 @@ test "webhook without mongo - minimal webhook with valid api key" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - payment received with fields" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -601,12 +610,16 @@ test "webhook without mongo - payment received with fields" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - not accessible via walker endpoint" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -614,12 +627,16 @@ test "webhook without mongo - not accessible via walker endpoint" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
 test "webhook without mongo - revoked api key" {
     port = get_free_port();
     base_url = f"http://localhost:{port}";
+    original_mongodb_uri = os.environ.pop("MONGODB_URI", None);
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
@@ -627,6 +644,9 @@ test "webhook without mongo - revoked api key" {
     } finally {
         _stop_server(sp);
         _cleanup_db_files(wh_fixtures_dir);
+        if original_mongodb_uri is not None {
+            os.environ["MONGODB_URI"] = original_mongodb_uri;
+        }
     }
 }
 
@@ -639,14 +659,14 @@ test "webhook with mongo - endpoint exists" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_endpoint_exists_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -658,14 +678,14 @@ test "webhook with mongo - normal walker not in webhook" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_normal_walker_not_in_webhook_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -677,14 +697,14 @@ test "webhook with mongo - normal walker accessible via walker endpoint" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_normal_walker_accessible_via_walker_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -696,14 +716,14 @@ test "webhook with mongo - requires api key" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_requires_api_key_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -715,14 +735,14 @@ test "webhook with mongo - invalid api key" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_invalid_api_key_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -734,14 +754,14 @@ test "webhook with mongo - minimal webhook with valid api key" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_minimal_webhook_with_valid_api_key_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -753,14 +773,14 @@ test "webhook with mongo - payment received with fields" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_payment_received_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -772,14 +792,14 @@ test "webhook with mongo - not accessible via walker endpoint" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_not_accessible_via_walker_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }
@@ -791,14 +811,14 @@ test "webhook with mongo - revoked api key" {
     mongo_container = MongoDbContainer("mongo:latest");
     mongo_container.start();
     mongo_uri = mongo_container.get_connection_url();
-    _write_fixtures_db_config(wh_fixtures_dir, mongo_uri);
+    os.environ["MONGODB_URI"] = mongo_uri;
     _cleanup_db_files(wh_fixtures_dir);
     sp = _start_server(wh_fixtures_dir, wh_test_file, port, base_url);
     try {
         run_webhook_revoked_api_key_test(base_url);
     } finally {
         _stop_server(sp);
-        _remove_fixtures_db_config(wh_fixtures_dir);
+        os.environ.pop("MONGODB_URI", None);
         mongo_container.stop();
         _cleanup_db_files(wh_fixtures_dir);
     }

@@ -1,9 +1,11 @@
 """Test serialization and persistence of social graph nodes."""
 import contextlib;
+import os;
 import from jaclang.runtimelib.serializer { Serializer }
 import from jac_scale.tests.fixtures.social_graph { User, Post, BuildGraph, QueryGraph }
 import from jac_scale.lib { kvstore }
 import from jac_scale.db { close_all_db_connections }
+import from jac_scale.config_loader { reset_scale_config }
 import from testcontainers.mongodb { MongoDbContainer }
 import from uuid { uuid4 }
 import from jaclang.jac0core.archetype { NodeAnchor, EdgeAnchor }
@@ -22,6 +24,12 @@ with entry {
 }
 
 glob MONGO_URI = _mongo_container.get_connection_url();
+
+# Set environment variable so ScaleTieredMemory uses the testcontainer's MongoDB
+with entry {
+    os.environ['MONGODB_URI'] = MONGO_URI;
+    reset_scale_config();  # Reset config cache to pick up the new env var
+}
 
 test "serialize user node" {
     u = User(name="Alice", role="admin", age=30);

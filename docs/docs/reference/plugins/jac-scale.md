@@ -1069,7 +1069,22 @@ redis_url = "redis://external-redis:6379"
 
 ### Connection Configuration
 
-Configure database connections in `jac.toml` under `[plugins.scale.database]`. Environment variables override these values.
+Configure database connection URIs via environment variables or `jac.toml`. **Environment variables take priority over `jac.toml`.**
+
+**Option 1 — Environment variables (recommended for secrets):**
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB connection URI |
+| `REDIS_URL` | Redis connection URL |
+
+```env
+# .env
+MONGODB_URI=mongodb://user:password@host:27017/mydb
+REDIS_URL=redis://host:6379/0
+```
+
+**Option 2 — `jac.toml`:**
 
 ```toml
 [plugins.scale.database]
@@ -1077,6 +1092,8 @@ mongodb_uri = "mongodb://localhost:27017"   # External MongoDB URI (skip auto-pr
 redis_url = "redis://localhost:6379"        # External Redis URL (skip auto-provisioning)
 shelf_db_path = ".jac/data/anchor_store.db"  # SQLite/shelf path for local dev
 ```
+
+> `MONGODB_URI` and `REDIS_URL` environment variables take precedence over the `jac.toml` values when both are set.
 
 | TOML Key | Default | Description |
 |----------|---------|-------------|
