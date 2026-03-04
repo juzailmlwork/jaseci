@@ -5,6 +5,7 @@ import json;
 import os;
 import subprocess;
 import time;
+import threading;
 import requests;
 import from pathlib { Path }
 import from typing { Any }
@@ -182,6 +183,49 @@ def _request_with_retry(
 
     assert response is not None , "No response received";
     return response;
+}
+
+"""Run a deployment target in a background thread; store result in result_holder[0]."""
+def _threaded_deploy(
+    target: Any, app_config: Any, result_holder: list
+) -> None {
+    result_holder[0] = target.deploy(app_config);
+}
+
+"""Wait for a Kubernetes pod matching label_selector to appear in namespace,
+then kill PID 1 inside the container to simulate a crash loop.
+Returns True when the restart is triggered, False on timeout."""
+def _force_companion_restart(namespace: str, label_selector: str) -> bool {
+    try {
+        config.load_kube_config();
+    } except Exception {
+        0;
+    }
+    v1 = client.CoreV1Api();
+    for _ in range(36) {  # Poll up to 6 minutes (36 × 10 s)
+        pods = v1.list_namespaced_pod(
+            namespace=namespace, label_selector=label_selector
+        );
+        if pods.items {
+            pod_name = pods.items[0].metadata.name;
+            print(f"Forcing restart of pod '{pod_name}' (label: {label_selector})");
+            result = subprocess.run(
+                [
+                    "kubectl", "exec", pod_name,
+                    "-n", namespace,
+                    "--", "/bin/sh", "-c", "kill 1"
+                ],
+                capture_output=True,
+                text=True,
+                check=False
+            );
+            print(f"Kill result: returncode={result.returncode}, stderr={result.stderr}");
+            return True;
+        }
+        time.sleep(10);
+    }
+    print(f"Timed out waiting for pod with label '{label_selector}'");
+    return False;
 }
 
 """Test deployment using the new factory-based architecture.
@@ -930,6 +974,105 @@ test "early exit" {
     assert "health_check_of_deployment" not in details;
     assert len(details) == 9;
     assert result.success is False;
+}
+
+"""Test that a non-jaseci companion pod restart triggers early deployment exit.
+
+Deploys the all-in-one app (MongoDB + Redis enabled, monitoring off).
+While deploy() runs in a background thread, the main thread repeatedly kills
+the MongoDB pod (kill PID 1 → container crash → restart_count > 0).
+MongoDB crash-looping causes the jaseci app to lose its database connection
+and also crash, so the health-check retry loop kicks in.  At that point
+check_pods_restarted detects the MongoDB companion pod restart and aborts the
+deployment — validating that the branch's change covers all companion pods,
+not only the jaseci pod itself."""
+test "companion pod restart causes early exit" {
+    config.load_kube_config();
+
+    namespace = "companion-restart";
+    app_name = namespace;
+
+    os.environ.update({"APP_NAME": app_name, "K8s_NAMESPACE": namespace});
+
+    test_dir = os.path.dirname(os.path.abspath(__file__));
+    todo_app_path = os.path.join(
+        test_dir, "../../../jac-client/jac_client/examples/all-in-one"
+    );
+
+    app_scale_config = JacScaleConfig(Path(os.path.normpath(todo_app_path)));
+    target_config = app_scale_config.get_kubernetes_config();
+    target_config["app_name"] = app_name;
+    target_config["namespace"] = namespace;
+    target_config["node_port"] = 30003;
+    target_config["monitoring_enabled"] = False;
+
+    (repo_url, branch, commit) = _get_git_config();
+    target_config["jaseci_repo_url"] = repo_url;
+    target_config["jaseci_branch"] = branch;
+    target_config["jaseci_commit"] = commit;
+    print(f"Using Jaseci repo: {repo_url}, branch: {branch}, commit: {commit}");
+
+    logger = UtilityFactory.create_logger("standard");
+    deployment_target = DeploymentTargetFactory.create(
+        "kubernetes", target_config, logger
+    );
+    deployment_target.secrets = app_scale_config.get_secrets_config();
+
+    app_config = AppConfig(
+        code_folder=todo_app_path,
+        file_name="main.jac",
+        build=False,
+        experimental=True
+    );
+
+    # deploy() is blocking — run it in a background thread so the main thread
+    # can simultaneously crash-loop MongoDB.
+    result_holder = [None];
+    deploy_thread = threading.Thread(
+        target=_threaded_deploy,
+        args=(deployment_target, app_config, result_holder),
+        daemon=True
+    );
+    deploy_thread.start();
+
+    # Repeatedly kill the MongoDB pod while deploy is running.
+    # Each kill increments restart_count; jaseci loses its DB connection and
+    # crashes too, making the health-check retry loop call check_pods_restarted.
+    v1 = client.CoreV1Api();
+    mongodb_label = f"app={app_name}-mongodb";
+    while deploy_thread.is_alive() {
+        pods = v1.list_namespaced_pod(
+            namespace=namespace, label_selector=mongodb_label
+        );
+        if pods.items {
+            pod_name = pods.items[0].metadata.name;
+            print(f"Killing mongodb pod '{pod_name}' (restart_count will increment)");
+            subprocess.run(
+                [
+                    "kubectl", "exec", pod_name,
+                    "-n", namespace,
+                    "--", "/bin/sh", "-c", "kill 1"
+                ],
+                capture_output=True,
+                text=True,
+                check=False
+            );
+        }
+        time.sleep(30);
+    }
+
+    # Wait up to 15 minutes for the deploy thread to finish.
+    deploy_thread.join(timeout=900);
+
+    result = result_holder[0];
+    details = result.details;
+    print(f"Deployment result: success={result.success}, message={result.message}");
+    print(f"Deployment details: {details}");
+
+    assert result is not None;
+    assert result.success is False;
+    assert "health_check_of_deployment" not in details;
+    assert len(details) == 9;
 }
 
 """Test individual methods of KubernetesTarget."""
