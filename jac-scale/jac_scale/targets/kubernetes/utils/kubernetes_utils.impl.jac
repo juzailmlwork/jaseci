@@ -450,15 +450,7 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         config.load_incluster_config();
     }
     v1 = client.CoreV1Api();
-    app_labels = [
-        app_name,
-        "{}-redis".format(app_name),
-        "{}-mongodb".format(app_name),
-        "{}-grafana".format(app_name),
-        "{}-prometheus".format(app_name),
-        "{}-mongo-express".format(app_name),
-        "{}-redis-insight".format(app_name)
-    ];
+    app_labels = [app_name + d[0] for d in COMPANION_DEFS];
     selector = "app in ({})".format(", ".join(app_labels));
     pods = v1.list_namespaced_pod(namespace=namespace, label_selector=selector);
     for pod in pods.items {
