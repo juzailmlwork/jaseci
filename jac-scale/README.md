@@ -542,7 +542,7 @@ jac start main.jac --scale --build
 
 ## Managing Deployments
 
-### `jac destroy` — Remove a Deployment
+### `jac destroy` - Remove a Deployment
 
 Removes a deployed JAC application from Kubernetes.
 
@@ -556,7 +556,7 @@ jac destroy <file.jac> [--target <target>] [--component <component>]
 jac destroy main.jac
 ```
 
-Deletes all resources in the namespace: the application, databases, cache, dashboards, and monitoring stack. **This is irreversible — you will be prompted to confirm.**
+Deletes all resources in the namespace: the application, databases, cache, dashboards, and monitoring stack. **This is irreversible - you will be prompted to confirm.**
 
 #### Remove a single component (Kubernetes only)
 
@@ -582,7 +582,7 @@ jac destroy main.jac --component dashboard     # Remove Mongo Express + RedisIns
 
 > **Note:** `--component` is only supported for `--target kubernetes` (the default target).
 
-### `jac status` — Check Deployment Status
+### `jac status` - Check Deployment Status
 
 Show the live status of all components for a deployed application:
 
