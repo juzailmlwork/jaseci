@@ -1038,7 +1038,7 @@ with entry {
 
 ### Auto-Provisioning
 
-On the first `jac start --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application - databases remain untouched.
+On the first `jac start app.jac --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application - databases remain untouched.
 
 **What gets provisioned:**
 
@@ -1065,6 +1065,8 @@ mongodb_uri = "mongodb://user:pass@external-host:27017"
 redis_url = "redis://external-redis:6379"
 ```
 
+---
+
 ### Connection Configuration
 
 Configure database connections in `jac.toml` under `[plugins.scale.database]`. Environment variables override these values.
@@ -1081,6 +1083,8 @@ shelf_db_path = ".jac/data/anchor_store.db"  # SQLite/shelf path for local dev
 | `mongodb_uri` | `MONGODB_URI` | None | External MongoDB URI. When set, K8s MongoDB StatefulSet is not provisioned. |
 | `redis_url` | `REDIS_URL` | None | External Redis URL. When set, K8s Redis is not provisioned. |
 | `shelf_db_path` | - | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
+
+---
 
 ### Dashboard Configuration
 
@@ -1125,6 +1129,8 @@ mongo_express_node_port  = 30033
 mongo_express_username   = "admin"
 mongo_express_password   = "strongpassword"
 ```
+
+---
 
 ### Memory Hierarchy
 
@@ -1259,7 +1265,7 @@ liveness_period = 30
 liveness_failure_threshold = 5
 ```
 
-> **Tip:** jac-scale exposes `/health` (liveness) and `/ready` (readiness) as built-in endpoints. Set `health_check_path = "/health"` to use them.
+> **Tip:** Set `health_check_path = "/health"` to use the built-in liveness and readiness endpoints - see [Health Checks](#health-checks).
 
 ---
 
@@ -1581,9 +1587,6 @@ with entry {
 | `jac destroy app.jac` | Remove Kubernetes deployment (prompts for confirmation) |
 | `jac destroy app.jac --target kubernetes` | Destroy a specific target |
 
-!!! warning "Destroy confirmation"
-    `jac destroy` requires interactive `y/n` confirmation before deleting the namespace and all its resources. This cannot be skipped.
-
 ---
 
 ## API Documentation
@@ -1676,7 +1679,7 @@ Values using `${ENV_VAR}` syntax are resolved from the local environment at depl
 
 ### How It Works
 
-1. At `jac start --scale`, environment variable references (`${...}`) are resolved
+1. At `jac start app.jac --scale`, environment variable references (`${...}`) are resolved
 2. A Kubernetes `Opaque` Secret named `{app_name}-secrets` is created (or updated if it already exists)
 3. The Secret is attached to the deployment pod spec via `envFrom.secretRef`
 4. All keys become environment variables inside the container
