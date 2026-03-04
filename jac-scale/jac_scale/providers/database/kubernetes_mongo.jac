@@ -2,6 +2,7 @@
 import from typing { Any }
 import from jac_scale.abstractions.database_provider { DatabaseProvider }
 import from jac_scale.abstractions.deployment_target { DeploymentTarget }
+import from jac_scale.config_loader { get_scale_config }
 
 """MongoDB provider for Kubernetes deployments."""
 obj KubernetesMongoProvider(DatabaseProvider) {
@@ -19,6 +20,22 @@ obj KubernetesMongoProvider(DatabaseProvider) {
         mongodb_port = 27017;
         mongodb_service_name = f"{mongodb_name}-service";
         mongodb_volume_name = f"{self.app_name}-mongo-data";
+        mongodb_secret_name = f"{mongodb_name}-secret";
+
+        scale_config = get_scale_config();
+        k8s_config = scale_config.get_kubernetes_config();
+        mongodb_username = k8s_config.get('mongodb_root_username', 'admin');
+        mongodb_password = k8s_config.get('mongodb_root_password', 'password');
+
+        mongodb_secret = {
+            'apiVersion': 'v1',
+            'kind': 'Secret',
+            'metadata': {'name': mongodb_secret_name, 'labels': {'managed': 'jac-scale'}},
+            'stringData': {
+                'username': mongodb_username,
+                'password': mongodb_password
+            }
+        };
 
         mongodb_statefulset = {
             'apiVersion': 'apps/v1',
@@ -39,11 +56,21 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                                 'env': [
                                     {
                                         'name': 'MONGO_INITDB_ROOT_USERNAME',
-                                        'value': 'admin'
+                                        'valueFrom': {
+                                            'secretKeyRef': {
+                                                'name': mongodb_secret_name,
+                                                'key': 'username'
+                                            }
+                                        }
                                     },
                                     {
                                         'name': 'MONGO_INITDB_ROOT_PASSWORD',
-                                        'value': 'password'
+                                        'valueFrom': {
+                                            'secretKeyRef': {
+                                                'name': mongodb_secret_name,
+                                                'key': 'password'
+                                            }
+                                        }
                                     }
                                 ],
                                 'volumeMounts': [
@@ -88,9 +115,10 @@ obj KubernetesMongoProvider(DatabaseProvider) {
             }
         };
 
-        self.connection_string = f"mongodb://admin:password@{mongodb_service_name}:{mongodb_port}";
+        self.connection_string = f"mongodb://{mongodb_username}:{mongodb_password}@{mongodb_service_name}:{mongodb_port}";
 
         return {
+            'secret': mongodb_secret,
             'deployment': mongodb_statefulset,
             'service': mongodb_service,
             'connection_string': self.connection_string,
@@ -100,9 +128,12 @@ obj KubernetesMongoProvider(DatabaseProvider) {
 
     def get_connection_string -> str {
         if not self.connection_string {
-            # Generate default connection string
+            scale_config = get_scale_config();
+            k8s_config = scale_config.get_kubernetes_config();
+            mongodb_username = k8s_config.get('mongodb_root_username', 'admin');
+            mongodb_password = k8s_config.get('mongodb_root_password', 'password');
             service_name = f"{self.app_name}-mongodb-service";
-            self.connection_string = f"mongodb://admin:password@{service_name}:27017";
+            self.connection_string = f"mongodb://{mongodb_username}:{mongodb_password}@{service_name}:27017";
         }
         return self.connection_string;
     }
@@ -142,6 +173,7 @@ obj KubernetesMongoProvider(DatabaseProvider) {
         password: str = 'admin'
     ) -> dict[str, Any] {
         mongodb_service_name = f"{self.app_name}-mongodb-service";
+        mongodb_secret_name = f"{self.app_name}-mongodb-secret";
         express_name = f"{self.app_name}-mongo-express";
 
         express_deployment = {
@@ -173,11 +205,21 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                                     },
                                     {
                                         'name': 'ME_CONFIG_MONGODB_ADMINUSERNAME',
-                                        'value': 'admin'
+                                        'valueFrom': {
+                                            'secretKeyRef': {
+                                                'name': mongodb_secret_name,
+                                                'key': 'username'
+                                            }
+                                        }
                                     },
                                     {
                                         'name': 'ME_CONFIG_MONGODB_ADMINPASSWORD',
-                                        'value': 'password'
+                                        'valueFrom': {
+                                            'secretKeyRef': {
+                                                'name': mongodb_secret_name,
+                                                'key': 'password'
+                                            }
+                                        }
                                     },
                                     {'name': 'ME_CONFIG_BASICAUTH', 'value': 'true'},
                                     {

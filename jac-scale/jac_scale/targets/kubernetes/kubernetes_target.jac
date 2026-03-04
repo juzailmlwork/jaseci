@@ -450,6 +450,19 @@ obj KubernetesTarget(DeploymentTarget) {
                 {'name': 'MONGODB_URI', 'value': mongo_result['connection_string']}
             );
             try {
+                core_v1.read_namespaced_secret(
+                    name=mongo_result['secret']['metadata']['name'], namespace=namespace
+                );
+            } except ApiException as e {
+                if e.status == 404 {
+                    core_v1.create_namespaced_secret(
+                        namespace=namespace, body=mongo_result['secret']
+                    );
+                } else {
+                    raise ;
+                }
+            }
+            try {
                 apps_v1.read_namespaced_stateful_set(
                     name=mongodb_name, namespace=namespace
                 );
@@ -533,6 +546,19 @@ obj KubernetesTarget(DeploymentTarget) {
             self.env_list.append(
                 {'name': 'REDIS_URL', 'value': redis_result['connection_string']}
             );
+            try {
+                core_v1.read_namespaced_secret(
+                    name=redis_result['secret']['metadata']['name'], namespace=namespace
+                );
+            } except ApiException as e {
+                if e.status == 404 {
+                    core_v1.create_namespaced_secret(
+                        namespace=namespace, body=redis_result['secret']
+                    );
+                } else {
+                    raise ;
+                }
+            }
             config_updated = False;
             try {
                 existing_cm = core_v1.read_namespaced_config_map(
