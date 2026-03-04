@@ -1048,10 +1048,10 @@ On the first `jac start app.jac --scale`, jac-scale automatically deploys Redis 
 - **Services** - NodePort service for external access
 - **ConfigMaps** - Application configuration
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `mongodb_enabled` | `K8s_MONGODB` | `true` | Auto-provision MongoDB StatefulSet |
-| `redis_enabled` | `K8s_REDIS` | `true` | Auto-provision Redis Deployment |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `mongodb_enabled` | `true` | Auto-provision MongoDB StatefulSet |
+| `redis_enabled` | `true` | Auto-provision Redis Deployment |
 
 **To disable (use an external database instead):**
 
@@ -1078,11 +1078,11 @@ redis_url = "redis://localhost:6379"        # External Redis URL (skip auto-prov
 shelf_db_path = ".jac/data/anchor_store.db"  # SQLite/shelf path for local dev
 ```
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `mongodb_uri` | `MONGODB_URI` | None | External MongoDB URI. When set, K8s MongoDB StatefulSet is not provisioned. |
-| `redis_url` | `REDIS_URL` | None | External Redis URL. When set, K8s Redis is not provisioned. |
-| `shelf_db_path` | - | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `mongodb_uri`| None | External MongoDB URI. When set, K8s MongoDB StatefulSet is not provisioned. |
+| `redis_url`  | None | External Redis URL. When set, K8s Redis is not provisioned. |
+| `shelf_db_path` | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
 
 ---
 
@@ -1175,10 +1175,10 @@ Controls the application name used for all Kubernetes resource names and the nam
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `app_name` | `APP_NAME` | `jaseci` | Prefix for all K8s resource names (deployments, services, secrets, etc.) |
-| `namespace` | `K8s_NAMESPACE` | `default` | Kubernetes namespace to deploy into |
+| TOML Key  | Default | Description |
+|-----------|---------|-------------|
+| `app_name` | `jaseci` | Prefix for all K8s resource names (deployments, services, secrets, etc.) |
+| `namespace`| `default` | Kubernetes namespace to deploy into |
 
 **To change in `jac.toml`:**
 
@@ -1196,10 +1196,10 @@ Controls how the application is exposed inside the cluster and externally via No
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `container_port` | - | `8000` | Port your app listens on inside the pod |
-| `node_port` | `K8s_NODE_PORT` | `30001` | External NodePort - access app at `http://localhost:<node_port>` |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `container_port`| `8000` | Port your app listens on inside the pod |
+| `node_port` | `30001` | External NodePort - access app at `http://localhost:<node_port>` |
 
 **To change in `jac.toml`:**
 
@@ -1217,12 +1217,12 @@ Controls CPU and memory requests/limits for the application container. Kubernete
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `cpu_request` | `K8s_CPU_REQUEST` | None | CPU units reserved for scheduling (e.g. `"250m"`) |
-| `cpu_limit` | `K8s_CPU_LIMIT` | None | Maximum CPU the container may use (e.g. `"1000m"`) |
-| `memory_request` | `K8s_MEMORY_REQUEST` | None | Memory reserved for scheduling (e.g. `"256Mi"`) |
-| `memory_limit` | `K8s_MEMORY_LIMIT` | None | Memory ceiling - container is OOM-killed if exceeded |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `cpu_request`  | None | CPU units reserved for scheduling (e.g. `"250m"`) |
+| `cpu_limit`  | None | Maximum CPU the container may use (e.g. `"1000m"`) |
+| `memory_request`  | None | Memory reserved for scheduling (e.g. `"256Mi"`) |
+| `memory_limit` | None | Memory ceiling - container is OOM-killed if exceeded |
 
 Accepted suffixes: `Ki`, `Mi`, `Gi` (binary) or `K`, `M`, `G` (decimal).
 
@@ -1244,14 +1244,14 @@ Kubernetes uses readiness and liveness probes to decide when a pod is ready to s
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `health_check_path` | - | `/docs` | Endpoint probed by both readiness and liveness checks |
-| `readiness_initial_delay` | `K8s_READINESS_INITIAL_DELAY` | `10` | Seconds to wait before first readiness check |
-| `readiness_period` | `K8s_READINESS_PERIOD` | `20` | Seconds between readiness checks |
-| `liveness_initial_delay` | `K8s_LIVENESS_INITIAL_DELAY` | `10` | Seconds to wait before first liveness check |
-| `liveness_period` | `K8s_LIVENESS_PERIOD` | `20` | Seconds between liveness checks |
-| `liveness_failure_threshold` | `K8s_LIVENESS_FAILURE_THRESHOLD` | `80` | Consecutive failures before the pod is restarted |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `health_check_path` | Endpoint probed by both readiness and liveness checks |
+| `readiness_initial_delay` | `10` | Seconds to wait before first readiness check |
+| `readiness_period` | `20` | Seconds between readiness checks |
+| `liveness_initial_delay`  | `10` | Seconds to wait before first liveness check |
+| `liveness_period`  | `20` | Seconds between liveness checks |
+| `liveness_failure_threshold` | `80` | Consecutive failures before the pod is restarted |
 
 **To change in `jac.toml`:**
 
@@ -1275,11 +1275,11 @@ jac-scale creates a Kubernetes HPA that scales the application pod count up or d
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `min_replicas` | `K8s_MIN_REPLICAS` | `1` | Minimum number of pods (HPA lower bound) |
-| `max_replicas` | `K8s_MAX_REPLICAS` | `3` | Maximum number of pods (HPA upper bound) |
-| `cpu_utilization_target` | `K8s_CPU_UTILIZATION_TARGET` | `50` | Average CPU % across pods that triggers scale-out |
+| TOML Key | Default | Description |
+|----------|---------|-------------|
+| `min_replicas` | `1` | Minimum number of pods (HPA lower bound) |
+| `max_replicas` | `3` | Maximum number of pods (HPA upper bound) |
+| `cpu_utilization_target`  | `50` | Average CPU % across pods that triggers scale-out |
 
 **To change in `jac.toml`:**
 
@@ -1300,9 +1300,9 @@ Controls the PersistentVolumeClaim (PVC) size for MongoDB and Redis StatefulSets
 
 **Default:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `pvc_size` | - | `5Gi` | Storage size for each database PVC |
+| TOML Key  | Default | Description |
+|----------|---------|-------------|
+| `pvc_size` | `5Gi` | Storage size for each database PVC |
 
 **To change in `jac.toml`:**
 
@@ -1321,10 +1321,10 @@ Controls the base images used for the application pod and init containers. Overr
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `python_image` | - | `python:3.12-slim` | Base image for the application pod |
-| `busybox_image` | - | `busybox:1.36` | Init container image used for dependency health checks |
+| TOML Key  | Default | Description |
+|----------|---------|-------------|
+| `python_image` | `python:3.12-slim` | Base image for the application pod |
+| `busybox_image` | `busybox:1.36` | Init container image used for dependency health checks |
 
 **To change in `jac.toml`:**
 
@@ -1359,10 +1359,11 @@ When using `--experimental` mode, Jaseci packages are installed from the GitHub 
 
 **Defaults:**
 
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `jaseci_branch` | - | `main` | Repository branch to install from |
-| `jaseci_commit` | - | None | Specific commit SHA - leave empty for latest of the branch |
+| TOML Key  | Default | Description |
+|-----------|---------|-------------|
+| `jaseci_repo_url` | `https://github.com/jaseci-labs/jaseci.git` | GitHub repository to install Jaseci packages from |
+| `jaseci_branch` | `main` | Repository branch to install from |
+| `jaseci_commit` | None | Specific commit SHA - leave empty for latest of the branch |
 
 **To change in `jac.toml`:**
 
