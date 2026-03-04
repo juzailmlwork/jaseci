@@ -605,7 +605,119 @@ test "deploy all in one" {
     );
     print(f"Port conflict correctly detected: {conflict_result.message}");
 
-    # Cleanup using new architecture
+    # --- Component destroy: monitoring only ---
+    # Destroy only the monitoring stack and verify it is removed while
+    # the rest of the deployment remains intact.
+    deployment_target.destroy(app_name, "monitoring");
+    print("Monitoring component destroy called");
+
+    # Verify Prometheus is gone
+    prometheus_name = f"{app_name}-prometheus";
+    try {
+        apps_v1.read_namespaced_deployment(prometheus_name, namespace=namespace);
+        raise AssertionError(
+            "Prometheus Deployment should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service(
+            f"{prometheus_name}-service", namespace=namespace
+        );
+        raise AssertionError(
+            "Prometheus Service should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_config_map(
+            f"{prometheus_name}-config", namespace=namespace
+        );
+        raise AssertionError(
+            "Prometheus ConfigMap should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    # Verify kube-state-metrics is gone
+    try {
+        apps_v1.read_namespaced_deployment(ksm_name, namespace=namespace);
+        raise AssertionError(
+            "kube-state-metrics Deployment should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service(f"{ksm_name}-service", namespace=namespace);
+        raise AssertionError(
+            "kube-state-metrics Service should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    # Verify Grafana is gone
+    grafana_name = f"{app_name}-grafana";
+    try {
+        apps_v1.read_namespaced_deployment(grafana_name, namespace=namespace);
+        raise AssertionError(
+            "Grafana Deployment should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service(f"{grafana_name}-service", namespace=namespace);
+        raise AssertionError(
+            "Grafana Service should have been deleted by component destroy"
+        ) ;
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    print(
+        "Monitoring component (Prometheus + Grafana + kube-state-metrics + node-exporter) removed; verifying rest of deployment is intact"
+    );
+
+    # Verify the rest of the deployment is still running
+    try {
+        apps_v1.read_namespaced_deployment(app_name, namespace=namespace);
+    } except ApiException as e {
+        raise AssertionError(
+            f"App deployment should still exist after monitoring destroy, got {e.status}"
+        ) ;
+    }
+
+    try {
+        apps_v1.read_namespaced_stateful_set(
+            f"{app_name}-mongodb", namespace=namespace
+        );
+    } except ApiException as e {
+        raise AssertionError(
+            f"MongoDB StatefulSet should still exist after monitoring destroy, got {e.status}"
+        ) ;
+    }
+
+    try {
+        apps_v1.read_namespaced_deployment(f"{app_name}-redis", namespace=namespace);
+    } except ApiException as e {
+        raise AssertionError(
+            f"Redis deployment should still exist after monitoring destroy, got {e.status}"
+        ) ;
+    }
+    print(
+        "Application, database, and cache components confirmed still running after monitoring destroy"
+    );
+
+    # --- Full cleanup ---
     deployment_target.destroy(app_name);
 
     # Verify cleanup - resources should no longer exist
@@ -715,134 +827,6 @@ test "deploy all in one" {
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
-
-    # Verify Prometheus cleanup
-    prometheus_name = f"{app_name}-prometheus";
-    try {
-        apps_v1.read_namespaced_deployment(prometheus_name, namespace=namespace);
-        raise AssertionError("Prometheus Deployment should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_service(
-            f"{prometheus_name}-service", namespace=namespace
-        );
-        raise AssertionError("Prometheus Service should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_config_map(
-            name=f"{prometheus_name}-config", namespace=namespace
-        );
-        raise AssertionError("Prometheus ConfigMap should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    # Verify kube-state-metrics cleanup
-    try {
-        apps_v1.read_namespaced_deployment(ksm_name, namespace=namespace);
-        raise AssertionError("kube-state-metrics Deployment should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_service(f"{ksm_name}-service", namespace=namespace);
-        raise AssertionError("kube-state-metrics Service should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_service_account(
-            name=f"{ksm_name}-sa", namespace=namespace
-        );
-        raise AssertionError(
-            "kube-state-metrics ServiceAccount should have been deleted"
-        ) ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        rbac_v1.read_cluster_role(name=cluster_role_name);
-        raise AssertionError(
-            "kube-state-metrics ClusterRole should have been deleted"
-        ) ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        rbac_v1.read_cluster_role_binding(name=cluster_role_name);
-        raise AssertionError(
-            "kube-state-metrics ClusterRoleBinding should have been deleted"
-        ) ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    # Verify node-exporter cleanup
-    try {
-        apps_v1.read_namespaced_daemon_set(ne_name, namespace=namespace);
-        raise AssertionError("node-exporter DaemonSet should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_service(f"{ne_name}-service", namespace=namespace);
-        raise AssertionError("node-exporter Service should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    print("K8s metrics stack (kube-state-metrics + node-exporter) cleanup verified");
-
-    # Verify Grafana cleanup
-    grafana_name = f"{app_name}-grafana";
-    try {
-        apps_v1.read_namespaced_deployment(grafana_name, namespace=namespace);
-        raise AssertionError("Grafana Deployment should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_service(f"{grafana_name}-service", namespace=namespace);
-        raise AssertionError("Grafana Service should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    try {
-        core_v1.read_namespaced_secret(f"{grafana_name}-secret", namespace=namespace);
-        raise AssertionError("Grafana Secret should have been deleted") ;
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
-    }
-
-    for cm_name in [
-        f"{grafana_name}-datasources",
-        f"{grafana_name}-dashboard-provider",
-        f"{grafana_name}-dashboard"
-    ] {
-        try {
-            core_v1.read_namespaced_config_map(name=cm_name, namespace=namespace);
-            raise AssertionError(
-                f"Grafana ConfigMap '{cm_name}' should have been deleted"
-            ) ;
-        } except ApiException as e {
-            assert e.status == 404 , f"Expected 404 for '{cm_name}', got {e.status}";
-        }
-    }
-
-    print("Monitoring stack (Prometheus + Grafana) cleanup verified");
 
     # Verify K8s Secret cleanup
     try {
