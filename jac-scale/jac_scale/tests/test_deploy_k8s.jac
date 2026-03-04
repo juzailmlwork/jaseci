@@ -190,50 +190,6 @@ def _threaded_deploy(target: Any, app_config: Any, result_holder: list) -> None 
     result_holder[0] = target.deploy(app_config);
 }
 
-"""Wait for a Kubernetes pod matching label_selector to appear in namespace,
-then kill PID 1 inside the container to simulate a crash loop.
-Returns True when the restart is triggered, False on timeout."""
-def _force_companion_restart(namespace: str, label_selector: str) -> bool {
-    try {
-        config.load_kube_config();
-    } except Exception {
-        0;
-    }
-    v1 = client.CoreV1Api();
-    for _ in range(36) {  # Poll up to 6 minutes (36 × 10 s)
-        pods = v1.list_namespaced_pod(
-            namespace=namespace, label_selector=label_selector
-        );
-        if pods.items {
-            pod_name = pods.items[0].metadata.name;
-            print(f"Forcing restart of pod '{pod_name}' (label: {label_selector})");
-            result = subprocess.run(
-                [
-                    "kubectl",
-                    "exec",
-                    pod_name,
-                    "-n",
-                    namespace,
-                    "--",
-                    "/bin/sh",
-                    "-c",
-                    "kill 1"
-                ],
-                capture_output=True,
-                text=True,
-                check=False
-            );
-            print(
-                f"Kill result: returncode={result.returncode}, stderr={result.stderr}"
-            );
-            return True;
-        }
-        time.sleep(10);
-    }
-    print(f"Timed out waiting for pod with label '{label_selector}'");
-    return False;
-}
-
 """Test deployment using the new factory-based architecture.
 Deploys the all-in-one app against a live Kubernetes cluster.
 Validates deployment, services, sends HTTP request, and tests cleanup."""
