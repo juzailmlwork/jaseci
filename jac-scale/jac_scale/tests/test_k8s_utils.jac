@@ -287,7 +287,6 @@ test "sync code to pvc sets pod affinity to code server" {
 }
 
 # --- check_pods_restarted ---
-
 test "check pods restarted selector and return values" {
     app_name = "myapp";
     namespace = "test-ns";
@@ -312,7 +311,7 @@ test "check pods restarted selector and return values" {
     fake_v1.list_namespaced_pod.return_value = resp_clean;
 
     with unittest.mock.patch.object(utils.config, "load_kube_config") {
-        with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1) {
+        with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1 ) {
             result_false = check_pods_restarted(namespace, app_name);
         }
     }
@@ -334,7 +333,7 @@ test "check pods restarted selector and return values" {
     fake_v1.list_namespaced_pod.return_value = resp_restarted;
 
     with unittest.mock.patch.object(utils.config, "load_kube_config") {
-        with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1) {
+        with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1 ) {
             result_true = check_pods_restarted(namespace, app_name);
         }
     }
