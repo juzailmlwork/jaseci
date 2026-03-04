@@ -186,9 +186,7 @@ def _request_with_retry(
 }
 
 """Run a deployment target in a background thread; store result in result_holder[0]."""
-def _threaded_deploy(
-    target: Any, app_config: Any, result_holder: list
-) -> None {
+def _threaded_deploy(target: Any, app_config: Any, result_holder: list) -> None {
     result_holder[0] = target.deploy(app_config);
 }
 
@@ -211,15 +209,23 @@ def _force_companion_restart(namespace: str, label_selector: str) -> bool {
             print(f"Forcing restart of pod '{pod_name}' (label: {label_selector})");
             result = subprocess.run(
                 [
-                    "kubectl", "exec", pod_name,
-                    "-n", namespace,
-                    "--", "/bin/sh", "-c", "kill 1"
+                    "kubectl",
+                    "exec",
+                    pod_name,
+                    "-n",
+                    namespace,
+                    "--",
+                    "/bin/sh",
+                    "-c",
+                    "kill 1"
                 ],
                 capture_output=True,
                 text=True,
                 check=False
             );
-            print(f"Kill result: returncode={result.returncode}, stderr={result.stderr}");
+            print(
+                f"Kill result: returncode={result.returncode}, stderr={result.stderr}"
+            );
             return True;
         }
         time.sleep(10);
@@ -1019,10 +1025,7 @@ test "companion pod restart causes early exit" {
     deployment_target.secrets = app_scale_config.get_secrets_config();
 
     app_config = AppConfig(
-        code_folder=todo_app_path,
-        file_name="main.jac",
-        build=False,
-        experimental=True
+        code_folder=todo_app_path, file_name="main.jac", build=False, experimental=True
     );
 
     # deploy() is blocking — run it in a background thread so the main thread
@@ -1041,17 +1044,21 @@ test "companion pod restart causes early exit" {
     v1 = client.CoreV1Api();
     mongodb_label = f"app={app_name}-mongodb";
     while deploy_thread.is_alive() {
-        pods = v1.list_namespaced_pod(
-            namespace=namespace, label_selector=mongodb_label
-        );
+        pods = v1.list_namespaced_pod(namespace=namespace, label_selector=mongodb_label);
         if pods.items {
             pod_name = pods.items[0].metadata.name;
             print(f"Killing mongodb pod '{pod_name}' (restart_count will increment)");
             subprocess.run(
                 [
-                    "kubectl", "exec", pod_name,
-                    "-n", namespace,
-                    "--", "/bin/sh", "-c", "kill 1"
+                    "kubectl",
+                    "exec",
+                    pod_name,
+                    "-n",
+                    namespace,
+                    "--",
+                    "/bin/sh",
+                    "-c",
+                    "kill 1"
                 ],
                 capture_output=True,
                 text=True,
