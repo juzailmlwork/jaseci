@@ -1071,7 +1071,7 @@ redis_url = "redis://external-redis:6379"
 
 Configure database connection URIs via environment variables or `jac.toml`. **Environment variables take priority over `jac.toml`.**
 
-**Option 1 — Environment variables (recommended for secrets):**
+**Option 1 - Environment variables (recommended for secrets):**
 
 | Variable | Description |
 |----------|-------------|
@@ -1084,7 +1084,7 @@ MONGODB_URI=mongodb://user:password@host:27017/mydb
 REDIS_URL=redis://host:6379/0
 ```
 
-**Option 2 — `jac.toml`:**
+**Option 2 - `jac.toml`:**
 
 ```toml
 [plugins.scale.database]
