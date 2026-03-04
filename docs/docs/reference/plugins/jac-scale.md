@@ -1034,7 +1034,38 @@ with entry {
 
 ---
 
-## Database Configuration
+## Database and Dashboards
+
+### Auto-Provisioning
+
+On the first `jac start --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application - databases remain untouched.
+
+**What gets provisioned:**
+
+- **MongoDB** - StatefulSet with PersistentVolumeClaim (graph persistence, `kvstore` backend)
+- **Redis** - Deployment with persistent storage (cache layer, session management)
+- **Application Deployment** - Your Jac app pod(s)
+- **Services** - NodePort service for external access
+- **ConfigMaps** - Application configuration
+
+| TOML Key | Env Var | Default | Description |
+|----------|---------|---------|-------------|
+| `mongodb_enabled` | `K8s_MONGODB` | `true` | Auto-provision MongoDB StatefulSet |
+| `redis_enabled` | `K8s_REDIS` | `true` | Auto-provision Redis Deployment |
+
+**To disable (use an external database instead):**
+
+```toml
+[plugins.scale.kubernetes]
+mongodb_enabled = false   # Don't deploy MongoDB - use MONGODB_URI instead
+redis_enabled = false     # Don't deploy Redis - use REDIS_URL instead
+
+[plugins.scale.database]
+mongodb_uri = "mongodb://user:pass@external-host:27017"
+redis_url = "redis://external-redis:6379"
+```
+
+### Connection Configuration
 
 Configure database connections in `jac.toml` under `[plugins.scale.database]`. Environment variables override these values.
 
@@ -1051,33 +1082,18 @@ shelf_db_path = ".jac/data/anchor_store.db"  # SQLite/shelf path for local dev
 | `redis_url` | `REDIS_URL` | None | External Redis URL. When set, K8s Redis is not provisioned. |
 | `shelf_db_path` | - | `.jac/data/anchor_store.db` | Local shelf/SQLite storage path for `jac start` (no K8s) |
 
-### Configuration via `jac.toml`
+### Dashboard Configuration
 
-Database and Kubernetes deployment settings are configured in your project's `jac.toml` file.
+Dashboards are **off by default** and must be explicitly enabled in `jac.toml`:
 
 ```toml
-# jac.toml
-
 [plugins.scale.kubernetes]
 redis_dashboard  = true   # Deploy RedisInsight UI (default: false)
 mongodb_dashboard = true  # Deploy Mongo Express UI (default: false)
 ```
 
-#### Connection URIs
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection URI (env override) | None |
-| `REDIS_URL` | Redis connection URL (env override) | None |
-
-#### Kubernetes Deployment Flags
-
-By default, jac-scale automatically deploys both MongoDB and Redis when running in Kubernetes mode. Dashboards are **off by default** and must be explicitly enabled.
-
 | `jac.toml` key | Description | Default |
 |----------------|-------------|---------|
-| `mongodb_enabled` | Deploy MongoDB in-cluster | `true` |
-| `redis_enabled` | Deploy Redis in-cluster | `true` |
 | `redis_dashboard` | Deploy RedisInsight dashboard UI | `false` |
 | `mongodb_dashboard` | Deploy Mongo Express dashboard UI | `false` |
 
@@ -1189,39 +1205,6 @@ node_port = 30080
 
 ---
 
-### Database Auto-Provisioning
-
-On the first `jac start --scale`, jac-scale automatically deploys Redis and MongoDB as Kubernetes StatefulSets with persistent storage. Subsequent deployments only update the application - databases remain untouched.
-
-**What gets provisioned:**
-
-- **MongoDB** - StatefulSet with PersistentVolumeClaim (graph persistence, `kvstore` backend)
-- **Redis** - Deployment with persistent storage (cache layer, session management)
-- **Application Deployment** - Your Jac app pod(s)
-- **Services** - NodePort service for external access
-- **ConfigMaps** - Application configuration
-
-**Defaults:**
-
-| TOML Key | Env Var | Default | Description |
-|----------|---------|---------|-------------|
-| `mongodb_enabled` | `K8s_MONGODB` | `true` | Auto-provision MongoDB StatefulSet |
-| `redis_enabled` | `K8s_REDIS` | `true` | Auto-provision Redis Deployment |
-
-**To disable (use an external database instead):**
-
-```toml
-[plugins.scale.kubernetes]
-mongodb_enabled = false   # Don't deploy MongoDB - use MONGODB_URI instead
-redis_enabled = false     # Don't deploy Redis - use REDIS_URL instead
-
-[plugins.scale.database]
-mongodb_uri = "mongodb://user:pass@external-host:27017"
-redis_url = "redis://external-redis:6379"
-```
-
----
-
 ### Resource Limits
 
 Controls CPU and memory requests/limits for the application container. Kubernetes uses requests for scheduling and limits for enforcement (OOM-kill).
@@ -1233,7 +1216,7 @@ Controls CPU and memory requests/limits for the application container. Kubernete
 | `cpu_request` | `K8s_CPU_REQUEST` | None | CPU units reserved for scheduling (e.g. `"250m"`) |
 | `cpu_limit` | `K8s_CPU_LIMIT` | None | Maximum CPU the container may use (e.g. `"1000m"`) |
 | `memory_request` | `K8s_MEMORY_REQUEST` | None | Memory reserved for scheduling (e.g. `"256Mi"`) |
-| `memory_limit` | `K8s_MEMORY_LIMIT` | `12Gi` | Memory ceiling - container is OOM-killed if exceeded |
+| `memory_limit` | `K8s_MEMORY_LIMIT` | None | Memory ceiling - container is OOM-killed if exceeded |
 
 Accepted suffixes: `Ki`, `Mi`, `Gi` (binary) or `K`, `M`, `G` (decimal).
 
