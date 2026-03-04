@@ -84,9 +84,7 @@ def post_request(base_url: str, path: str, payload: dict, token: str) -> dict[st
 
 """Write a minimal jac.toml with database config for the test server."""
 def write_fixtures_db_config(
-    fixtures_dir: Path,
-    mongodb_uri: str | None = None,
-    redis_url: str | None = None
+    fixtures_dir: Path, mongodb_uri: str | None = None, redis_url: str | None = None
 ) -> None {
     lines = ["[plugins.scale.database]"];
     if mongodb_uri {
