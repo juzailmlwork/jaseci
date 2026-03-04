@@ -451,7 +451,8 @@ obj KubernetesTarget(DeploymentTarget) {
             );
             try {
                 core_v1.read_namespaced_secret(
-                    name=mongo_result['secret']['metadata']['name'], namespace=namespace
+                    name=mongo_result['secret']['metadata']['name'],
+                    namespace=namespace
                 );
             } except ApiException as e {
                 if e.status == 404 {
@@ -548,7 +549,8 @@ obj KubernetesTarget(DeploymentTarget) {
             );
             try {
                 core_v1.read_namespaced_secret(
-                    name=redis_result['secret']['metadata']['name'], namespace=namespace
+                    name=redis_result['secret']['metadata']['name'],
+                    namespace=namespace
                 );
             } except ApiException as e {
                 if e.status == 404 {

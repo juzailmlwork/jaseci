@@ -193,10 +193,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                     'managed-by': 'jac-scale'
                 }
             },
-            'stringData': {
-                'username': redis_username,
-                'password': redis_password
-            }
+            'stringData': {'username': redis_username, 'password': redis_password}
         };
 
         # Create ConfigMap for redis.conf

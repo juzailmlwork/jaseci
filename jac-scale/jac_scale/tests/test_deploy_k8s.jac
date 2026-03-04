@@ -332,7 +332,9 @@ test "deploy all in one" {
         "NOT_FOUND"
     );
     assert mongo_pass_value is None;
-    print("MongoDB StatefulSet uses secretKeyRef for root credentials (env values are None)");
+    print(
+        "MongoDB StatefulSet uses secretKeyRef for root credentials (env values are None)"
+    );
 
     # Validate Redis Deployment and Service
     redis_deploy = apps_v1.read_namespaced_deployment(
@@ -754,9 +756,7 @@ test "deploy all in one" {
     }
 
     try {
-        core_v1.read_namespaced_secret(
-            f"{app_name}-redis-secret", namespace=namespace
-        );
+        core_v1.read_namespaced_secret(f"{app_name}-redis-secret", namespace=namespace);
         raise AssertionError("Redis Secret should have been deleted") ;
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";

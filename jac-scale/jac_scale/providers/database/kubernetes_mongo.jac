@@ -30,11 +30,11 @@ obj KubernetesMongoProvider(DatabaseProvider) {
         mongodb_secret = {
             'apiVersion': 'v1',
             'kind': 'Secret',
-            'metadata': {'name': mongodb_secret_name, 'labels': {'managed': 'jac-scale'}},
-            'stringData': {
-                'username': mongodb_username,
-                'password': mongodb_password
-            }
+            'metadata': {
+                'name': mongodb_secret_name,
+                'labels': {'managed': 'jac-scale'}
+            },
+            'stringData': {'username': mongodb_username, 'password': mongodb_password}
         };
 
         mongodb_statefulset = {
