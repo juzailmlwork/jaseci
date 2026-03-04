@@ -1304,6 +1304,12 @@ obj KubernetesTarget(DeploymentTarget) {
                 namespace,
                 'Service'
             );
+            delete_if_exists(
+                core_v1.delete_namespaced_secret,
+                f"{mongodb_name}-secret",
+                namespace,
+                'Secret'
+            );
             express_name = f"{app_name}-mongo-express";
             delete_if_exists(
                 apps_v1.delete_namespaced_deployment,
@@ -1332,6 +1338,18 @@ obj KubernetesTarget(DeploymentTarget) {
                 f"{redis_name}-service",
                 namespace,
                 'Service'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_config_map,
+                f"{redis_name}-config",
+                namespace,
+                'ConfigMap'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_secret,
+                f"{redis_name}-secret",
+                namespace,
+                'Secret'
             );
             insight_name = f"{app_name}-redis-insight";
             delete_if_exists(
