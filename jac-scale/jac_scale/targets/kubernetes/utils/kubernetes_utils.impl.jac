@@ -459,13 +459,8 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         "{}-mongo-express".format(app_name),
         "{}-redis-insight".format(app_name)
     ];
-    for label in app_labels {
-    selector = "app in ({})" .format(
-        ", ".join(app_labels)
-    );
-    pods = v1.list_namespaced_pod(
-        namespace=namespace, label_selector=selector
-    );
+    selector = "app in ({})".format(", ".join(app_labels));
+    pods = v1.list_namespaced_pod(namespace=namespace, label_selector=selector);
     for pod in pods.items {
         statuses = pod.status.container_statuses;
         if not statuses {
@@ -479,25 +474,6 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
                     f"{container.name} restarted "
                 );
                 return True;
-            }
-        }
-    }
-            namespace=namespace, label_selector="app={}".format(label)
-        );
-        for pod in pods.items {
-            statuses = pod.status.container_statuses;
-            if not statuses {
-                continue;
-            }
-
-            for container in statuses {
-                if (container.restart_count > 0) {
-                    console.print(
-                        f"Pod {pod.metadata.name} container "
-                        f"{container.name} restarted "
-                    );
-                    return True;
-                }
             }
         }
     }
