@@ -9,6 +9,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - 1 Minor refactor/change.
 - [Internal] Convert username and password for redis and mongodb to secret when injecting to pod deployment
 - 2 Minor refactors/changes.
+- 3 Minor refactors/changes.
 - update jac-scale plugin documentation with missing features
 - APP_NAME, K8s_NAMESPACE, DOCKER_USERNAME, DOCKER_PASSWORD are no longer read from environment variables and must be configured via `jac.toml.
 

@@ -430,7 +430,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     );
                 }
             } else {
-                raise ;
+                raise;
             }
         }
     }
@@ -473,7 +473,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=mongo_result['deployment']
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             try {
@@ -486,7 +486,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=mongo_result['service']
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             if self.k8s_config.mongodb_dashboard {
@@ -506,7 +506,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             namespace=namespace, body=express_result['deployment']
                         );
                     } else {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -519,7 +519,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             namespace=namespace, body=express_result['service']
                         );
                     } else {
-                        raise ;
+                        raise;
                     }
                 }
                 if self.logger {
@@ -609,7 +609,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     if self.logger {
                         self.logger.error(f"Failed to manage Redis ConfigMap: {e}");
                     }
-                    raise ;
+                    raise;
                 }
             }
             # Deploy Deployment (or update if config changed)
@@ -667,7 +667,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     if self.logger {
                         self.logger.error(f"Failed to manage Redis deployment: {e}");
                     }
-                    raise ;
+                    raise;
                 }
             }
             # Deploy Service
@@ -681,7 +681,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=redis_result['service']
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             if self.k8s_config.redis_dashboard {
@@ -704,7 +704,7 @@ obj KubernetesTarget(DeploymentTarget) {
                                 body=insight_result['auth_configmap']
                             );
                         } else {
-                            raise ;
+                            raise;
                         }
                     }
                     try {
@@ -718,7 +718,7 @@ obj KubernetesTarget(DeploymentTarget) {
                                 namespace=namespace, body=insight_result['auth_secret']
                             );
                         } else {
-                            raise ;
+                            raise;
                         }
                     }
                 }
@@ -732,7 +732,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             namespace=namespace, body=insight_result['deployment']
                         );
                     } else {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -745,7 +745,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             namespace=namespace, body=insight_result['service']
                         );
                     } else {
-                        raise ;
+                        raise;
                     }
                 }
                 if self.logger {
@@ -807,9 +807,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     app_name=app_name
                 );
                 if not (deployment_status) {
-                    raise Exception(
-                        "Deployment failed: Application failed to deploy."
-                    ) ;
+                    raise Exception("Deployment failed: Application failed to deploy.");
                 }
             }
         } else {
@@ -817,7 +815,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 self.k8s_config.node_port, path, namespace=namespace, app_name=app_name
             );
             if deployment_status is False {
-                raise Exception("Deployment failed: Application failed to deploy.") ;
+                raise Exception("Deployment failed: Application failed to deploy.");
             }
         }
         return deployment_details;
@@ -1048,7 +1046,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=service
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             details["create_jaseci_application_service"] = "Successful";
@@ -1111,7 +1109,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
-                    raise ;
+                    raise;
                 }
             }
 
@@ -1123,7 +1121,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
-                    raise ;
+                    raise;
                 }
             }
 
@@ -1136,7 +1134,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
-                    raise ;
+                    raise;
                 }
             }
 
@@ -1148,7 +1146,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
-                    raise ;
+                    raise;
                 }
             }
 
@@ -1162,7 +1160,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -1172,7 +1170,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
             }
@@ -1187,7 +1185,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -1197,7 +1195,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
             }
@@ -1212,7 +1210,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -1222,7 +1220,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
                 grafana_name = f"{app_name}-grafana";
@@ -1233,7 +1231,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
                 try {
@@ -1243,7 +1241,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     resources_exist = True;
                 } except ApiException as e {
                     if e.status != 404 {
-                        raise ;
+                        raise;
                     }
                 }
             }
@@ -1267,7 +1265,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 resources_exist = True;
             } except ApiException as e {
                 if e.status != 404 {
-                    raise ;
+                    raise;
                 }
             }
 
@@ -1494,7 +1492,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             ns_deleted = True;
                             break;
                         }
-                        raise ;
+                        raise;
                     }
                 }
                 if self.logger {
@@ -1515,7 +1513,7 @@ obj KubernetesTarget(DeploymentTarget) {
             if self.logger {
                 self.logger.error(f"Error destroying application '{app_name}': {e}");
             }
-            raise ;
+            raise;
         }
     }
 
@@ -1590,7 +1588,7 @@ obj KubernetesTarget(DeploymentTarget) {
             if self.logger {
                 self.logger.error(f"Failed to scale '{app_name}': {e}");
             }
-            raise ;
+            raise;
         }
     }
 

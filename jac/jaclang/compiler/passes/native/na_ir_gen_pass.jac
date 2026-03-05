@@ -34,6 +34,7 @@ obj NaIRGenPass(Transform) {
     def _codegen_stmt(nd: uni.UniNode) -> None;
     def _codegen_return(nd: uni.ReturnStmt) -> None;
     def _codegen_if(nd: uni.IfStmt) -> None;
+    def _codegen_switch(nd: uni.SwitchStmt) -> None;
     def _codegen_while(nd: uni.WhileStmt) -> None;
     def _codegen_assignment(nd: uni.Assignment) -> None;
     # Expression codegen
@@ -54,6 +55,7 @@ obj NaIRGenPass(Transform) {
     def _get_snprintf_fmt(fmt: str) -> ir.GlobalVariable;
     # Helper methods
     def _resolve_jac_type(type_expr: (uni.UniNode | None)) -> ir.Type;
+    def _resolve_func_ptr_type(sig: uni.FuncSignature) -> ir.Type;
     def _resolve_type_str(type_name: str) -> ir.Type;
     def _get_name(nd: (uni.UniNode | None)) -> (str | None);
     def _to_bool(val: ir.Value) -> ir.Value;
@@ -71,6 +73,11 @@ obj NaIRGenPass(Transform) {
     def _codegen_int_pow(base: ir.Value, exp: ir.Value) -> ir.Value;
     # Phase 1: Enums, BoolExpr, Break/Continue, For, Ternary
     def _codegen_enum(nd: uni.Enum) -> None;
+    def _build_enum_string_table(enum_name: str, entries: list) -> None;
+    def _codegen_enum_value_lookup(
+        enum_name: str, ordinal_val: ir.Value, use_name: bool = False
+    ) -> (ir.Value | None);
+
     def _codegen_atom_trailer(nd: uni.AtomTrailer) -> (ir.Value | None);
     def _codegen_bool_expr(nd: uni.BoolExpr) -> (ir.Value | None);
     def _codegen_ctrl(nd: uni.CtrlStmt) -> None;
@@ -84,7 +91,10 @@ obj NaIRGenPass(Transform) {
     # Phase 3: Objects, Fields, Methods, None
     def _forward_declare_archetype_names(module: uni.Module) -> None;
     def _register_imported_struct_types -> None;
+    def _walk_imported_module(imported_mod: uni.Module) -> None;
     def _register_imported_archetype(arch: uni.Archetype) -> None;
+    def _register_imported_globals(nd: uni.GlobalVars) -> None;
+    def _forward_declare_imported_ability(nd: uni.Ability) -> None;
     def _register_archetypes(module: uni.Module) -> None;
     def _codegen_archetype(nd: uni.Archetype) -> None;
     def _forward_declare_method(arch_name: str, method: uni.Ability) -> None;
@@ -286,6 +296,11 @@ obj NaIRGenPass(Transform) {
     def _process_clib_imports(module: uni.Module) -> None;
     def _declare_clib_ability(nd: uni.Ability) -> None;
     def _resolve_clib_type(type_expr: (uni.UniNode | None)) -> ir.Type;
+    # Layout metadata export
+    def _llvm_type_str(ty: ir.Type) -> str;
+    def _export_native_layout -> None;
+    def _extract_tuple_struct_hints(type_node: object) -> list;
+    def _extract_elem_struct_hint(type_node: object) -> (str | None);
     # Primitive emitter dispatch
     def _ensure_emitters -> None;
     def _dispatch_primitive_method(

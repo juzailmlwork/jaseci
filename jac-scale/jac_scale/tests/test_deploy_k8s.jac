@@ -152,7 +152,7 @@ def _get_git_config -> tuple[str, str, str] {
         return (repo_url, branch, commit);
     } except subprocess.CalledProcessError as e {
         print(f"Error getting git config: {e}");
-        raise ;
+        raise;
     }
 }
 
@@ -677,14 +677,14 @@ test "deploy all in one" {
     # Verify cleanup - resources should no longer exist
     try {
         apps_v1.read_namespaced_deployment(app_name, namespace=namespace);
-        raise AssertionError("Deployment should have been deleted") ;
+        raise AssertionError("Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{app_name}-service", namespace=namespace);
-        raise AssertionError("Service should have been deleted") ;
+        raise AssertionError("Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -694,14 +694,14 @@ test "deploy all in one" {
         autoscaling_v2.read_namespaced_horizontal_pod_autoscaler(
             name=f"{app_name}-hpa", namespace=namespace
         );
-        raise AssertionError("HPA should have been deleted") ;
+        raise AssertionError("HPA should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         apps_v1.read_namespaced_stateful_set(f"{app_name}-mongodb", namespace=namespace);
-        raise AssertionError("MongoDB StatefulSet should have been deleted") ;
+        raise AssertionError("MongoDB StatefulSet should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -710,7 +710,7 @@ test "deploy all in one" {
         core_v1.read_namespaced_service(
             f"{app_name}-mongodb-service", namespace=namespace
         );
-        raise AssertionError("MongoDB Service should have been deleted") ;
+        raise AssertionError("MongoDB Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -726,7 +726,7 @@ test "deploy all in one" {
 
     try {
         apps_v1.read_namespaced_deployment(f"{app_name}-redis", namespace=namespace);
-        raise AssertionError("Redis Deployment should have been deleted") ;
+        raise AssertionError("Redis Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -735,7 +735,7 @@ test "deploy all in one" {
         core_v1.read_namespaced_service(
             f"{app_name}-redis-service", namespace=namespace
         );
-        raise AssertionError("Redis Service should have been deleted") ;
+        raise AssertionError("Redis Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -753,14 +753,14 @@ test "deploy all in one" {
     insight_name = f"{app_name}-redis-insight";
     try {
         apps_v1.read_namespaced_deployment(insight_name, namespace=namespace);
-        raise AssertionError("RedisInsight Deployment should have been deleted") ;
+        raise AssertionError("RedisInsight Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{insight_name}-service", namespace=namespace);
-        raise AssertionError("RedisInsight Service should have been deleted") ;
+        raise AssertionError("RedisInsight Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -769,14 +769,14 @@ test "deploy all in one" {
     express_name = f"{app_name}-mongo-express";
     try {
         apps_v1.read_namespaced_deployment(express_name, namespace=namespace);
-        raise AssertionError("mongo-express Deployment should have been deleted") ;
+        raise AssertionError("mongo-express Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{express_name}-service", namespace=namespace);
-        raise AssertionError("mongo-express Service should have been deleted") ;
+        raise AssertionError("mongo-express Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -788,14 +788,14 @@ test "deploy all in one" {
         apps_v1.read_namespaced_deployment(
             f"{app_name}-code-server", namespace=namespace
         );
-        raise AssertionError("Code-server Deployment should have been deleted") ;
+        raise AssertionError("Code-server Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{app_name}-code-server", namespace=namespace);
-        raise AssertionError("Code-server Service should have been deleted") ;
+        raise AssertionError("Code-server Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -804,7 +804,7 @@ test "deploy all in one" {
     prometheus_name = f"{app_name}-prometheus";
     try {
         apps_v1.read_namespaced_deployment(prometheus_name, namespace=namespace);
-        raise AssertionError("Prometheus Deployment should have been deleted") ;
+        raise AssertionError("Prometheus Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -813,7 +813,7 @@ test "deploy all in one" {
         core_v1.read_namespaced_service(
             f"{prometheus_name}-service", namespace=namespace
         );
-        raise AssertionError("Prometheus Service should have been deleted") ;
+        raise AssertionError("Prometheus Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -822,7 +822,7 @@ test "deploy all in one" {
         core_v1.read_namespaced_config_map(
             name=f"{prometheus_name}-config", namespace=namespace
         );
-        raise AssertionError("Prometheus ConfigMap should have been deleted") ;
+        raise AssertionError("Prometheus ConfigMap should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -830,14 +830,14 @@ test "deploy all in one" {
     # Verify kube-state-metrics cleanup
     try {
         apps_v1.read_namespaced_deployment(ksm_name, namespace=namespace);
-        raise AssertionError("kube-state-metrics Deployment should have been deleted") ;
+        raise AssertionError("kube-state-metrics Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{ksm_name}-service", namespace=namespace);
-        raise AssertionError("kube-state-metrics Service should have been deleted") ;
+        raise AssertionError("kube-state-metrics Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -848,16 +848,14 @@ test "deploy all in one" {
         );
         raise AssertionError(
             "kube-state-metrics ServiceAccount should have been deleted"
-        ) ;
+        );
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         rbac_v1.read_cluster_role(name=cluster_role_name);
-        raise AssertionError(
-            "kube-state-metrics ClusterRole should have been deleted"
-        ) ;
+        raise AssertionError("kube-state-metrics ClusterRole should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -866,7 +864,7 @@ test "deploy all in one" {
         rbac_v1.read_cluster_role_binding(name=cluster_role_name);
         raise AssertionError(
             "kube-state-metrics ClusterRoleBinding should have been deleted"
-        ) ;
+        );
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -874,14 +872,14 @@ test "deploy all in one" {
     # Verify node-exporter cleanup
     try {
         apps_v1.read_namespaced_daemon_set(ne_name, namespace=namespace);
-        raise AssertionError("node-exporter DaemonSet should have been deleted") ;
+        raise AssertionError("node-exporter DaemonSet should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{ne_name}-service", namespace=namespace);
-        raise AssertionError("node-exporter Service should have been deleted") ;
+        raise AssertionError("node-exporter Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -892,21 +890,21 @@ test "deploy all in one" {
     grafana_name = f"{app_name}-grafana";
     try {
         apps_v1.read_namespaced_deployment(grafana_name, namespace=namespace);
-        raise AssertionError("Grafana Deployment should have been deleted") ;
+        raise AssertionError("Grafana Deployment should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_service(f"{grafana_name}-service", namespace=namespace);
-        raise AssertionError("Grafana Service should have been deleted") ;
+        raise AssertionError("Grafana Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
         core_v1.read_namespaced_secret(f"{grafana_name}-secret", namespace=namespace);
-        raise AssertionError("Grafana Secret should have been deleted") ;
+        raise AssertionError("Grafana Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -920,7 +918,7 @@ test "deploy all in one" {
             core_v1.read_namespaced_config_map(name=cm_name, namespace=namespace);
             raise AssertionError(
                 f"Grafana ConfigMap '{cm_name}' should have been deleted"
-            ) ;
+            );
         } except ApiException as e {
             assert e.status == 404 , f"Expected 404 for '{cm_name}', got {e.status}";
         }
@@ -931,7 +929,7 @@ test "deploy all in one" {
     # Verify K8s Secret cleanup
     try {
         core_v1.read_namespaced_secret(f"{app_name}-secrets", namespace=namespace);
-        raise AssertionError("K8s Secret should have been deleted") ;
+        raise AssertionError("K8s Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -952,7 +950,7 @@ test "deploy all in one" {
     # Verify namespace was deleted (since it is not 'default')
     try {
         core_v1.read_namespace(name=namespace);
-        raise AssertionError("Namespace should have been deleted") ;
+        raise AssertionError("Namespace should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404 for namespace, got {e.status}";
     }
