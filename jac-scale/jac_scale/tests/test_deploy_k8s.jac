@@ -677,16 +677,22 @@ test "deploy all in one" {
     }
 
     # Verify code PVC is gone (the billable-storage bug fix)
-    try {
-        core_v1.read_namespaced_persistent_volume_claim(
-            name=f"{app_name}-code-pvc", namespace=namespace
-        );
-        raise AssertionError(
-            "code-pvc should have been deleted by application component destroy"
-        );
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
+    # PVC may briefly be in Terminating state while the pvc-protection finalizer
+    # is cleared after code-server pods finish terminating — poll up to 60s.
+    pvc_deleted = False;
+    for _ in range(30) {
+        try {
+            core_v1.read_namespaced_persistent_volume_claim(
+                name=f"{app_name}-code-pvc", namespace=namespace
+            );
+            time.sleep(2);
+        } except ApiException as e {
+            assert e.status == 404 , f"Expected 404, got {e.status}";
+            pvc_deleted = True;
+            break;
+        }
     }
+    assert pvc_deleted , "code-pvc should have been deleted within 60s of application component destroy";
 
     print(
         "Application component (HPA + Deployment + Service + Secret + code-server + PVCs) removed"
