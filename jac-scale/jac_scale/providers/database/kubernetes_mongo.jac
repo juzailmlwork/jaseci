@@ -26,6 +26,7 @@ obj KubernetesMongoProvider(DatabaseProvider) {
         k8s_config = scale_config.get_kubernetes_config();
         mongodb_username = k8s_config.get('mongodb_root_username', 'admin');
         mongodb_password = k8s_config.get('mongodb_root_password', 'password');
+        connection_string = f"mongodb://{mongodb_username}:{mongodb_password}@{mongodb_service_name}:{mongodb_port}";
 
         mongodb_secret = {
             'apiVersion': 'v1',
@@ -34,7 +35,11 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                 'name': mongodb_secret_name,
                 'labels': {'managed': 'jac-scale'}
             },
-            'stringData': {'username': mongodb_username, 'password': mongodb_password}
+            'stringData': {
+                'username': mongodb_username,
+                'password': mongodb_password,
+                'connection-string': connection_string
+            }
         };
 
         mongodb_statefulset = {
@@ -115,13 +120,14 @@ obj KubernetesMongoProvider(DatabaseProvider) {
             }
         };
 
-        self.connection_string = f"mongodb://{mongodb_username}:{mongodb_password}@{mongodb_service_name}:{mongodb_port}";
+        self.connection_string = connection_string;
 
         return {
             'secret': mongodb_secret,
             'deployment': mongodb_statefulset,
             'service': mongodb_service,
             'connection_string': self.connection_string,
+            'secret_name': mongodb_secret_name,
             'service_name': mongodb_service_name
         };
     }

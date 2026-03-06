@@ -447,7 +447,15 @@ obj KubernetesTarget(DeploymentTarget) {
             );
             mongo_result = mongo_provider.deploy({});
             self.env_list.append(
-                {'name': 'MONGODB_URI', 'value': mongo_result['connection_string']}
+                {
+                    'name': 'MONGODB_URI',
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': mongo_result['secret_name'],
+                            'key': 'connection-string'
+                        }
+                    }
+                }
             );
             try {
                 core_v1.read_namespaced_secret(
@@ -545,7 +553,15 @@ obj KubernetesTarget(DeploymentTarget) {
             );
             redis_result = redis_provider.deploy({});
             self.env_list.append(
-                {'name': 'REDIS_URL', 'value': redis_result['connection_string']}
+                {
+                    'name': 'REDIS_URL',
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': redis_result['secret_name'],
+                            'key': 'connection-string'
+                        }
+                    }
+                }
             );
             try {
                 core_v1.read_namespaced_secret(

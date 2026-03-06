@@ -175,6 +175,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
         );
         redis_username = k8s_config.get('redis_username', 'admin');
         redis_password = k8s_config.get('redis_password', 'password');
+        connection_string = f"redis://{redis_username}:{redis_password}@{redis_service_name}:{redis_port}/0";
 
         # Load and generate Redis configuration
         redis_conf_content = self._load_redis_config();
@@ -193,7 +194,11 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                     'managed-by': 'jac-scale'
                 }
             },
-            'stringData': {'username': redis_username, 'password': redis_password}
+            'stringData': {
+                'username': redis_username,
+                'password': redis_password,
+                'connection-string': connection_string
+            }
         };
 
         # Create ConfigMap for redis.conf
@@ -291,7 +296,12 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                                     'failureThreshold': 3
                                 },
                                 'readinessProbe': {
-                                    'exec': {'command': ['redis-cli', 'ping']},
+                                    'exec': {
+                                        'command': [
+                                            'sh', '-c',
+                                            'redis-cli -a "$REDIS_PASSWORD" ping'
+                                        ]
+                                    },
                                     'initialDelaySeconds': 5,
                                     'periodSeconds': 5,
                                     'timeoutSeconds': 3,
@@ -335,11 +345,11 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             }
         };
 
-        self.connection_string = f"redis://{redis_username}:{redis_password}@{redis_service_name}:{redis_port}/0";
+        self.connection_string = connection_string;
 
         logger.info(
             f"Prepared Redis deployment: {redis_name} "
-            f"(connection: {self.connection_string}, config hash: {config_hash})"
+            f"(connection: redis://{redis_service_name}:{redis_port}/0, config hash: {config_hash})"
         );
 
         return {
@@ -348,6 +358,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             'deployment': redis_deployment,
             'service': redis_service,
             'connection_string': self.connection_string,
+            'secret_name': redis_secret_name,
             'service_name': redis_service_name,
             'config_hash': config_hash,
             'default_ttl': redis_default_ttl,
