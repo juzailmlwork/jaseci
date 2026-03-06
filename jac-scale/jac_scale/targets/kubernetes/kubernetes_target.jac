@@ -1303,6 +1303,16 @@ obj KubernetesTarget(DeploymentTarget) {
         delete_if_exists(
             core_v1.delete_namespaced_pod, f"{app_name}-code-sync", namespace, 'Pod'
         );
+        pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace);
+        for pvc in pvcs.items {
+            if pvc.metadata.name.startswith(app_name) {
+                try {
+                    core_v1.delete_namespaced_persistent_volume_claim(
+                        name=pvc.metadata.name, namespace=namespace
+                    );
+                } except Exception { }
+            }
+        }
     }
 
     def _destroy_database(
@@ -1335,6 +1345,12 @@ obj KubernetesTarget(DeploymentTarget) {
             f"{redis_name}-service",
             namespace,
             'Service'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_config_map,
+            f"{redis_name}-config",
+            namespace,
+            'ConfigMap'
         );
     }
 
@@ -1420,7 +1436,6 @@ obj KubernetesTarget(DeploymentTarget) {
             }
             apps_v1 = client.AppsV1Api();
             core_v1 = client.CoreV1Api();
-            autoscaling_v2 = client.AutoscalingV2Api();
             namespace = self.k8s_config.namespace;
 
             if component {
@@ -1429,6 +1444,8 @@ obj KubernetesTarget(DeploymentTarget) {
                 );
                 return;
             }
+
+            autoscaling_v2 = client.AutoscalingV2Api();
 
             # Delete HPA
             delete_if_exists(
