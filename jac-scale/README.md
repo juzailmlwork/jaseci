@@ -567,7 +567,7 @@ Use `--component` to tear down only one part of the deployment while leaving eve
 | `application` | App deployment, service, secrets, HPA |
 | `database` | MongoDB StatefulSet and service |
 | `cache` | Redis deployment and service |
-| `monitoring` | Prometheus and Grafana deployments and services |
+| `monitoring` | Prometheus, Grafana, kube-state-metrics, and node-exporter (deployments, services, RBAC) |
 | `dashboard` | Mongo Express and RedisInsight deployments and services |
 
 **Examples:**
