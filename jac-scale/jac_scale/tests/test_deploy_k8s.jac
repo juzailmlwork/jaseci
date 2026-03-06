@@ -668,9 +668,7 @@ test "deploy all in one" {
 
     # Verify code-server Service is gone
     try {
-        core_v1.read_namespaced_service(
-            f"{app_name}-code-server", namespace=namespace
-        );
+        core_v1.read_namespaced_service(f"{app_name}-code-server", namespace=namespace);
         raise AssertionError(
             "Code-server Service should have been deleted by application component destroy"
         );
@@ -713,7 +711,9 @@ test "deploy all in one" {
         );
     }
 
-    print("Cache and database components confirmed still running after application destroy");
+    print(
+        "Cache and database components confirmed still running after application destroy"
+    );
 
     # --- Component destroy: cache ---
     # Destroy only the cache stack and verify all three resources (Deployment,
@@ -810,7 +810,9 @@ test "deploy all in one" {
         core_v1.read_namespaced_config_map(
             f"{insight_name}-nginx-config", namespace=namespace
         );
-        raise AssertionError("RedisInsight nginx-config ConfigMap should have been deleted");
+        raise AssertionError(
+            "RedisInsight nginx-config ConfigMap should have been deleted"
+        );
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -910,7 +912,9 @@ test "deploy all in one" {
     ] {
         try {
             core_v1.read_namespaced_config_map(name=cm_name, namespace=namespace);
-            raise AssertionError(f"Grafana ConfigMap '{cm_name}' should have been deleted");
+            raise AssertionError(
+                f"Grafana ConfigMap '{cm_name}' should have been deleted"
+            );
         } except ApiException as e {
             assert e.status == 404 , f"Expected 404 for '{cm_name}', got {e.status}";
         }
@@ -920,7 +924,9 @@ test "deploy all in one" {
         core_v1.read_namespaced_service_account(
             name=f"{ksm_name}-sa", namespace=namespace
         );
-        raise AssertionError("kube-state-metrics ServiceAccount should have been deleted");
+        raise AssertionError(
+            "kube-state-metrics ServiceAccount should have been deleted"
+        );
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }

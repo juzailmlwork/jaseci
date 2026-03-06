@@ -1404,7 +1404,7 @@ obj KubernetesTarget(DeploymentTarget) {
         } else {
             raise ValueError(
                 f"Unknown component: '{component}'. Valid choices: application, database, cache, monitoring, dashboard"
-            ) ;
+            );
         }
         if self.logger {
             self.logger.info(f"Component '{component}' of '{app_name}' destroyed");
