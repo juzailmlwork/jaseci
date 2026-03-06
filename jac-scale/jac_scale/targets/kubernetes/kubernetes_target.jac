@@ -468,7 +468,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=mongo_result['secret']
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             try {
@@ -574,7 +574,7 @@ obj KubernetesTarget(DeploymentTarget) {
                         namespace=namespace, body=redis_result['secret']
                     );
                 } else {
-                    raise ;
+                    raise;
                 }
             }
             config_updated = False;

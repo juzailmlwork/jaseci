@@ -719,7 +719,7 @@ test "deploy all in one" {
         core_v1.read_namespaced_secret(
             f"{app_name}-mongodb-secret", namespace=namespace
         );
-        raise AssertionError("MongoDB Secret should have been deleted") ;
+        raise AssertionError("MongoDB Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -742,7 +742,7 @@ test "deploy all in one" {
 
     try {
         core_v1.read_namespaced_secret(f"{app_name}-redis-secret", namespace=namespace);
-        raise AssertionError("Redis Secret should have been deleted") ;
+        raise AssertionError("Redis Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }

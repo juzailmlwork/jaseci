@@ -298,7 +298,8 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                                 'readinessProbe': {
                                     'exec': {
                                         'command': [
-                                            'sh', '-c',
+                                            'sh',
+                                            '-c',
                                             'redis-cli -a "$REDIS_PASSWORD" ping'
                                         ]
                                     },
