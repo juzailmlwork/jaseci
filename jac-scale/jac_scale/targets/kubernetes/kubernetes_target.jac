@@ -1303,9 +1303,17 @@ obj KubernetesTarget(DeploymentTarget) {
         delete_if_exists(
             core_v1.delete_namespaced_pod, f"{app_name}-code-sync", namespace, 'Pod'
         );
+        pvc_name = f"{app_name}-code-pvc";
+        try {
+            core_v1.patch_namespaced_persistent_volume_claim(
+                name=pvc_name,
+                namespace=namespace,
+                body={'metadata': {'finalizers': []}}
+            );
+        } except ApiException { }
         delete_if_exists(
             core_v1.delete_namespaced_persistent_volume_claim,
-            f"{app_name}-code-pvc",
+            pvc_name,
             namespace,
             'PersistentVolumeClaim'
         );
