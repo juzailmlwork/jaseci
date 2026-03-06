@@ -152,7 +152,7 @@ def _get_git_config -> tuple[str, str, str] {
         return (repo_url, branch, commit);
     } except subprocess.CalledProcessError as e {
         print(f"Error getting git config: {e}");
-        raise ;
+        raise;
     }
 }
 
@@ -831,7 +831,7 @@ test "deploy all in one" {
     # Verify K8s Secret cleanup
     try {
         core_v1.read_namespaced_secret(f"{app_name}-secrets", namespace=namespace);
-        raise AssertionError("K8s Secret should have been deleted") ;
+        raise AssertionError("K8s Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -852,7 +852,7 @@ test "deploy all in one" {
     # Verify namespace was deleted (since it is not 'default')
     try {
         core_v1.read_namespace(name=namespace);
-        raise AssertionError("Namespace should have been deleted") ;
+        raise AssertionError("Namespace should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404 for namespace, got {e.status}";
     }
