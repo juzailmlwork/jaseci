@@ -1303,16 +1303,12 @@ obj KubernetesTarget(DeploymentTarget) {
         delete_if_exists(
             core_v1.delete_namespaced_pod, f"{app_name}-code-sync", namespace, 'Pod'
         );
-        pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace);
-        for pvc in pvcs.items {
-            if pvc.metadata.name.startswith(app_name) {
-                try {
-                    core_v1.delete_namespaced_persistent_volume_claim(
-                        name=pvc.metadata.name, namespace=namespace
-                    );
-                } except Exception { }
-            }
-        }
+        delete_if_exists(
+            core_v1.delete_namespaced_persistent_volume_claim,
+            f"{app_name}-code-pvc",
+            namespace,
+            'PersistentVolumeClaim'
+        );
     }
 
     def _destroy_database(

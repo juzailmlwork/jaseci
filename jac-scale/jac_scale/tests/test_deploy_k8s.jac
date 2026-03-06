@@ -678,12 +678,16 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
-    # Verify PVCs are gone (the billable-storage bug fix)
-    pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace);
-    for pvc in pvcs.items {
-        assert not pvc.metadata.name.startswith(app_name) , (
-            f"PVC '{pvc.metadata.name}' should have been deleted by application component destroy"
+    # Verify code PVC is gone (the billable-storage bug fix)
+    try {
+        core_v1.read_namespaced_persistent_volume_claim(
+            name=f"{app_name}-code-pvc", namespace=namespace
         );
+        raise AssertionError(
+            "code-pvc should have been deleted by application component destroy"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     print(
@@ -802,6 +806,22 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
+    try {
+        core_v1.read_namespaced_config_map(
+            f"{insight_name}-nginx-config", namespace=namespace
+        );
+        raise AssertionError("RedisInsight nginx-config ConfigMap should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_secret(f"{insight_name}-auth", namespace=namespace);
+        raise AssertionError("RedisInsight auth Secret should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
     # Verify mongo-express dashboard cleanup
     express_name = f"{app_name}-mongo-express";
     try {
@@ -872,6 +892,65 @@ test "deploy all in one" {
     try {
         core_v1.read_namespaced_service(f"{grafana_name}-service", namespace=namespace);
         raise AssertionError("Grafana Service should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_secret(f"{grafana_name}-secret", namespace=namespace);
+        raise AssertionError("Grafana Secret should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    for cm_name in [
+        f"{grafana_name}-datasources",
+        f"{grafana_name}-dashboard-provider",
+        f"{grafana_name}-dashboard"
+    ] {
+        try {
+            core_v1.read_namespaced_config_map(name=cm_name, namespace=namespace);
+            raise AssertionError(f"Grafana ConfigMap '{cm_name}' should have been deleted");
+        } except ApiException as e {
+            assert e.status == 404 , f"Expected 404 for '{cm_name}', got {e.status}";
+        }
+    }
+
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{ksm_name}-sa", namespace=namespace
+        );
+        raise AssertionError("kube-state-metrics ServiceAccount should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        rbac_v1.read_cluster_role(name=cluster_role_name);
+        raise AssertionError("kube-state-metrics ClusterRole should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        rbac_v1.read_cluster_role_binding(name=cluster_role_name);
+        raise AssertionError(
+            "kube-state-metrics ClusterRoleBinding should have been deleted"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        apps_v1.read_namespaced_daemon_set(ne_name, namespace=namespace);
+        raise AssertionError("node-exporter DaemonSet should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service(f"{ne_name}-service", namespace=namespace);
+        raise AssertionError("node-exporter Service should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
