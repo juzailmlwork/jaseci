@@ -1441,7 +1441,16 @@ obj KubernetesTarget(DeploymentTarget) {
                 return;
             }
 
-            autoscaling_v2 = client.AutoscalingV2Api();
+            self._destroy_application(app_name, namespace, apps_v1, core_v1);
+
+            # Delete monitoring stack (Prometheus / Grafana)
+            monitoring = MonitoringDeployer(self.k8s_config, self.logger);
+            monitoring.destroy(app_name, namespace, apps_v1, core_v1);
+
+            # Delete databases
+            self._destroy_databases(app_name, namespace, apps_v1, core_v1);
+
+            # Broad PVC cleanup (catch any PVCs the component methods missed)
 
             # Delete HPA
             delete_if_exists(
