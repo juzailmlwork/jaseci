@@ -1450,16 +1450,6 @@ obj KubernetesTarget(DeploymentTarget) {
             # Delete databases
             self._destroy_databases(app_name, namespace, apps_v1, core_v1);
 
-            # Broad PVC cleanup (catch any PVCs the component methods missed)
-
-            # Delete HPA
-            delete_if_exists(
-                autoscaling_v2.delete_namespaced_horizontal_pod_autoscaler,
-                f"{app_name}-hpa",
-                namespace,
-                'HorizontalPodAutoscaler'
-            );
-
             # Delete main deployment and service
             delete_if_exists(
                 apps_v1.delete_namespaced_deployment, app_name, namespace, 'Deployment'
