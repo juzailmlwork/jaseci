@@ -493,8 +493,10 @@ obj KubernetesTarget(DeploymentTarget) {
                     password=self.k8s_config.mongo_express_password
                 );
                 try {
-                    apps_v1.read_namespaced_deployment(
-                        name=express_result['deployment_name'], namespace=namespace
+                    apps_v1.patch_namespaced_deployment(
+                        name=express_result['deployment_name'],
+                        namespace=namespace,
+                        body=express_result['deployment']
                     );
                 } except ApiException as e {
                     if e.status == 404 {
@@ -506,8 +508,10 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
                 try {
-                    core_v1.read_namespaced_service(
-                        name=express_result['service_name'], namespace=namespace
+                    core_v1.replace_namespaced_service(
+                        name=express_result['service_name'],
+                        namespace=namespace,
+                        body=express_result['service']
                     );
                 } except ApiException as e {
                     if e.status == 404 {
@@ -520,7 +524,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 }
                 if self.logger {
                     self.logger.info(
-                        f"mongo-express dashboard deployed for '{app_name}' (accessible via ingress at /mongo-express)"
+                        f"mongo-express dashboard deployed for '{app_name}' (accessible via ingress at /db-dashboard)"
                     );
                 }
             }
@@ -689,9 +693,10 @@ obj KubernetesTarget(DeploymentTarget) {
                 );
                 if 'auth_configmap' in insight_result {
                     try {
-                        core_v1.read_namespaced_config_map(
+                        core_v1.patch_namespaced_config_map(
                             name=insight_result['auth_configmap']['metadata']['name'],
-                            namespace=namespace
+                            namespace=namespace,
+                            body=insight_result['auth_configmap']
                         );
                     } except ApiException as e {
                         if e.status == 404 {
@@ -719,8 +724,10 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
                 try {
-                    apps_v1.read_namespaced_deployment(
-                        name=insight_result['deployment_name'], namespace=namespace
+                    apps_v1.patch_namespaced_deployment(
+                        name=insight_result['deployment_name'],
+                        namespace=namespace,
+                        body=insight_result['deployment']
                     );
                 } except ApiException as e {
                     if e.status == 404 {
@@ -732,8 +739,10 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
                 try {
-                    core_v1.read_namespaced_service(
-                        name=insight_result['service_name'], namespace=namespace
+                    core_v1.replace_namespaced_service(
+                        name=insight_result['service_name'],
+                        namespace=namespace,
+                        body=insight_result['service']
                     );
                 } except ApiException as e {
                     if e.status == 404 {
@@ -746,7 +755,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 }
                 if self.logger {
                     self.logger.info(
-                        f"RedisInsight dashboard deployed for '{app_name}' (accessible via ingress at /redis-insight)"
+                        f"RedisInsight dashboard deployed for '{app_name}' (accessible via ingress at /cache-dashboard)"
                     );
                 }
             }
@@ -1757,11 +1766,11 @@ obj KubernetesTarget(DeploymentTarget) {
         }
 
         if redis_insight_running {
-            urls['redis_insight'] = f"{base_url}/redis-insight";
+            urls['redis_insight'] = f"{base_url}/cache-dashboard";
         }
 
         if mongo_express_running {
-            urls['mongo_express'] = f"{base_url}/mongo-express";
+            urls['mongo_express'] = f"{base_url}/db-dashboard";
         }
 
         return {
