@@ -236,7 +236,7 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                                     },
                                     {
                                         'name': 'ME_CONFIG_SITE_BASEURL',
-                                        'value': '/mongo-express/'
+                                        'value': '/db-dashboard/'
                                     }
                                 ],
                                 'resources': {
@@ -250,7 +250,7 @@ obj KubernetesMongoProvider(DatabaseProvider) {
             }
         };
 
-        # Service: always ClusterIP — exposed via NGINX Ingress at /mongo-express
+        # Service: always ClusterIP — exposed via NGINX Ingress at /db-dashboard
         express_service = {
             'apiVersion': 'v1',
             'kind': 'Service',

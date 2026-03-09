@@ -446,9 +446,10 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                     {'name': 'RI_REDIS_HOST', 'value': redis_service_name},
                     {'name': 'RI_REDIS_PORT', 'value': '6379'},
                     {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'},
-                    # Tell RedisInsight it is served at a subpath so the frontend
-                    # constructs all URLs with the correct prefix (ingress rewrite).
-                    {'name': 'RIPROXYPATH', 'value': '/redis-insight'}
+                    # Tell RedisInsight it is served at /cache-dashboard so the
+                    # frontend constructs all URLs with the correct prefix.
+                    # The ingress passes /cache-dashboard/... unchanged (no rewrite).
+                    {'name': 'RIPROXYPATH', 'value': '/cache-dashboard'}
                 ],
                 'resources': {
                     'requests': {'cpu': '100m', 'memory': '128Mi'},
@@ -465,14 +466,18 @@ obj KubernetesRedisProvider(DatabaseProvider) {
 
             nginx_conf = """server {
     listen 8080;
-    location / {
+    location = /cache-dashboard {
+        return 301 /cache-dashboard/;
+    }
+    location /cache-dashboard/ {
         auth_basic "RedisInsight";
         auth_basic_user_file /etc/nginx/.htpasswd;
         proxy_pass http://localhost:5540;
         proxy_set_header Host $host;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection $http_upgrade;
+        proxy_redirect off;
     }
 }""";
 
