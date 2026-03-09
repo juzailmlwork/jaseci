@@ -769,9 +769,10 @@ test "deploy all in one" {
         core_v1.read_namespaced_secret(
             f"{app_name}-mongodb-secret", namespace=namespace
         );
-        raise AssertionError("MongoDB Secret should have been deleted");
     } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
+        raise AssertionError(
+            f"MongoDB Secret should still exist after application destroy, got {e.status}"
+        );
     }
 
     try {
@@ -810,7 +811,7 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
-    print("MongoDB and Redis secrets cleanup verified");
+    print("Redis secret cleanup verified");
 
     # Verify RedisInsight dashboard cleanup
     insight_name = f"{app_name}-redis-insight";
@@ -878,6 +879,15 @@ test "deploy all in one" {
             f"{app_name}-mongodb-service", namespace=namespace
         );
         raise AssertionError("MongoDB Service should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_secret(
+            f"{app_name}-mongodb-secret", namespace=namespace
+        );
+        raise AssertionError("MongoDB Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }

@@ -1371,6 +1371,7 @@ obj KubernetesTarget(DeploymentTarget) {
             namespace,
             'Service'
         );
+        delete_k8s_secret(core_v1, namespace, f"{app_name}-mongodb-secret");
     }
 
     def _destroy_cache(
@@ -1392,6 +1393,7 @@ obj KubernetesTarget(DeploymentTarget) {
             namespace,
             'ConfigMap'
         );
+        delete_k8s_secret(core_v1, namespace, f"{app_name}-redis-secret");
     }
 
     def _destroy_dashboard(
