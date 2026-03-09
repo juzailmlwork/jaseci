@@ -413,9 +413,6 @@ obj KubernetesRedisProvider(DatabaseProvider) {
     NodePort, AWS NLB, and Ingress (ClusterIP) deployments.
     """
     def deploy_dashboard(
-        cluster_env: str,
-        node_port: int,
-        ingress_enabled: bool = False,
         username: str = '',
         password: str = ''
     ) -> dict[str, Any] {
@@ -448,7 +445,10 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'env': [
                     {'name': 'RI_REDIS_HOST', 'value': redis_service_name},
                     {'name': 'RI_REDIS_PORT', 'value': '6379'},
-                    {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'}
+                    {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'},
+                    # Tell RedisInsight it is served at a subpath so the frontend
+                    # constructs all URLs with the correct prefix (ingress rewrite).
+                    {'name': 'RIPROXYPATH', 'value': '/redis-insight'}
                 ],
                 'resources': {
                     'requests': {'cpu': '100m', 'memory': '128Mi'},
@@ -543,68 +543,25 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             }
         };
 
-        if ingress_enabled {
-            insight_service = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'name': f"{insight_name}-service",
-                    'labels': {'app': insight_name, 'managed': 'jac-scale'}
-                },
-                'spec': {
-                    'type': 'ClusterIP',
-                    'selector': {'app': insight_name},
-                    'ports': [
-                        {
-                            'protocol': 'TCP',
-                            'port': service_port,
-                            'targetPort': service_port
-                        }
-                    ]
-                }
-            };
-        } elif cluster_env == 'aws' {
-            insight_service = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'name': f"{insight_name}-service",
-                    'labels': {'app': insight_name, 'managed': 'jac-scale'},
-                    'annotations': {
-                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
-                        'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
+        insight_service = {
+            'apiVersion': 'v1',
+            'kind': 'Service',
+            'metadata': {
+                'name': f"{insight_name}-service",
+                'labels': {'app': insight_name, 'managed': 'jac-scale'}
+            },
+            'spec': {
+                'type': 'ClusterIP',
+                'selector': {'app': insight_name},
+                'ports': [
+                    {
+                        'protocol': 'TCP',
+                        'port': service_port,
+                        'targetPort': service_port
                     }
-                },
-                'spec': {
-                    'type': 'LoadBalancer',
-                    'selector': {'app': insight_name},
-                    'ports': [
-                        {'protocol': 'TCP', 'port': 80, 'targetPort': service_port}
-                    ]
-                }
-            };
-        } else {
-            insight_service = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'name': f"{insight_name}-service",
-                    'labels': {'app': insight_name, 'managed': 'jac-scale'}
-                },
-                'spec': {
-                    'type': 'NodePort',
-                    'selector': {'app': insight_name},
-                    'ports': [
-                        {
-                            'protocol': 'TCP',
-                            'port': service_port,
-                            'targetPort': service_port,
-                            'nodePort': node_port
-                        }
-                    ]
-                }
-            };
-        }
+                ]
+            }
+        };
 
         result = {
             'deployment': insight_deployment,

@@ -983,6 +983,16 @@ obj MonitoringDeployer {
                                 'envFrom': [
                                     {'secretRef': {'name': grafana_secret_name}}
                                 ],
+                                'env': [
+                                    {
+                                        'name': 'GF_SERVER_ROOT_URL',
+                                        'value': '%(protocol)s://%(domain)s/grafana'
+                                    },
+                                    {
+                                        'name': 'GF_SERVER_SERVE_FROM_SUB_PATH',
+                                        'value': 'true'
+                                    }
+                                ],
                                 'volumeMounts': [
                                     {
                                         'name': 'grafana-datasources-vol',
@@ -1033,49 +1043,21 @@ obj MonitoringDeployer {
             }
         }
 
-        # Service: NodePort locally, dedicated LoadBalancer (NLB) on AWS
-        if cluster_env == 'aws' {
-            grafana_service = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'name': f"{grafana_name}-service",
-                    'namespace': namespace,
-                    'labels': {'app': grafana_name, 'managed': 'jac-scale'},
-                    'annotations': {
-                        'service.beta.kubernetes.io/aws-load-balancer-type': 'nlb',
-                        'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
-                    }
-                },
-                'spec': {
-                    'type': 'LoadBalancer',
-                    'selector': {'app': grafana_name},
-                    'ports': [{'protocol': 'TCP', 'port': 80, 'targetPort': 3000}]
-                }
-            };
-        } else {
-            grafana_service = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'name': f"{grafana_name}-service",
-                    'namespace': namespace,
-                    'labels': {'app': grafana_name, 'managed': 'jac-scale'}
-                },
-                'spec': {
-                    'type': 'NodePort',
-                    'selector': {'app': grafana_name},
-                    'ports': [
-                        {
-                            'protocol': 'TCP',
-                            'port': 3000,
-                            'targetPort': 3000,
-                            'nodePort': self.k8s_config.grafana_node_port
-                        }
-                    ]
-                }
-            };
-        }
+        # Service: always ClusterIP — exposed via NGINX Ingress at /grafana
+        grafana_service = {
+            'apiVersion': 'v1',
+            'kind': 'Service',
+            'metadata': {
+                'name': f"{grafana_name}-service",
+                'namespace': namespace,
+                'labels': {'app': grafana_name, 'managed': 'jac-scale'}
+            },
+            'spec': {
+                'type': 'ClusterIP',
+                'selector': {'app': grafana_name},
+                'ports': [{'protocol': 'TCP', 'port': 3000, 'targetPort': 3000}]
+            }
+        };
 
         try {
             core_v1.read_namespaced_service(
@@ -1092,13 +1074,9 @@ obj MonitoringDeployer {
         }
 
         if self.logger {
-            if cluster_env == 'aws' {
-                self.logger.info(f"Grafana deployed for '{app_name}'");
-            } else {
-                self.logger.info(
-                    f"Grafana deployed for '{app_name}' accessible at localhost:{self.k8s_config.grafana_node_port}"
-                );
-            }
+            self.logger.info(
+                f"Grafana deployed for '{app_name}' (ClusterIP, accessible via ingress at /grafana)"
+            );
         }
     }
 

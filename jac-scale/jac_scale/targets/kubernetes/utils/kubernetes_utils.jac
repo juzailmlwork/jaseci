@@ -87,11 +87,7 @@ def cluster_type -> str;
 
 def check_node_ports_available(
     node_port: int,
-    prometheus_node_port: int | None,
-    grafana_node_port: int | None,
-    current_namespace: str,
-    redis_insight_node_port: int | None = None,
-    mongo_express_node_port: int | None = None
+    current_namespace: str
 ) -> None;
 
 def ensure_pvc_exists(
