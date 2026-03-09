@@ -4,7 +4,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.2.5 (Unreleased)
 
-- **NGINX Ingress Controller**: Replaced individual NodePort services with a single NGINX Ingress controller. All services are now ClusterIP, accessible via path-based routing through `ingress_node_port` (default: `30080`) — `/` app, `/grafana`, `/cache-dashboard/`, `/db-dashboard`.
+- **NGINX Ingress Controller**: Replaced individual NodePort services with a single NGINX Ingress controller. All services are now ClusterIP, accessible via path-based routing through `ingress_node_port` (default: `30080`): `/` app, `/grafana`, `/cache-dashboard/`, `/db-dashboard`.
 - Fix: Redis Insight dashboard 404 and nginx-auth ConfigMap not updating on re-deploy.
 
 ## jac-scale 0.2.4 (Latest Release)

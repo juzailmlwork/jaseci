@@ -1129,7 +1129,7 @@ mongodb_dashboard = true  # Deploy Mongo Express UI (default: false)
 
 #### Dashboard Credentials
 
-When dashboards are enabled, they are served through the NGINX Ingress at fixed subpaths — no separate NodePorts are needed.
+When dashboards are enabled, they are served through the NGINX Ingress at fixed subpaths. No separate NodePorts are needed.
 
 | `jac.toml` key | Description | Default |
 |----------------|-------------|---------|
@@ -1230,7 +1230,7 @@ All traffic flows through a single **NGINX Ingress controller** deployed per app
 | TOML Key | Default | Description |
 |----------|---------|-------------|
 | `container_port`| `8000` | Port your app listens on inside the pod |
-| `ingress_node_port` | `30080` | NodePort for the NGINX Ingress controller — all external traffic enters here |
+| `ingress_node_port` | `30080` | NodePort for the NGINX Ingress controller (all external traffic enters here) |
 
 **Access URLs (local cluster):**
 
