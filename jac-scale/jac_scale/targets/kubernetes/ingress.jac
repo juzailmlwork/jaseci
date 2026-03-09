@@ -1,4 +1,6 @@
 """NGINX Ingress controller and Ingress resource deployer."""
+import base64;
+import hashlib;
 import from typing { Any }
 import from kubernetes { client }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
@@ -167,7 +169,11 @@ obj IngressDeployer {
             }
         }
 
-        # --- ConfigMap (empty — controller uses defaults) ---
+        # --- ConfigMap ---
+        # allow-snippet-annotations is required so that configuration-snippet
+        # annotations on Ingress resources (e.g. sub_filter for RedisInsight asset
+        # path rewriting) are accepted by the controller. Disabled by default in
+        # nginx-ingress >= v1.9.0, so we must opt-in explicitly.
         cm = {
             'apiVersion': 'v1',
             'kind': 'ConfigMap',
@@ -176,11 +182,14 @@ obj IngressDeployer {
                 'namespace': namespace,
                 'labels': {'app': controller_name, 'managed': 'jac-scale'}
             },
-            'data': {}
+            'data': {
+                'allow-snippet-annotations': 'true',
+                'annotations-risk-level': 'Critical'
+            }
         };
         try {
-            core_v1.read_namespaced_config_map(
-                name=configmap_name, namespace=namespace
+            core_v1.patch_namespaced_config_map(
+                name=configmap_name, namespace=namespace, body=cm
             );
         } except ApiException as e {
             if e.status == 404 {
@@ -391,7 +400,8 @@ obj IngressDeployer {
         grafana_enabled: bool,
         redis_dashboard: bool,
         mongo_dashboard: bool,
-        networking_v1: Any
+        networking_v1: Any,
+        core_v1: Any
     ) -> None {
         ingress_name = f"{app_name}-ingress";
         redis_ingress_name = f"{app_name}-redis-insight-ingress";
@@ -474,28 +484,89 @@ obj IngressDeployer {
             }
         }
 
-        # --- RedisInsight Ingress (with rewrite-target to strip /cache-dashboard prefix) ---
+        # --- RedisInsight Ingress ---
+        # Auth is enforced by NGINX Ingress basic-auth annotations — no sidecar needed.
+        # RIPROXYPATH=/cache-dashboard is set on the container so the ingress passes
+        # the full /cache-dashboard/... path unchanged (no rewrite-target).
         if redis_dashboard {
-            # Determine the redis-insight service port (8080 when nginx-auth sidecar is
-            # enabled, i.e. username and password are both set; otherwise 5540).
-            auth_enabled = bool(
-                self.k8s_config.redis_insight_username
-                and self.k8s_config.redis_insight_password
-            );
-            redis_service_port = 8080 if auth_enabled else 5540;
+            ri_username = self.k8s_config.redis_insight_username;
+            ri_password = self.k8s_config.redis_insight_password;
+            auth_enabled = bool(ri_username and ri_password);
+            ri_auth_secret_name = f"{app_name}-redis-insight-auth";
 
-            # No rewrite — RIPROXYPATH=/cache-dashboard is set on the container so
-            # Redis Insight expects to receive the full /cache-dashboard/... path.
+            # Create/update the NGINX Ingress basic-auth secret when credentials are set.
+            # The secret must have key 'auth' containing an htpasswd-formatted string.
+            # Format: username:{SHA}base64(sha1(password))
+            if auth_enabled {
+                pw_hash = base64.b64encode(
+                    hashlib.sha1(ri_password.encode('utf-8')).digest()
+                ).decode('utf-8');
+                htpasswd_line = f"{ri_username}:{{SHA}}{pw_hash}";
+                ri_auth_secret = {
+                    'apiVersion': 'v1',
+                    'kind': 'Secret',
+                    'metadata': {
+                        'name': ri_auth_secret_name,
+                        'namespace': namespace,
+                        'labels': {'app': f"{app_name}-redis-insight", 'managed': 'jac-scale'}
+                    },
+                    'stringData': {'auth': htpasswd_line}
+                };
+                try {
+                    core_v1.read_namespaced_secret(
+                        name=ri_auth_secret_name, namespace=namespace
+                    );
+                } except ApiException as e {
+                    if e.status == 404 {
+                        core_v1.create_namespaced_secret(
+                            namespace=namespace, body=ri_auth_secret
+                        );
+                    } else {
+                        raise;
+                    }
+                }
+            }
+
+            # RedisInsight v3 (Vite build) emits root-relative asset URLs (/assets/...)
+            # regardless of RIPROXYPATH. The ingress uses rewrite-target=/$2 to strip the
+            # /cache-dashboard prefix before forwarding to the backend, so /assets/... is
+            # served correctly. sub_filter rewrites asset URLs in the HTML so the browser
+            # requests /cache-dashboard/assets/... (which nginx then rewrites back to
+            # /assets/... for the backend). RIPROXYPATH is also rewritten so the JS
+            # frontend sets window.__RI_PROXY_PATH__ = 'cache-dashboard' and prefixes all
+            # API/socket calls with /cache-dashboard (which nginx strips via rewrite-target).
+            # Accept-Encoding is cleared so nginx can apply sub_filter to uncompressed HTML.
+            redis_ingress_annotations: dict = {
+                'nginx.ingress.kubernetes.io/proxy-body-size': '0',
+                'nginx.ingress.kubernetes.io/proxy-read-timeout': '3600',
+                'nginx.ingress.kubernetes.io/proxy-send-timeout': '3600',
+                'nginx.ingress.kubernetes.io/use-regex': 'true',
+                'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+                'nginx.ingress.kubernetes.io/configuration-snippet': (
+                    'proxy_set_header Accept-Encoding "";\n'
+                    'sub_filter_types text/html;\n'
+                    'sub_filter \'src="/assets/\' \'src="/cache-dashboard/assets/\';\n'
+                    'sub_filter \'href="/assets/\' \'href="/cache-dashboard/assets/\';\n'
+                    'sub_filter "var RIPROXYPATH = \'\';" "var RIPROXYPATH = \'/cache-dashboard\';";\n'
+                    'sub_filter_once off;'
+                )
+            };
+            if auth_enabled {
+                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-type'] = 'basic';
+                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-secret'] = ri_auth_secret_name;
+                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-realm'] = 'RedisInsight';
+            }
+
             redis_rule: dict = {
                 'http': {
                     'paths': [
                         {
-                            'path': '/cache-dashboard',
-                            'pathType': 'Prefix',
+                            'path': '/cache-dashboard(/|$)(.*)',
+                            'pathType': 'ImplementationSpecific',
                             'backend': {
                                 'service': {
                                     'name': f"{app_name}-redis-insight-service",
-                                    'port': {'number': redis_service_port}
+                                    'port': {'number': 5540}
                                 }
                             }
                         }
@@ -513,11 +584,7 @@ obj IngressDeployer {
                     'name': redis_ingress_name,
                     'namespace': namespace,
                     'labels': {'app': app_name, 'managed': 'jac-scale'},
-                    'annotations': {
-                        'nginx.ingress.kubernetes.io/proxy-body-size': '0',
-                        'nginx.ingress.kubernetes.io/proxy-read-timeout': '3600',
-                        'nginx.ingress.kubernetes.io/proxy-send-timeout': '3600'
-                    }
+                    'annotations': redis_ingress_annotations
                 },
                 'spec': {'ingressClassName': ingress_class, 'rules': [redis_rule]}
             };

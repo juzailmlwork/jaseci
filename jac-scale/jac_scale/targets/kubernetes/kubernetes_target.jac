@@ -687,42 +687,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 }
             }
             if self.k8s_config.redis_dashboard {
-                insight_result = redis_provider.deploy_dashboard(
-                    username=self.k8s_config.redis_insight_username,
-                    password=self.k8s_config.redis_insight_password
-                );
-                if 'auth_configmap' in insight_result {
-                    try {
-                        core_v1.patch_namespaced_config_map(
-                            name=insight_result['auth_configmap']['metadata']['name'],
-                            namespace=namespace,
-                            body=insight_result['auth_configmap']
-                        );
-                    } except ApiException as e {
-                        if e.status == 404 {
-                            core_v1.create_namespaced_config_map(
-                                namespace=namespace,
-                                body=insight_result['auth_configmap']
-                            );
-                        } else {
-                            raise;
-                        }
-                    }
-                    try {
-                        core_v1.read_namespaced_secret(
-                            name=insight_result['auth_secret']['metadata']['name'],
-                            namespace=namespace
-                        );
-                    } except ApiException as e {
-                        if e.status == 404 {
-                            core_v1.create_namespaced_secret(
-                                namespace=namespace, body=insight_result['auth_secret']
-                            );
-                        } else {
-                            raise;
-                        }
-                    }
-                }
+                insight_result = redis_provider.deploy_dashboard();
                 try {
                     apps_v1.patch_namespaced_deployment(
                         name=insight_result['deployment_name'],
@@ -1060,7 +1025,8 @@ obj KubernetesTarget(DeploymentTarget) {
                 self.k8s_config.monitoring_enabled,
                 self.k8s_config.redis_dashboard,
                 self.k8s_config.mongodb_dashboard,
-                networking_v1
+                networking_v1,
+                core_v1
             );
             details["deploy_ingress"] = "Successful";
 

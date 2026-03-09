@@ -1,3 +1,4 @@
+
 """Implementation of Jac Scale configuration loader.
 
 This module provides the implementation for JacScaleConfig, which inherits
