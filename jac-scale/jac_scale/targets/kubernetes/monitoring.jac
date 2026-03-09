@@ -13,10 +13,8 @@ import from kubernetes.client.exceptions { ApiException }
 
 """Deploys and destroys a Prometheus + Grafana monitoring stack scoped to an app namespace.
 
-Prometheus is always exposed as ClusterIP (internal scraped by Grafana).
-Grafana is exposed as:
-  - NodePort      (non-AWS): accessible via <node-ip>:<grafana_node_port>
-  - LoadBalancer  (AWS):     its own NLB, accessible at <grafana-nlb-url> (port 80)
+Prometheus is always exposed as ClusterIP (internal, scraped by Grafana).
+Grafana is exposed as ClusterIP, routed via NGINX Ingress at /grafana.
 
 Admin credentials for Grafana use the 'prometheus_admin_password' config value.
 

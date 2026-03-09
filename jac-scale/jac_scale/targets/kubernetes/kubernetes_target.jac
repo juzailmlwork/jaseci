@@ -508,7 +508,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
                 try {
-                    core_v1.replace_namespaced_service(
+                    core_v1.patch_namespaced_service(
                         name=express_result['service_name'],
                         namespace=namespace,
                         body=express_result['service']
@@ -739,7 +739,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
                 try {
-                    core_v1.replace_namespaced_service(
+                    core_v1.patch_namespaced_service(
                         name=insight_result['service_name'],
                         namespace=namespace,
                         body=insight_result['service']

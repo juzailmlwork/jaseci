@@ -343,7 +343,9 @@ obj IngressDeployer {
             };
         }
         try {
-            core_v1.read_namespaced_service(name=service_name, namespace=namespace);
+            core_v1.patch_namespaced_service(
+                name=service_name, namespace=namespace, body=controller_service
+            );
         } except ApiException as e {
             if e.status == 404 {
                 core_v1.create_namespaced_service(
