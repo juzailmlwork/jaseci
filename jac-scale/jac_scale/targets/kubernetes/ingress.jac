@@ -52,9 +52,7 @@ obj IngressDeployer {
             );
         } except ApiException as e {
             if e.status == 404 {
-                core_v1.create_namespaced_service_account(
-                    namespace=namespace, body=sa
-                );
+                core_v1.create_namespaced_service_account(namespace=namespace, body=sa);
             } else {
                 raise;
             }
@@ -72,7 +70,14 @@ obj IngressDeployer {
                 # Core reads (cluster-wide)
                 {
                     'apiGroups': [''],
-                    'resources': ['configmaps', 'endpoints', 'nodes', 'pods', 'secrets', 'namespaces'],
+                    'resources': [
+                        'configmaps',
+                        'endpoints',
+                        'nodes',
+                        'pods',
+                        'secrets',
+                        'namespaces'
+                    ],
                     'verbs': ['get', 'list', 'watch']
                 },
                 # ConfigMap writes (leader-election lock)
@@ -179,9 +184,7 @@ obj IngressDeployer {
             );
         } except ApiException as e {
             if e.status == 404 {
-                core_v1.create_namespaced_config_map(
-                    namespace=namespace, body=cm
-                );
+                core_v1.create_namespaced_config_map(namespace=namespace, body=cm);
             } else {
                 raise;
             }
@@ -246,7 +249,9 @@ obj IngressDeployer {
                                     {
                                         'name': 'POD_NAMESPACE',
                                         'valueFrom': {
-                                            'fieldRef': {'fieldPath': 'metadata.namespace'}
+                                            'fieldRef': {
+                                                'fieldPath': 'metadata.namespace'
+                                            }
                                         }
                                     }
                                 ],
@@ -453,10 +458,7 @@ obj IngressDeployer {
                     'nginx.ingress.kubernetes.io/proxy-send-timeout': '3600'
                 }
             },
-            'spec': {
-                'ingressClassName': ingress_class,
-                'rules': [main_rule]
-            }
+            'spec': {'ingressClassName': ingress_class, 'rules': [main_rule]}
         };
         try {
             networking_v1.patch_namespaced_ingress(
@@ -517,10 +519,7 @@ obj IngressDeployer {
                         'nginx.ingress.kubernetes.io/proxy-send-timeout': '3600'
                     }
                 },
-                'spec': {
-                    'ingressClassName': ingress_class,
-                    'rules': [redis_rule]
-                }
+                'spec': {'ingressClassName': ingress_class, 'rules': [redis_rule]}
             };
             try {
                 networking_v1.patch_namespaced_ingress(

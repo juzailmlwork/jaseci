@@ -390,7 +390,11 @@ test "deploy all in one" {
     assert ri_host_env == f"{app_name}-redis-service";
     assert ri_port_env == "6379";
     ri_proxy_path_env = next(
-        (e.value for e in insight_container.env if e.name == "RIPROXYPATH"),
+        (
+            e.value
+            for e in insight_container.env
+            if e.name == "RIPROXYPATH"
+        ),
         None
     );
     assert ri_proxy_path_env == "/cache-dashboard";
@@ -500,17 +504,27 @@ test "deploy all in one" {
     print(f"Grafana Service '{grafana_name}-service' (ClusterIP) exists");
 
     gf_root_url_env = next(
-        (e.value for e in grafana_container.env if e.name == "GF_SERVER_ROOT_URL"),
+        (
+            e.value
+            for e in grafana_container.env
+            if e.name == "GF_SERVER_ROOT_URL"
+        ),
         None
     );
     gf_subpath_env = next(
-        (e.value for e in grafana_container.env if e.name == "GF_SERVER_SERVE_FROM_SUB_PATH"),
+        (
+            e.value
+            for e in grafana_container.env
+            if e.name == "GF_SERVER_SERVE_FROM_SUB_PATH"
+        ),
         None
     );
     assert gf_root_url_env is not None , "GF_SERVER_ROOT_URL must be set";
     assert "grafana" in gf_root_url_env , f"GF_SERVER_ROOT_URL should contain 'grafana', got: {gf_root_url_env}";
     assert gf_subpath_env == "true" , f"GF_SERVER_SERVE_FROM_SUB_PATH must be 'true', got: {gf_subpath_env}";
-    print(f"Grafana subpath env vars verified: GF_SERVER_ROOT_URL={gf_root_url_env}, GF_SERVER_SERVE_FROM_SUB_PATH={gf_subpath_env}");
+    print(
+        f"Grafana subpath env vars verified: GF_SERVER_ROOT_URL={gf_root_url_env}, GF_SERVER_SERVE_FROM_SUB_PATH={gf_subpath_env}"
+    );
 
     grafana_secret = core_v1.read_namespaced_secret(
         name=f"{grafana_name}-secret", namespace=namespace
@@ -685,13 +699,19 @@ test "deploy all in one" {
     );
     assert nginx_service.spec.type == "NodePort";
     nginx_node_port = next(
-        (p.node_port for p in nginx_service.spec.ports if p.name == "http"),
+        (
+            p.node_port
+            for p in nginx_service.spec.ports
+            if p.name == "http"
+        ),
         None
     );
     assert nginx_node_port == ingress_node_port , (
         f"Expected ingress NodePort {ingress_node_port}, got {nginx_node_port}"
     );
-    print(f"NGINX Ingress Service '{nginx_service_name}' (NodePort:{ingress_node_port}) exists");
+    print(
+        f"NGINX Ingress Service '{nginx_service_name}' (NodePort:{ingress_node_port}) exists"
+    );
 
     main_ingress = networking_v1.read_namespaced_ingress(
         name=ingress_name, namespace=namespace
@@ -699,9 +719,7 @@ test "deploy all in one" {
     assert main_ingress.metadata.name == ingress_name;
     assert main_ingress.spec.ingress_class_name == ingress_class_name;
     ingress_paths = [
-        p.path
-        for rule in main_ingress.spec.rules
-        for p in rule.http.paths
+        p.path for rule in main_ingress.spec.rules for p in rule.http.paths
     ];
     assert "/" in ingress_paths , f"Main ingress must route '/'; got paths: {ingress_paths}";
     assert "/grafana" in ingress_paths , f"Main ingress must route '/grafana'; got paths: {ingress_paths}";
@@ -712,11 +730,7 @@ test "deploy all in one" {
         name=redis_ingress_name, namespace=namespace
     );
     assert ri_ingress.metadata.name == redis_ingress_name;
-    ri_paths = [
-        p.path
-        for rule in ri_ingress.spec.rules
-        for p in rule.http.paths
-    ];
+    ri_paths = [p.path for rule in ri_ingress.spec.rules for p in rule.http.paths];
     assert "/cache-dashboard" in ri_paths , f"Redis Insight ingress must route '/cache-dashboard'; got: {ri_paths}";
     print(f"Redis Insight Ingress '{redis_ingress_name}' exists with route: {ri_paths}");
 
@@ -743,7 +757,9 @@ test "deploy all in one" {
     duplicate_target_config = app_scale_config.get_kubernetes_config();
     duplicate_target_config["app_name"] = duplicate_app_name;
     duplicate_target_config["namespace"] = duplicate_namespace;
-    duplicate_target_config["ingress_node_port"] = target_config["ingress_node_port"];  # same port — must conflict
+    duplicate_target_config["ingress_node_port"] = target_config[
+        "ingress_node_port"
+    ];  # same port — must conflict
     duplicate_target_config["redis_dashboard"] = True;
     duplicate_target_config["mongodb_dashboard"] = True;
     duplicate_target_config["jaseci_repo_url"] = repo_url;
@@ -1060,7 +1076,9 @@ test "deploy all in one" {
         core_v1.read_namespaced_service_account(
             name=nginx_controller_name, namespace=namespace
         );
-        raise AssertionError("NGINX controller ServiceAccount should have been deleted");
+        raise AssertionError(
+            "NGINX controller ServiceAccount should have been deleted"
+        );
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }

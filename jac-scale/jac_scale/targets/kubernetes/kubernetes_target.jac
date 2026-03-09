@@ -811,7 +811,10 @@ obj KubernetesTarget(DeploymentTarget) {
             }
         } else {
             (deployment_status, deployment_details) = check_deployment_status(
-                self.k8s_config.ingress_node_port, path, namespace=namespace, app_name=app_name
+                self.k8s_config.ingress_node_port,
+                path,
+                namespace=namespace,
+                app_name=app_name
             );
             if deployment_status is False {
                 raise Exception("Deployment failed: Application failed to deploy.");
@@ -1040,7 +1043,13 @@ obj KubernetesTarget(DeploymentTarget) {
             networking_v1 = client.NetworkingV1Api();
             ingress_deployer = IngressDeployer(self.k8s_config, self.logger);
             ingress_deployer._deploy_nginx_controller(
-                app_name, namespace, cluster_env, apps_v1, core_v1, rbac_v1, networking_v1
+                app_name,
+                namespace,
+                cluster_env,
+                apps_v1,
+                core_v1,
+                rbac_v1,
+                networking_v1
             );
             ingress_deployer._deploy_ingress_resource(
                 app_name,

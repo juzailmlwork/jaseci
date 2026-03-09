@@ -8,11 +8,7 @@ import from jac_scale.factories.utility_factory { UtilityFactory }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
 
 test "deployment target factory creates kubernetes target" {
-    config = {
-        "app_name": "test-app",
-        "namespace": "default",
-        "container_port": 8000
-    };
+    config = {"app_name": "test-app", "namespace": "default", "container_port": 8000};
 
     target = DeploymentTargetFactory.create("kubernetes", config);
 

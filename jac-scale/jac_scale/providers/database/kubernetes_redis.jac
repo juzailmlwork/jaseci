@@ -412,10 +412,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
     HTTP basic auth in front of RedisInsight. This works identically for local
     NodePort, AWS NLB, and Ingress (ClusterIP) deployments.
     """
-    def deploy_dashboard(
-        username: str = '',
-        password: str = ''
-    ) -> dict[str, Any] {
+    def deploy_dashboard(username: str = '', password: str = '') -> dict[str, Any] {
         redis_service_name = f"{self.app_name}-redis-service";
         insight_name = f"{self.app_name}-redis-insight";
         auth_enabled = bool(username and password);

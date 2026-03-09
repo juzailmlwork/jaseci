@@ -173,8 +173,7 @@ obj KubernetesMongoProvider(DatabaseProvider) {
     Follows the same pattern as deploy(): pure spec construction, no API calls.
     """
     def deploy_dashboard(
-        username: str = 'admin',
-        password: str = 'admin'
+        username: str = 'admin', password: str = 'admin'
     ) -> dict[str, Any] {
         mongodb_service_name = f"{self.app_name}-mongodb-service";
         mongodb_secret_name = f"{self.app_name}-mongodb-secret";

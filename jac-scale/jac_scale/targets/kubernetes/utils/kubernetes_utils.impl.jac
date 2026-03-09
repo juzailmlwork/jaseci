@@ -338,10 +338,7 @@ Detect if the current connected cluster is AWS or local.
     Returns:
         'aws' for AWS EKS clusters, 'local' for local/other clusters.
 """
-impl check_node_ports_available(
-    node_port: int,
-    current_namespace: str
-) -> None {
+impl check_node_ports_available(node_port: int, current_namespace: str) -> None {
     """Check that the ingress controller NodePort is not already bound by a
     service in another namespace.
 
@@ -369,7 +366,9 @@ impl check_node_ports_available(
     if node_port in used_ports {
         raise ValueError(
             f"NodePort conflict detected on local cluster.\n"
-            f"  ingress_node_port={node_port} is already in use by '{used_ports[node_port]}'\n"
+            f"  ingress_node_port={node_port} is already in use by '{used_ports[
+                node_port
+            ]}'\n"
             f"Please choose a different ingress_node_port value in your KubernetesConfig and try again."
         );
     }
