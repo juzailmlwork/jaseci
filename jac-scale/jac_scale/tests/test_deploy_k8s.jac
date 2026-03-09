@@ -252,6 +252,7 @@ test "deploy all in one" {
     assert "Jaseci App" in component_names;
     assert "Redis" in component_names;
     assert "MongoDB" in component_names;
+    assert "NGINX Ingress" in component_names;
     for component in full_status["components"] {
         assert "name" in component;
         assert "status" in component;
