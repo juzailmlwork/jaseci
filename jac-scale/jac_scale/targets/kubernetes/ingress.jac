@@ -13,8 +13,8 @@ One controller per app, identified by ingress class '{app_name}-nginx'.
 Routes (local: http://<node-ip>:30080, AWS: NLB port 80):
   /               -> {app_name}-service
   /grafana        -> {app_name}-grafana-service   (Grafana handles subpath via GF_SERVER env)
-  /mongo-express  -> {app_name}-mongo-express-service  (MongoExpress handles subpath via ME_CONFIG_SITE_BASEURL)
-  /redis-insight  -> {app_name}-redis-insight-service  (separate Ingress with rewrite-target)
+  /db-dashboard  -> {app_name}-mongo-express-service  (MongoExpress handles subpath via ME_CONFIG_SITE_BASEURL)
+  /cache-dashboard  -> {app_name}-redis-insight-service  (separate Ingress with rewrite-target)
 """
 obj IngressDeployer {
     has k8s_config: KubernetesConfig,
@@ -369,8 +369,8 @@ obj IngressDeployer {
 
     """Deploy Ingress routing rules.
 
-    Main Ingress: routes /, /grafana (if enabled), /mongo-express (if enabled).
-    RedisInsight Ingress (separate): routes /redis-insight with rewrite-target so the
+    Main Ingress: routes /, /grafana (if enabled), /db-dashboard (if enabled).
+    RedisInsight Ingress (separate): routes /cache-dashboard with rewrite-target so the
     prefix is stripped before hitting the service.
 
     ingress_host: optional hostname; empty string = wildcard (matches all hosts).
@@ -421,7 +421,7 @@ obj IngressDeployer {
         if mongo_dashboard {
             paths.append(
                 {
-                    'path': '/mongo-express',
+                    'path': '/db-dashboard',
                     'pathType': 'Prefix',
                     'backend': {
                         'service': {
@@ -470,7 +470,7 @@ obj IngressDeployer {
             }
         }
 
-        # --- RedisInsight Ingress (with rewrite-target to strip /redis-insight prefix) ---
+        # --- RedisInsight Ingress (with rewrite-target to strip /cache-dashboard prefix) ---
         if redis_dashboard {
             # Determine the redis-insight service port (8080 when nginx-auth sidecar is
             # enabled, i.e. username and password are both set; otherwise 5540).
@@ -480,12 +480,14 @@ obj IngressDeployer {
             );
             redis_service_port = 8080 if auth_enabled else 5540;
 
+            # No rewrite — RIPROXYPATH=/cache-dashboard is set on the container so
+            # Redis Insight expects to receive the full /cache-dashboard/... path.
             redis_rule: dict = {
                 'http': {
                     'paths': [
                         {
-                            'path': '/redis-insight(/|$)(.*)',
-                            'pathType': 'ImplementationSpecific',
+                            'path': '/cache-dashboard',
+                            'pathType': 'Prefix',
                             'backend': {
                                 'service': {
                                     'name': f"{app_name}-redis-insight-service",
@@ -508,8 +510,9 @@ obj IngressDeployer {
                     'namespace': namespace,
                     'labels': {'app': app_name, 'managed': 'jac-scale'},
                     'annotations': {
-                        'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
-                        'nginx.ingress.kubernetes.io/use-regex': 'true'
+                        'nginx.ingress.kubernetes.io/proxy-body-size': '0',
+                        'nginx.ingress.kubernetes.io/proxy-read-timeout': '3600',
+                        'nginx.ingress.kubernetes.io/proxy-send-timeout': '3600'
                     }
                 },
                 'spec': {
