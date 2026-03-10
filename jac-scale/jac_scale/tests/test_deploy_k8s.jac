@@ -557,7 +557,7 @@ test "deploy all in one" {
     assert "provider.yaml" in grafana_provider.data;
     print("Grafana dashboard provider ConfigMap exists");
 
-    # Validate kube-state-metrics Deployment, Service, ServiceAccount, ClusterRole, ClusterRoleBinding
+    # Validate kube-state-metrics Deployment, Service, ServiceAccount, ClusterRole,ClusterRoleBinding
     ksm_deploy = apps_v1.read_namespaced_deployment(name=ksm_name, namespace=namespace);
     assert ksm_deploy.metadata.name == ksm_name;
     assert ksm_deploy.spec.replicas == 1;
