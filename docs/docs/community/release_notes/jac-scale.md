@@ -8,6 +8,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Fix: Ingress routes now update correctly on re-deploy**: Switched from `patch` to `replace` for Ingress resources so toggling monitoring or dashboards off actually removes the old routes instead of leaving them in place.
 - **Security: RedisInsight always requires authentication**: The `/cache-dashboard` route now always enforces HTTP basic-auth when `redis_dashboard = true`. Credentials are hashed with bcrypt (replaces the previous SHA1 scheme). The auth Secret is also cleaned up automatically when `redis_dashboard` is disabled.
 - Fix: Redis Insight dashboard 404 and nginx-auth ConfigMap not updating on re-deploy.
+- **Fix: Parser Strictness Compliance**: Moved docstrings before signatures in `kubernetes_utils.impl.jac` and converted nested function docstring to comment in `api.cl.jac` to comply with the stricter RD parser.
 - [Internal] Refactor: Extract graph visualizer HTML into a standalone template file.
 - **User storage now supports both MongoDB and SQLite**: User authentication and management automatically uses SQLite when MongoDB is not configured, maintaining full backward compatibility with existing installations.
 
