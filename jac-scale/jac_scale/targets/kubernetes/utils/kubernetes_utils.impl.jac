@@ -348,7 +348,7 @@ impl check_node_ports_available(node_port: int, current_namespace: str) -> None 
     cannot share the same NodePort value.  Services inside current_namespace
     are excluded because they will be replaced by this deployment.
     Raises ValueError if the port is already bound.
-    """
+    """;
     v1 = client.CoreV1Api();
     all_services = v1.list_service_for_all_namespaces();
     # Build a map: port_number -> "namespace/service-name"
