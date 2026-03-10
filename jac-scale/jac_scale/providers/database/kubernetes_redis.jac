@@ -220,6 +220,21 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             'data': {'redis.conf': redis_conf_content}
         };
 
+        redis_sa_name = f"{redis_name}-sa";
+        redis_service_account = {
+            'apiVersion': 'v1',
+            'kind': 'ServiceAccount',
+            'metadata': {
+                'name': redis_sa_name,
+                'labels': {
+                    'app': redis_name,
+                    'component': 'cache',
+                    'managed-by': 'jac-scale'
+                }
+            },
+            'automountServiceAccountToken': False
+        };
+
         # Create Redis Deployment
         redis_deployment = {
             'apiVersion': 'apps/v1',
@@ -245,10 +260,19 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                         }
                     },
                     'spec': {
+                        'automountServiceAccountToken': False,
+                        'serviceAccountName': redis_sa_name,
                         'containers': [
                             {
                                 'name': 'redis',
                                 'image': 'redis:7.2',
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 999,
+                                    'readOnlyRootFilesystem': True,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {'drop': ['ALL']}
+                                },
                                 'ports': [
                                     {'containerPort': redis_port, 'name': 'redis'}
                                 ],
@@ -282,7 +306,8 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                                         'name': 'redis-config',
                                         'mountPath': '/etc/redis',
                                         'readOnly': True
-                                    }
+                                    },
+                                    {'name': 'tmp', 'mountPath': '/tmp'}
                                 ],
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '128Mi'},
@@ -314,7 +339,8 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                             {
                                 'name': 'redis-config',
                                 'configMap': {'name': redis_config_name}
-                            }
+                            },
+                            {'name': 'tmp', 'emptyDir': {}}
                         ]
                     }
                 }
@@ -358,6 +384,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             'configmap': redis_configmap,
             'deployment': redis_deployment,
             'service': redis_service,
+            'service_account': redis_service_account,
             'connection_string': self.connection_string,
             'secret_name': redis_secret_name,
             'service_name': redis_service_name,
@@ -394,6 +421,13 @@ obj KubernetesRedisProvider(DatabaseProvider) {
         return {
             'name': 'wait-for-redis',
             'image': wait_image,
+            'securityContext': {
+                'runAsNonRoot': True,
+                'runAsUser': 1000,
+                'readOnlyRootFilesystem': True,
+                'allowPrivilegeEscalation': False,
+                'capabilities': {'drop': ['ALL']}
+            },
             'command': [
                 'sh',
                 '-c',
@@ -438,17 +472,39 @@ obj KubernetesRedisProvider(DatabaseProvider) {
         # The service targets this port so auth is enforced for all access paths.
         service_port = 8080 if auth_enabled else 5540;
 
+        insight_sa_name = f"{insight_name}-sa";
+        insight_service_account = {
+            'apiVersion': 'v1',
+            'kind': 'ServiceAccount',
+            'metadata': {
+                'name': insight_sa_name,
+                'labels': {'app': insight_name, 'managed': 'jac-scale'}
+            },
+            'automountServiceAccountToken': False
+        };
+
         # RedisInsight v3 supports RI_REDIS_HOST / RI_REDIS_PORT env vars to
         # pre-seed a database connection on first start (no manual setup needed).
         containers = [
             {
                 'name': 'redisinsight',
                 'image': 'redis/redisinsight:3.2.0',
+                'securityContext': {
+                    'runAsNonRoot': True,
+                    'runAsUser': 1000,
+                    'readOnlyRootFilesystem': True,
+                    'allowPrivilegeEscalation': False,
+                    'capabilities': {'drop': ['ALL']}
+                },
                 'ports': [{'containerPort': 5540}],
                 'env': [
                     {'name': 'RI_REDIS_HOST', 'value': redis_service_name},
                     {'name': 'RI_REDIS_PORT', 'value': '6379'},
                     {'name': 'RI_REDIS_ALIAS', 'value': 'Jaseci Redis'}
+                ],
+                'volumeMounts': [
+                    {'name': 'insight-data', 'mountPath': '/data'},
+                    {'name': 'tmp', 'mountPath': '/tmp'}
                 ],
                 'resources': {
                     'requests': {'cpu': '100m', 'memory': '128Mi'},
@@ -457,7 +513,15 @@ obj KubernetesRedisProvider(DatabaseProvider) {
             }
         ];
 
-        pod_spec = {'containers': containers};
+        pod_spec = {
+            'automountServiceAccountToken': False,
+            'serviceAccountName': insight_sa_name,
+            'containers': containers,
+            'volumes': [
+                {'name': 'insight-data', 'emptyDir': {}},
+                {'name': 'tmp', 'emptyDir': {}}
+            ]
+        };
 
         if auth_enabled {
             nginx_config_name = f"{insight_name}-nginx-config";
@@ -500,6 +564,13 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 {
                     'name': 'nginx-auth',
                     'image': 'nginx:1.27-alpine',
+                    'securityContext': {
+                        'runAsNonRoot': True,
+                        'runAsUser': 101,
+                        'readOnlyRootFilesystem': True,
+                        'allowPrivilegeEscalation': False,
+                        'capabilities': {'drop': ['ALL']}
+                    },
                     'ports': [{'containerPort': 8080}],
                     'volumeMounts': [
                         {
@@ -511,7 +582,9 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                             'name': 'htpasswd',
                             'mountPath': '/etc/nginx/.htpasswd',
                             'subPath': '.htpasswd'
-                        }
+                        },
+                        {'name': 'nginx-cache', 'mountPath': '/var/cache/nginx'},
+                        {'name': 'nginx-run', 'mountPath': '/var/run'}
                     ],
                     'resources': {
                         'requests': {'cpu': '50m', 'memory': '32Mi'},
@@ -520,9 +593,11 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 }
             );
 
-            pod_spec['volumes'] = [
+            pod_spec['volumes'] = pod_spec.get('volumes', []) + [
                 {'name': 'nginx-config', 'configMap': {'name': nginx_config_name}},
-                {'name': 'htpasswd', 'secret': {'secretName': auth_secret_name}}
+                {'name': 'htpasswd', 'secret': {'secretName': auth_secret_name}},
+                {'name': 'nginx-cache', 'emptyDir': {}},
+                {'name': 'nginx-run', 'emptyDir': {}}
             ];
         }
 
@@ -609,6 +684,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
         result = {
             'deployment': insight_deployment,
             'service': insight_service,
+            'service_account': insight_service_account,
             'deployment_name': insight_name,
             'service_name': f"{insight_name}-service"
         };

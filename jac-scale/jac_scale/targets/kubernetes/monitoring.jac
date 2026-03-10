@@ -100,6 +100,31 @@ obj MonitoringDeployer {
             }
         }
 
+        prometheus_sa_name = f"{prometheus_name}-sa";
+        prometheus_sa = {
+            'apiVersion': 'v1',
+            'kind': 'ServiceAccount',
+            'metadata': {
+                'name': prometheus_sa_name,
+                'namespace': namespace,
+                'labels': {'app': prometheus_name, 'managed': 'jac-scale'}
+            },
+            'automountServiceAccountToken': False
+        };
+        try {
+            core_v1.read_namespaced_service_account(
+                name=prometheus_sa_name, namespace=namespace
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_service_account(
+                    namespace=namespace, body=prometheus_sa
+                );
+            } else {
+                raise;
+            }
+        }
+
         prometheus_deployment = {
             'apiVersion': 'apps/v1',
             'kind': 'Deployment',
@@ -119,10 +144,19 @@ obj MonitoringDeployer {
                         'annotations': {'checksum/config': config_hash}
                     },
                     'spec': {
+                        'automountServiceAccountToken': False,
+                        'serviceAccountName': prometheus_sa_name,
                         'containers': [
                             {
                                 'name': 'prometheus',
                                 'image': 'prom/prometheus:latest',
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 65534,
+                                    'readOnlyRootFilesystem': True,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {'drop': ['ALL']}
+                                },
                                 'args': [
                                     '--config.file=/etc/prometheus/prometheus.yml',
                                     '--storage.tsdb.path=/prometheus',
@@ -136,7 +170,12 @@ obj MonitoringDeployer {
                                     {
                                         'name': 'prometheus-config-vol',
                                         'mountPath': '/etc/prometheus'
-                                    }
+                                    },
+                                    {
+                                        'name': 'prometheus-data',
+                                        'mountPath': '/prometheus'
+                                    },
+                                    {'name': 'tmp', 'mountPath': '/tmp'}
                                 ]
                             }
                         ],
@@ -144,7 +183,9 @@ obj MonitoringDeployer {
                             {
                                 'name': 'prometheus-config-vol',
                                 'configMap': {'name': f"{prometheus_name}-config"}
-                            }
+                            },
+                            {'name': 'prometheus-data', 'emptyDir': {}},
+                            {'name': 'tmp', 'emptyDir': {}}
                         ]
                     }
                 }
@@ -348,11 +389,19 @@ obj MonitoringDeployer {
                 'template': {
                     'metadata': {'labels': {'app': ksm_name}},
                     'spec': {
+                        'automountServiceAccountToken': True,
                         'serviceAccountName': ksm_sa_name,
                         'containers': [
                             {
                                 'name': 'kube-state-metrics',
                                 'image': 'registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1',
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 65534,
+                                    'readOnlyRootFilesystem': True,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {'drop': ['ALL']}
+                                },
                                 'ports': [
                                     {'containerPort': 8080, 'name': 'http-metrics'},
                                     {'containerPort': 8081, 'name': 'telemetry'}
@@ -452,11 +501,22 @@ obj MonitoringDeployer {
                 'template': {
                     'metadata': {'labels': {'app': ne_name}},
                     'spec': {
+                        'automountServiceAccountToken': False,
                         'tolerations': [{'operator': 'Exists', 'effect': 'NoSchedule'}],
                         'containers': [
                             {
                                 'name': 'node-exporter',
                                 'image': 'prom/node-exporter:v1.10.2',
+                                # node-exporter reads host proc/sys paths — readOnlyRootFilesystem
+                                # and allowPrivilegeEscalation are still hardened; capabilities
+                                # are kept minimal (only SYS_TIME omitted as not needed).
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 65534,
+                                    'readOnlyRootFilesystem': True,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {'drop': ['ALL']}
+                                },
                                 'args': [
                                     '--path.procfs=/host/proc',
                                     '--path.sysfs=/host/sys'
@@ -961,6 +1021,31 @@ obj MonitoringDeployer {
             }
         }
 
+        grafana_sa_name = f"{grafana_name}-sa";
+        grafana_sa = {
+            'apiVersion': 'v1',
+            'kind': 'ServiceAccount',
+            'metadata': {
+                'name': grafana_sa_name,
+                'namespace': namespace,
+                'labels': {'app': grafana_name, 'managed': 'jac-scale'}
+            },
+            'automountServiceAccountToken': False
+        };
+        try {
+            core_v1.read_namespaced_service_account(
+                name=grafana_sa_name, namespace=namespace
+            );
+        } except ApiException as e {
+            if e.status == 404 {
+                core_v1.create_namespaced_service_account(
+                    namespace=namespace, body=grafana_sa
+                );
+            } else {
+                raise;
+            }
+        }
+
         grafana_deployment = {
             'apiVersion': 'apps/v1',
             'kind': 'Deployment',
@@ -975,10 +1060,19 @@ obj MonitoringDeployer {
                 'template': {
                     'metadata': {'labels': {'app': grafana_name}},
                     'spec': {
+                        'automountServiceAccountToken': False,
+                        'serviceAccountName': grafana_sa_name,
                         'containers': [
                             {
                                 'name': 'grafana',
                                 'image': 'grafana/grafana:latest',
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 472,
+                                    'readOnlyRootFilesystem': True,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {'drop': ['ALL']}
+                                },
                                 'ports': [{'containerPort': 3000}],
                                 'envFrom': [
                                     {'secretRef': {'name': grafana_secret_name}}
@@ -995,7 +1089,12 @@ obj MonitoringDeployer {
                                     {
                                         'name': 'grafana-dashboard-vol',
                                         'mountPath': '/var/lib/grafana/dashboards'
-                                    }
+                                    },
+                                    {
+                                        'name': 'grafana-data',
+                                        'mountPath': '/var/lib/grafana'
+                                    },
+                                    {'name': 'tmp', 'mountPath': '/tmp'}
                                 ]
                             }
                         ],
@@ -1013,7 +1112,9 @@ obj MonitoringDeployer {
                             {
                                 'name': 'grafana-dashboard-vol',
                                 'configMap': {'name': f"{grafana_name}-dashboard"}
-                            }
+                            },
+                            {'name': 'grafana-data', 'emptyDir': {}},
+                            {'name': 'tmp', 'emptyDir': {}}
                         ]
                     }
                 }
