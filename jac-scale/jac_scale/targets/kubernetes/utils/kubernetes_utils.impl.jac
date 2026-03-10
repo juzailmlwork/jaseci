@@ -111,6 +111,7 @@ impl sync_code_to_pvc(
             'securityContext': {
                 'runAsNonRoot': True,
                 'runAsUser': 1000,
+                'fsGroup': 1000,
                 'seccompProfile': {'type': 'RuntimeDefault'}
             },
             'affinity': {
