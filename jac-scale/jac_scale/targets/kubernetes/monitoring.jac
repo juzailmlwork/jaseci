@@ -146,6 +146,9 @@ obj MonitoringDeployer {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': prometheus_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'prometheus',
@@ -391,6 +394,9 @@ obj MonitoringDeployer {
                     'spec': {
                         'automountServiceAccountToken': True,
                         'serviceAccountName': ksm_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'kube-state-metrics',
@@ -503,6 +509,9 @@ obj MonitoringDeployer {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'tolerations': [{'operator': 'Exists', 'effect': 'NoSchedule'}],
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'node-exporter',
@@ -1062,6 +1071,9 @@ obj MonitoringDeployer {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': grafana_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'grafana',

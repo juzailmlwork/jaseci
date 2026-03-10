@@ -108,6 +108,11 @@ impl sync_code_to_pvc(
         'metadata': {'name': sync_pod_name, 'labels': {'managed': 'jac-scale'}},
         'spec': {
             'restartPolicy': 'Never',
+            'securityContext': {
+                'runAsNonRoot': True,
+                'runAsUser': 1000,
+                'seccompProfile': {'type': 'RuntimeDefault'}
+            },
             'affinity': {
                 'podAffinity': {
                     'preferredDuringSchedulingIgnoredDuringExecution': [
@@ -128,6 +133,14 @@ impl sync_code_to_pvc(
                     'name': 'sync',
                     'image': sync_image,
                     'command': ['sh', '-c', 'sleep 3600'],
+                    'securityContext': {
+                        'runAsNonRoot': True,
+                        'runAsUser': 1000,
+                        'readOnlyRootFilesystem': True,
+                        'allowPrivilegeEscalation': False,
+                        'capabilities': {'drop': ['ALL']},
+                        'seccompProfile': {'type': 'RuntimeDefault'}
+                    },
                     'volumeMounts': [{'name': 'code', 'mountPath': '/data'}]
                 }
             ],

@@ -268,7 +268,8 @@ obj KubernetesTarget(DeploymentTarget) {
                 'runAsUser': 1000,
                 'readOnlyRootFilesystem': True,
                 'allowPrivilegeEscalation': False,
-                'capabilities': {'drop': ['ALL']}
+                'capabilities': {'drop': ['ALL']},
+                'seccompProfile': {'type': 'RuntimeDefault'}
             },
             'ports': [{'containerPort': self.k8s_config.container_port}],
             'env': self.env_list,
@@ -328,7 +329,8 @@ obj KubernetesTarget(DeploymentTarget) {
                 'runAsUser': 1000,
                 'readOnlyRootFilesystem': False,
                 'allowPrivilegeEscalation': False,
-                'capabilities': {'drop': ['ALL']}
+                'capabilities': {'drop': ['ALL']},
+                'seccompProfile': {'type': 'RuntimeDefault'}
             },
             'command': [
                 'sh',
@@ -397,6 +399,9 @@ obj KubernetesTarget(DeploymentTarget) {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': code_server_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'code-server',
@@ -408,7 +413,8 @@ obj KubernetesTarget(DeploymentTarget) {
                                     'runAsUser': 1000,
                                     'readOnlyRootFilesystem': False,
                                     'allowPrivilegeEscalation': False,
-                                    'capabilities': {'drop': ['ALL']}
+                                    'capabilities': {'drop': ['ALL']},
+                                    'seccompProfile': {'type': 'RuntimeDefault'}
                                 },
                                 'command': [
                                     'sh',
@@ -1236,6 +1242,9 @@ obj KubernetesTarget(DeploymentTarget) {
                         'spec': {
                             'automountServiceAccountToken': False,
                             'serviceAccountName': app_sa_name,
+                            'securityContext': {
+                                'seccompProfile': {'type': 'RuntimeDefault'}
+                            },
                             'initContainers': init_containers,
                             'containers': [container_config],
                             'volumes': volumes

@@ -55,6 +55,9 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': f"{mongodb_name}-sa",
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'mongodb',
@@ -244,6 +247,9 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': express_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'mongo-express',

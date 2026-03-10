@@ -262,6 +262,9 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                     'spec': {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': redis_sa_name,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'redis',
@@ -516,6 +519,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
         pod_spec = {
             'automountServiceAccountToken': False,
             'serviceAccountName': insight_sa_name,
+            'securityContext': {'seccompProfile': {'type': 'RuntimeDefault'}},
             'containers': containers,
             'volumes': [
                 {'name': 'insight-data', 'emptyDir': {}},
