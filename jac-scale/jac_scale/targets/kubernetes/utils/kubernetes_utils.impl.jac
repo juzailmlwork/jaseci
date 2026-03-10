@@ -141,11 +141,15 @@ impl sync_code_to_pvc(
                         'capabilities': {'drop': ['ALL']},
                         'seccompProfile': {'type': 'RuntimeDefault'}
                     },
-                    'volumeMounts': [{'name': 'code', 'mountPath': '/data'}]
+                    'volumeMounts': [
+                        {'name': 'code', 'mountPath': '/data'},
+                        {'name': 'tmp', 'mountPath': '/tmp'}
+                    ]
                 }
             ],
             'volumes': [
-                {'name': 'code', 'persistentVolumeClaim': {'claimName': pvc_name}}
+                {'name': 'code', 'persistentVolumeClaim': {'claimName': pvc_name}},
+                {'name': 'tmp', 'emptyDir': {}}
             ]
         }
     };
