@@ -609,6 +609,17 @@ impl ensure_namespace_exists(namespace: str) -> None {
         core_v1 = client.CoreV1Api();
         core_v1.read_namespace(name=namespace);
         console.print(f"Namespace '{namespace}' already exists.");
+        core_v1.patch_namespace(
+            name=namespace,
+            body={
+                'metadata': {
+                    'labels': {
+                        'pod-security.kubernetes.io/enforce': 'restricted',
+                        'pod-security.kubernetes.io/warn': 'restricted'
+                    }
+                }
+            }
+        );
     } except ApiException as e {
         if (e.status == 404) {
             console.print(f"Namespace '{namespace}' not found. Creating it...");
@@ -616,7 +627,13 @@ impl ensure_namespace_exists(namespace: str) -> None {
                 body={
                     'apiVersion': 'v1',
                     'kind': 'Namespace',
-                    'metadata': {'name': namespace}
+                    'metadata': {
+                        'name': namespace,
+                        'labels': {
+                            'pod-security.kubernetes.io/enforce': 'restricted',
+                            'pod-security.kubernetes.io/warn': 'restricted'
+                        }
+                    }
                 }
             );
             console.print(f"Namespace '{namespace}' created successfully.");

@@ -6,7 +6,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 - [Internal] Refactor: Extract graph visualizer HTML into a standalone template file.
 - **User storage now supports both MongoDB and SQLite**: User authentication and management automatically uses SQLite when MongoDB is not configured, maintaining full backward compatibility with existing installations.
-- **Kubernetes Security Hardening**: All generated Kubernetes manifests now enforce `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, and `capabilities.drop: ALL` on every container; each workload gets a dedicated `ServiceAccount` with `automountServiceAccountToken: false`; and a default-deny `NetworkPolicy` is generated per namespace with allowlists for DNS, intra-namespace, and external HTTP/HTTPS traffic.
+- **Kubernetes Security Hardening**: All generated Kubernetes manifests now enforce `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, and `capabilities.drop: ALL` on every container; each workload gets a dedicated `ServiceAccount` with `automountServiceAccountToken: false`; a default-deny `NetworkPolicy` is generated per namespace with allowlists for DNS, intra-namespace, and external HTTP/HTTPS traffic; and namespaces are labeled with `pod-security.kubernetes.io/enforce: restricted` and `pod-security.kubernetes.io/warn: restricted` (applied on both create and update).
 
 ## jac-scale 0.2.4 (Latest Release)
 
