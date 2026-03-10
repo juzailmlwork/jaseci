@@ -609,17 +609,23 @@ impl ensure_namespace_exists(namespace: str) -> None {
         core_v1 = client.CoreV1Api();
         core_v1.read_namespace(name=namespace);
         console.print(f"Namespace '{namespace}' already exists.");
-        core_v1.patch_namespace(
-            name=namespace,
-            body={
-                'metadata': {
-                    'labels': {
-                        'pod-security.kubernetes.io/enforce': 'restricted',
-                        'pod-security.kubernetes.io/warn': 'restricted'
+        try {
+            core_v1.patch_namespace(
+                name=namespace,
+                body={
+                    'metadata': {
+                        'labels': {
+                            'pod-security.kubernetes.io/enforce': 'restricted',
+                            'pod-security.kubernetes.io/warn': 'restricted'
+                        }
                     }
                 }
-            }
-        );
+            );
+        } except ApiException as patch_err {
+            console.print(
+                f"Warning: could not apply PSS labels to namespace '{namespace}': {patch_err}"
+            );
+        }
     } except ApiException as e {
         if (e.status == 404) {
             console.print(f"Namespace '{namespace}' not found. Creating it...");
