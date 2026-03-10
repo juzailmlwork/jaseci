@@ -25,6 +25,7 @@ glob COMPANION_DEFS: list = [
          ("-redis-insight", "RedisInsight", False),
          ("-mongo-express", "Mongo Express", False),
          ("-ingress-nginx", "NGINX Ingress", False),
+
      ];
 
 def check_pods_restarted(namespace: str, app_name: str) -> bool;

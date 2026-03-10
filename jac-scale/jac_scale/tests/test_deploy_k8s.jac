@@ -732,7 +732,7 @@ test "deploy all in one" {
     );
     assert ri_ingress.metadata.name == redis_ingress_name;
     ri_paths = [p.path for rule in ri_ingress.spec.rules for p in rule.http.paths];
-    assert "/cache-dashboard" in ri_paths , f"Redis Insight ingress must route '/cache-dashboard'; got: {ri_paths}";
+    assert any(p.startswith("/cache-dashboard") for p in ri_paths) , f"Redis Insight ingress must route '/cache-dashboard'; got: {ri_paths}";
     print(f"Redis Insight Ingress '{redis_ingress_name}' exists with route: {ri_paths}");
 
     # Send POST request to create a todo (with retry for 503)

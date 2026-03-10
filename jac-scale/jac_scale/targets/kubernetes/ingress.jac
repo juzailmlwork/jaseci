@@ -471,7 +471,7 @@ obj IngressDeployer {
             'spec': {'ingressClassName': ingress_class, 'rules': [main_rule]}
         };
         try {
-            networking_v1.patch_namespaced_ingress(
+            networking_v1.replace_namespaced_ingress(
                 name=ingress_name, namespace=namespace, body=main_ingress
             );
         } except ApiException as e {
@@ -500,7 +500,9 @@ obj IngressDeployer {
             if auth_enabled {
                 pw_hash = base64.b64encode(
                     hashlib.sha1(ri_password.encode('utf-8')).digest()
-                ).decode('utf-8');
+                ).decode(
+                    'utf-8'
+                );
                 htpasswd_line = f"{ri_username}:{{SHA}}{pw_hash}";
                 ri_auth_secret = {
                     'apiVersion': 'v1',
@@ -508,7 +510,10 @@ obj IngressDeployer {
                     'metadata': {
                         'name': ri_auth_secret_name,
                         'namespace': namespace,
-                        'labels': {'app': f"{app_name}-redis-insight", 'managed': 'jac-scale'}
+                        'labels': {
+                            'app': f"{app_name}-redis-insight",
+                            'managed': 'jac-scale'
+                        }
                     },
                     'stringData': {'auth': htpasswd_line}
                 };
@@ -589,7 +594,7 @@ obj IngressDeployer {
                 'spec': {'ingressClassName': ingress_class, 'rules': [redis_rule]}
             };
             try {
-                networking_v1.patch_namespaced_ingress(
+                networking_v1.replace_namespaced_ingress(
                     name=redis_ingress_name, namespace=namespace, body=redis_ingress
                 );
             } except ApiException as e {
@@ -601,6 +606,13 @@ obj IngressDeployer {
                     raise;
                 }
             }
+        } else {
+            delete_if_exists(
+                networking_v1.delete_namespaced_ingress,
+                redis_ingress_name,
+                namespace,
+                'Ingress'
+            );
         }
 
         if self.logger {
