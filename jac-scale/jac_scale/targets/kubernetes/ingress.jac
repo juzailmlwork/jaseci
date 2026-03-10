@@ -1,4 +1,5 @@
 """NGINX Ingress controller and Ingress resource deployer."""
+import time;
 import bcrypt;
 import from typing { Any }
 import from kubernetes { client }
@@ -245,7 +246,8 @@ obj IngressDeployer {
                                     f"--watch-namespace={namespace}",
                                     f"--configmap={namespace}/{configmap_name}",
                                     '--election-id=ingress-controller-leader',
-                                    '--validating-webhook='
+                                    '--validating-webhook=',
+                                    '--sync-period=5s'
                                 ],
                                 'env': [
                                     {
@@ -379,6 +381,46 @@ obj IngressDeployer {
                     f"NGINX ingress controller deployed for '{app_name}' at localhost:{self.k8s_config.ingress_node_port}"
                 );
             }
+        }
+    }
+
+    """Wait for the NGINX controller Deployment to have at least one ready replica.
+
+    Polls every 5 seconds for up to max_wait seconds. This avoids burning the
+    longer app health-check intervals (15 s each) while NGINX is still starting.
+    """
+    def _wait_for_nginx_ready(
+        app_name: str, namespace: str, apps_v1: Any, max_wait: int = 180
+    ) -> None {
+        controller_name = f"{app_name}-ingress-nginx";
+        elapsed = 0;
+        poll = 5;
+        while elapsed < max_wait {
+            try {
+                deploy = apps_v1.read_namespaced_deployment(
+                    name=controller_name, namespace=namespace
+                );
+                ready = deploy.status.ready_replicas or 0;
+                if ready >= 1 {
+                    if self.logger {
+                        self.logger.info(
+                            f"NGINX controller '{controller_name}' is ready ({elapsed}s)"
+                        );
+                    }
+                    return;
+                }
+            } except ApiException as e {
+                if e.status != 404 {
+                    raise;
+                }
+            }
+            time.sleep(poll);
+            elapsed = elapsed + poll;
+        }
+        if self.logger {
+            self.logger.warning(
+                f"NGINX controller '{controller_name}' not ready after {max_wait}s, proceeding anyway"
+            );
         }
     }
 

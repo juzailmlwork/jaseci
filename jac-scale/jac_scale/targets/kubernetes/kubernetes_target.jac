@@ -1016,6 +1016,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 rbac_v1,
                 networking_v1
             );
+            ingress_deployer._wait_for_nginx_ready(app_name, namespace, apps_v1);
             ingress_deployer._deploy_ingress_resource(
                 app_name,
                 namespace,
