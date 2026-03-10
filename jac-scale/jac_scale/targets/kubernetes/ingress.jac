@@ -1,6 +1,5 @@
 """NGINX Ingress controller and Ingress resource deployer."""
-import base64;
-import hashlib;
+import bcrypt;
 import from typing { Any }
 import from kubernetes { client }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
@@ -388,13 +387,10 @@ obj IngressDeployer {
     Main Ingress: routes /, /grafana (if enabled), /db-dashboard (if enabled).
     RedisInsight Ingress (separate): routes /cache-dashboard with rewrite-target so the
     prefix is stripped before hitting the service.
-
-    ingress_host: optional hostname; empty string = wildcard (matches all hosts).
     """
     def _deploy_ingress_resource(
         app_name: str,
         namespace: str,
-        ingress_host: str,
         ingress_class: str,
         service_port: int,
         grafana_enabled: bool,
@@ -451,9 +447,6 @@ obj IngressDeployer {
         }
 
         main_rule: dict = {'http': {'paths': paths}};
-        if ingress_host {
-            main_rule['host'] = ingress_host;
-        }
 
         main_ingress = {
             'apiVersion': 'networking.k8s.io/v1',
@@ -491,44 +484,43 @@ obj IngressDeployer {
         if redis_dashboard {
             ri_username = self.k8s_config.redis_insight_username;
             ri_password = self.k8s_config.redis_insight_password;
-            auth_enabled = bool(ri_username and ri_password);
             ri_auth_secret_name = f"{app_name}-redis-insight-auth";
 
-            # Create/update the NGINX Ingress basic-auth secret when credentials are set.
+            # Create/update the NGINX Ingress basic-auth secret.
             # The secret must have key 'auth' containing an htpasswd-formatted string.
-            # Format: username:{SHA}base64(sha1(password))
-            if auth_enabled {
-                pw_hash = base64.b64encode(
-                    hashlib.sha1(ri_password.encode('utf-8')).digest()
-                ).decode(
-                    'utf-8'
-                );
-                htpasswd_line = f"{ri_username}:{{SHA}}{pw_hash}";
-                ri_auth_secret = {
-                    'apiVersion': 'v1',
-                    'kind': 'Secret',
-                    'metadata': {
-                        'name': ri_auth_secret_name,
-                        'namespace': namespace,
-                        'labels': {
-                            'app': f"{app_name}-redis-insight",
-                            'managed': 'jac-scale'
-                        }
-                    },
-                    'stringData': {'auth': htpasswd_line}
-                };
-                try {
-                    core_v1.read_namespaced_secret(
-                        name=ri_auth_secret_name, namespace=namespace
-                    );
-                } except ApiException as e {
-                    if e.status == 404 {
-                        core_v1.create_namespaced_secret(
-                            namespace=namespace, body=ri_auth_secret
-                        );
-                    } else {
-                        raise;
+            # Format: username:<bcrypt-hash>  ($2y$ prefix required by NGINX Ingress)
+            pw_hash = bcrypt.hashpw(
+                ri_password.encode('utf-8'), bcrypt.gensalt()
+            ).decode(
+                'utf-8'
+            ).replace(
+                '$2b$', '$2y$'
+            );
+            htpasswd_line = f"{ri_username}:{pw_hash}";
+            ri_auth_secret = {
+                'apiVersion': 'v1',
+                'kind': 'Secret',
+                'metadata': {
+                    'name': ri_auth_secret_name,
+                    'namespace': namespace,
+                    'labels': {
+                        'app': f"{app_name}-redis-insight",
+                        'managed': 'jac-scale'
                     }
+                },
+                'stringData': {'auth': htpasswd_line}
+            };
+            try {
+                core_v1.read_namespaced_secret(
+                    name=ri_auth_secret_name, namespace=namespace
+                );
+            } except ApiException as e {
+                if e.status == 404 {
+                    core_v1.create_namespaced_secret(
+                        namespace=namespace, body=ri_auth_secret
+                    );
+                } else {
+                    raise;
                 }
             }
 
@@ -556,11 +548,9 @@ obj IngressDeployer {
                     'sub_filter_once off;'
                 )
             };
-            if auth_enabled {
-                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-type'] = 'basic';
-                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-secret'] = ri_auth_secret_name;
-                redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-realm'] = 'RedisInsight';
-            }
+            redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-type'] = 'basic';
+            redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-secret'] = ri_auth_secret_name;
+            redis_ingress_annotations['nginx.ingress.kubernetes.io/auth-realm'] = 'RedisInsight';
 
             redis_rule: dict = {
                 'http': {
@@ -578,9 +568,6 @@ obj IngressDeployer {
                     ]
                 }
             };
-            if ingress_host {
-                redis_rule['host'] = ingress_host;
-            }
 
             redis_ingress = {
                 'apiVersion': 'networking.k8s.io/v1',
@@ -612,6 +599,12 @@ obj IngressDeployer {
                 redis_ingress_name,
                 namespace,
                 'Ingress'
+            );
+            delete_if_exists(
+                core_v1.delete_namespaced_secret,
+                f"{app_name}-redis-insight-auth",
+                namespace,
+                'Secret'
             );
         }
 

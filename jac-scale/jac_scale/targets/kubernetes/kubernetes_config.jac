@@ -57,7 +57,6 @@ obj KubernetesConfig(BaseConfig) {
         redis_username: str = 'admin',
         redis_password: str = 'password',
         # Ingress configuration
-        ingress_host: str = '',
         ingress_node_port: int = 30080;
 
     override def to_dict -> dict[str, Any] {
@@ -119,7 +118,6 @@ obj KubernetesConfig(BaseConfig) {
                 'redis_username': self.redis_username,
                 'redis_password': self.redis_password,
                 # Ingress configuration
-                'ingress_host': self.ingress_host,
                 'ingress_node_port': self.ingress_node_port
             }
         );
@@ -181,7 +179,6 @@ obj KubernetesConfig(BaseConfig) {
             mongodb_root_password=config.get('mongodb_root_password', 'password'),
             redis_username=config.get('redis_username', 'admin'),
             redis_password=config.get('redis_password', 'password'),
-            ingress_host=config.get('ingress_host', ''),
             ingress_node_port=config.get('ingress_node_port', 30080)
         );
     }

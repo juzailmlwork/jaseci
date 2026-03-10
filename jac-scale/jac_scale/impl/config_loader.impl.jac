@@ -58,7 +58,6 @@ impl JacScaleConfig.get_default_config(self: JacScaleConfig) -> dict[str, Any] {
             'redis_username': 'admin',
             'redis_password': 'password',
             # Ingress configuration
-            'ingress_host': '',
             'ingress_node_port': 30080,
             # Resource requests/limits
             'cpu_request': None,

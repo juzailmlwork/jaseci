@@ -1133,10 +1133,12 @@ When dashboards are enabled, they are served through the NGINX Ingress at fixed 
 
 | `jac.toml` key | Description | Default |
 |----------------|-------------|---------|
-| `redis_insight_username` | RedisInsight login username | `admin` |
-| `redis_insight_password` | RedisInsight login password | `admin` |
+| `redis_insight_username` | RedisInsight basic-auth username | `admin` |
+| `redis_insight_password` | RedisInsight basic-auth password | `admin` |
 | `mongo_express_username` | Mongo Express login username | `admin` |
 | `mongo_express_password` | Mongo Express login password | `admin` |
+
+> **Note:** When `redis_dashboard = true`, the `/cache-dashboard` route is always protected by HTTP basic authentication using the credentials above. Change the defaults before deploying to a shared or public cluster.
 
 **Access URLs:**
 

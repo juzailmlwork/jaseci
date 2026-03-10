@@ -241,9 +241,9 @@ impl run_kubectl_command(args: list[str], cwd: str | Path | None = None) -> None
             ['kubectl', *args], check=True, text=True, cwd=str(cwd) if cwd else None
         );
     } except subprocess.CalledProcessError as exc {
-        raise exc from RuntimeError(
+        raise RuntimeError(
             f"kubectl command failed: {' '.join(['kubectl', *args])}"
-        );
+        ) from exc;
     }
 }
 

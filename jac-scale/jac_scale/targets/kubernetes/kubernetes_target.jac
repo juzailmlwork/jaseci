@@ -1019,7 +1019,6 @@ obj KubernetesTarget(DeploymentTarget) {
             ingress_deployer._deploy_ingress_resource(
                 app_name,
                 namespace,
-                self.k8s_config.ingress_host,
                 f"{app_name}-nginx",
                 self.k8s_config.container_port,
                 self.k8s_config.monitoring_enabled,
@@ -1221,7 +1220,13 @@ obj KubernetesTarget(DeploymentTarget) {
                         break;
                     }
                 }
-            } except Exception { }
+            } except Exception as e {
+                if self.logger {
+                    self.logger.warning(
+                        f"Failed to list PVCs while checking resources for '{app_name}': {e}"
+                    );
+                }
+            }
 
             # Check code sync pod
             try {
@@ -1462,7 +1467,13 @@ obj KubernetesTarget(DeploymentTarget) {
                         core_v1.delete_namespaced_persistent_volume_claim(
                             name=pvc.metadata.name, namespace=namespace
                         );
-                    } except Exception { }
+                    } except Exception as e {
+                        if self.logger {
+                            self.logger.warning(
+                                f"Failed to delete PVC '{pvc.metadata.name}': {e}"
+                            );
+                        }
+                    }
                 }
             }
 
@@ -1666,7 +1677,13 @@ obj KubernetesTarget(DeploymentTarget) {
             for d in apps_v1.list_namespaced_deployment(namespace=namespace).items {
                 dep_map[d.metadata.name] = d;
             }
-        } except Exception { }
+        } except Exception as e {
+            if self.logger {
+                self.logger.warning(
+                    f"Failed to list Deployments in '{namespace}': {e}"
+                );
+            }
+        }
 
         # 2. Bulk-fetch all StatefulSets
         sts_map = {};
@@ -1674,7 +1691,13 @@ obj KubernetesTarget(DeploymentTarget) {
             for s in apps_v1.list_namespaced_stateful_set(namespace=namespace).items {
                 sts_map[s.metadata.name] = s;
             }
-        } except Exception { }
+        } except Exception as e {
+            if self.logger {
+                self.logger.warning(
+                    f"Failed to list StatefulSets in '{namespace}': {e}"
+                );
+            }
+        }
 
         # 3. Bulk-fetch pods to detect crash-looping (restart_count > 0)
         #    Keyed by the pod's 'app' label → True if any container has restarts
@@ -1693,7 +1716,11 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 }
             }
-        } except Exception { }
+        } except Exception as e {
+            if self.logger {
+                self.logger.warning(f"Failed to list Pods in '{namespace}': {e}");
+            }
+        }
 
         # Resolve status for each component from the cached maps.
         # Derived from COMPANION_DEFS — add new companions there, not here.
@@ -1761,7 +1788,13 @@ obj KubernetesTarget(DeploymentTarget) {
             if app_url {
                 urls['app'] = app_url;
             }
-        } except Exception { }
+        } except Exception as e {
+            if self.logger {
+                self.logger.warning(
+                    f"Failed to resolve service URL for '{app_name}': {e}"
+                );
+            }
+        }
 
         # All dashboard URLs are path-based through the ingress entry point
         base_url = self.get_service_url(app_name) or '';
