@@ -766,12 +766,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 }
             }
             if self.k8s_config.redis_dashboard {
-                insight_result = redis_provider.deploy_dashboard(
-                    cluster_env=cluster_env,
-                    node_port=self.k8s_config.redis_insight_node_port,
-                    username=self.k8s_config.redis_insight_username,
-                    password=self.k8s_config.redis_insight_password
-                );
+                insight_result = redis_provider.deploy_dashboard();
                 self._apply_provider_service_account(
                     insight_result['service_account'], namespace, core_v1
                 );
