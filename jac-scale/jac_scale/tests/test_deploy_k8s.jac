@@ -656,7 +656,8 @@ test "deploy all in one" {
 
     # Validate NGINX Ingress controller resources
     nginx_controller_name = f"{app_name}-ingress-nginx";
-    ingress_class_name = f"{app_name}-nginx";
+    nginx_cluster_resource_name = f"{namespace}-{nginx_controller_name}";
+    ingress_class_name = f"{namespace}-{app_name}-nginx";
     nginx_configmap_name = f"{app_name}-nginx-configuration";
     nginx_service_name = f"{nginx_controller_name}-service";
     ingress_name = f"{app_name}-ingress";
@@ -668,13 +669,13 @@ test "deploy all in one" {
     assert nginx_sa.metadata.name == nginx_controller_name;
     print(f"NGINX Ingress ServiceAccount '{nginx_controller_name}' exists");
 
-    nginx_cluster_role = rbac_v1.read_cluster_role(name=nginx_controller_name);
-    assert nginx_cluster_role.metadata.name == nginx_controller_name;
-    print(f"NGINX Ingress ClusterRole '{nginx_controller_name}' exists");
+    nginx_cluster_role = rbac_v1.read_cluster_role(name=nginx_cluster_resource_name);
+    assert nginx_cluster_role.metadata.name == nginx_cluster_resource_name;
+    print(f"NGINX Ingress ClusterRole '{nginx_cluster_resource_name}' exists");
 
-    nginx_crb = rbac_v1.read_cluster_role_binding(name=nginx_controller_name);
-    assert nginx_crb.metadata.name == nginx_controller_name;
-    print(f"NGINX Ingress ClusterRoleBinding '{nginx_controller_name}' exists");
+    nginx_crb = rbac_v1.read_cluster_role_binding(name=nginx_cluster_resource_name);
+    assert nginx_crb.metadata.name == nginx_cluster_resource_name;
+    print(f"NGINX Ingress ClusterRoleBinding '{nginx_cluster_resource_name}' exists");
 
     nginx_cm = core_v1.read_namespaced_config_map(
         name=nginx_configmap_name, namespace=namespace
