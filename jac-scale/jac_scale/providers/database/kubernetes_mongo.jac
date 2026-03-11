@@ -56,6 +56,9 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                         'automountServiceAccountToken': False,
                         'serviceAccountName': f"{mongodb_name}-sa",
                         'securityContext': {
+                            'runAsNonRoot': True,
+                            'runAsUser': 999,
+                            'fsGroup': 999,
                             'seccompProfile': {'type': 'RuntimeDefault'}
                         },
                         'containers': [
