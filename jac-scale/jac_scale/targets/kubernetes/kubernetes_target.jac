@@ -258,19 +258,32 @@ obj KubernetesTarget(DeploymentTarget) {
         command: (list[str] | None) = None,
         working_dir: (str | None) = None,
         volume_mounts: (list[dict[(str, Any)]] | None) = None,
-        secret_ref_name: (str | None) = None
+        secret_ref_name: (str | None) = None,
+        needs_root: bool = False
     ) -> dict[(str, Any)] {
-        container_config = {
-            'name': app_name,
-            'image': image,
-            'securityContext': {
+        # Containers that install packages at runtime (apt-get, pip) need root
+        # and a writable filesystem. Pre-built image containers can be fully locked down.
+        if needs_root {
+            security_context = {
+                'readOnlyRootFilesystem': False,
+                'allowPrivilegeEscalation': False,
+                'capabilities': {'drop': ['ALL']},
+                'seccompProfile': {'type': 'RuntimeDefault'}
+            };
+        } else {
+            security_context = {
                 'runAsNonRoot': True,
                 'runAsUser': 1000,
                 'readOnlyRootFilesystem': True,
                 'allowPrivilegeEscalation': False,
                 'capabilities': {'drop': ['ALL']},
                 'seccompProfile': {'type': 'RuntimeDefault'}
-            },
+            };
+        }
+        container_config = {
+            'name': app_name,
+            'image': image,
+            'securityContext': security_context,
             'ports': [{'containerPort': self.k8s_config.container_port}],
             'env': self.env_list,
             'readinessProbe': probe_configs['readiness'],
@@ -1213,7 +1226,8 @@ obj KubernetesTarget(DeploymentTarget) {
                             'mountPath': self.k8s_config.app_mount_path
                         }
                     ],
-                    secret_ref_name=secret_ref_name
+                    secret_ref_name=secret_ref_name,
+                    needs_root=True
                 );
             }
 
@@ -1574,6 +1588,25 @@ obj KubernetesTarget(DeploymentTarget) {
             namespace,
             'PersistentVolumeClaim'
         );
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-sa",
+            namespace,
+            'ServiceAccount'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-code-server-sa",
+            namespace,
+            'ServiceAccount'
+        );
+        networking_v1 = client.NetworkingV1Api();
+        delete_if_exists(
+            networking_v1.delete_namespaced_network_policy,
+            f"{app_name}-network-policy",
+            namespace,
+            'NetworkPolicy'
+        );
     }
 
     def _destroy_database(
@@ -1593,6 +1626,12 @@ obj KubernetesTarget(DeploymentTarget) {
             'Service'
         );
         delete_k8s_secret(core_v1, namespace, f"{app_name}-mongodb-secret");
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-mongodb-sa",
+            namespace,
+            'ServiceAccount'
+        );
     }
 
     def _destroy_cache(
@@ -1615,6 +1654,12 @@ obj KubernetesTarget(DeploymentTarget) {
             'ConfigMap'
         );
         delete_k8s_secret(core_v1, namespace, f"{app_name}-redis-secret");
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-redis-sa",
+            namespace,
+            'ServiceAccount'
+        );
     }
 
     def _destroy_dashboard(
@@ -1651,6 +1696,18 @@ obj KubernetesTarget(DeploymentTarget) {
             f"{insight_name}-auth",
             namespace,
             'Secret'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-mongo-express-sa",
+            namespace,
+            'ServiceAccount'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{app_name}-redis-insight-sa",
+            namespace,
+            'ServiceAccount'
         );
     }
 

@@ -1337,6 +1337,18 @@ obj MonitoringDeployer {
             }
         }
         delete_k8s_secret(core_v1, namespace, f"{grafana_name}-secret");
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{prometheus_name}-sa",
+            namespace,
+            'ServiceAccount'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_service_account,
+            f"{grafana_name}-sa",
+            namespace,
+            'ServiceAccount'
+        );
 
         if self.logger {
             self.logger.info(f"Monitoring stack destroyed for '{app_name}'");

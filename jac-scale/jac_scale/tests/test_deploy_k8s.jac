@@ -760,8 +760,45 @@ test "deploy all in one" {
     }
     assert pvc_deleted , "code-pvc should have been deleted within 60s of application component destroy";
 
+    # Verify app ServiceAccount is gone
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-sa", namespace=namespace
+        );
+        raise AssertionError(
+            "App ServiceAccount should have been deleted by application component destroy"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    # Verify code-server ServiceAccount is gone
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-code-server-sa", namespace=namespace
+        );
+        raise AssertionError(
+            "Code-server ServiceAccount should have been deleted by application component destroy"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    # Verify NetworkPolicy is gone
+    networking_v1 = client.NetworkingV1Api();
+    try {
+        networking_v1.read_namespaced_network_policy(
+            name=f"{app_name}-network-policy", namespace=namespace
+        );
+        raise AssertionError(
+            "NetworkPolicy should have been deleted by application component destroy"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
     print(
-        "Application component (HPA + Deployment + Service + Secret + code-server + PVCs) removed"
+        "Application component (HPA + Deployment + Service + Secret + code-server + PVCs + SAs + NetworkPolicy) removed"
     );
 
     # Verify cache and database are still running
@@ -848,7 +885,19 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
-    print("Cache component (Redis Deployment + Service + ConfigMap) removed");
+    # Verify Redis ServiceAccount is gone
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-redis-sa", namespace=namespace
+        );
+        raise AssertionError(
+            "Redis ServiceAccount should have been deleted by cache component destroy"
+        );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    print("Cache component (Redis Deployment + Service + ConfigMap + SA) removed");
 
     # Verify database is still running
     try {
@@ -942,6 +991,25 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
+    # Verify dashboard ServiceAccounts are gone
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-mongo-express-sa", namespace=namespace
+        );
+        raise AssertionError("mongo-express ServiceAccount should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-redis-insight-sa", namespace=namespace
+        );
+        raise AssertionError("RedisInsight ServiceAccount should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
     print("Dashboard (RedisInsight + mongo-express) cleanup verified");
 
     # Verify monitoring stack cleanup
@@ -1022,6 +1090,16 @@ test "deploy all in one" {
         }
     }
 
+    # Verify MongoDB ServiceAccount is gone
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-mongodb-sa", namespace=namespace
+        );
+        raise AssertionError("MongoDB ServiceAccount should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
     try {
         core_v1.read_namespaced_service_account(
             name=f"{ksm_name}-sa", namespace=namespace
@@ -1029,6 +1107,24 @@ test "deploy all in one" {
         raise AssertionError(
             "kube-state-metrics ServiceAccount should have been deleted"
         );
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-prometheus-sa", namespace=namespace
+        );
+        raise AssertionError("Prometheus ServiceAccount should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_service_account(
+            name=f"{app_name}-grafana-sa", namespace=namespace
+        );
+        raise AssertionError("Grafana ServiceAccount should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -1064,7 +1160,7 @@ test "deploy all in one" {
     }
 
     print(
-        "Monitoring component (Prometheus + Grafana + kube-state-metrics + node-exporter) cleanup verified"
+        "Monitoring component (Prometheus + Grafana + kube-state-metrics + node-exporter + SAs) cleanup verified"
     );
 
     # Verify namespace was deleted (since it is not 'default')
