@@ -782,7 +782,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 app_name=app_name
             );
             if deployment_status is False {
-                raise Exception("Deployment failed: Application failed to deploy.");
+                raise Exception(f"Deployment failed: {deployment_details}");
             }
         }
         return deployment_details;
