@@ -1007,26 +1007,18 @@ obj KubernetesTarget(DeploymentTarget) {
             rbac_v1 = client.RbacAuthorizationV1Api();
             networking_v1 = client.NetworkingV1Api();
             ingress_deployer = IngressDeployer(self.k8s_config, self.logger);
-            ingress_deployer._deploy_nginx_controller(
+            ingress_deployer.deploy(
                 app_name,
                 namespace,
                 cluster_env,
-                apps_v1,
-                core_v1,
-                rbac_v1,
-                networking_v1
-            );
-            ingress_deployer._wait_for_nginx_ready(app_name, namespace, apps_v1);
-            ingress_deployer._deploy_ingress_resource(
-                app_name,
-                namespace,
-                f"{app_name}-nginx",
                 self.k8s_config.container_port,
                 self.k8s_config.monitoring_enabled,
                 self.k8s_config.redis_dashboard,
                 self.k8s_config.mongodb_dashboard,
-                networking_v1,
-                core_v1
+                apps_v1,
+                core_v1,
+                rbac_v1,
+                networking_v1
             );
             details["deploy_ingress"] = "Successful";
 
@@ -1784,6 +1776,7 @@ obj KubernetesTarget(DeploymentTarget) {
 
         # 4. Application service URL
         is_aws = cluster_type() == 'aws';
+        app_url = None;
         try {
             app_url = self.get_service_url(app_name);
             if app_url {
@@ -1798,7 +1791,7 @@ obj KubernetesTarget(DeploymentTarget) {
         }
 
         # All dashboard URLs are path-based through the ingress entry point
-        base_url = self.get_service_url(app_name) or '';
+        base_url = app_url or '';
 
         if grafana_running {
             urls['grafana'] = f"{base_url}/grafana";

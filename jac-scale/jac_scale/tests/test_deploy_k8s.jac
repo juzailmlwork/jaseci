@@ -1144,11 +1144,13 @@ test "deploy all in one" {
 
     # Verify NGINX Ingress controller cleanup
     nginx_controller_name = f"{app_name}-ingress-nginx";
-    ingress_class_name = f"{app_name}-nginx";
+    nginx_cluster_resource_name = f"{namespace}-{app_name}-ingress-nginx";
+    ingress_class_name = f"{namespace}-{app_name}-nginx";
     nginx_configmap_name = f"{app_name}-nginx-configuration";
     nginx_service_name = f"{nginx_controller_name}-service";
     ingress_name = f"{app_name}-ingress";
     redis_ingress_name = f"{app_name}-redis-insight-ingress";
+    redis_auth_secret_name = f"{app_name}-redis-insight-auth";
 
     try {
         networking_v1.read_namespaced_ingress(name=ingress_name, namespace=namespace);
@@ -1162,6 +1164,13 @@ test "deploy all in one" {
             name=redis_ingress_name, namespace=namespace
         );
         raise AssertionError("Redis Insight Ingress should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_secret(name=redis_auth_secret_name, namespace=namespace);
+        raise AssertionError("Redis Insight auth Secret should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
@@ -1201,14 +1210,14 @@ test "deploy all in one" {
     }
 
     try {
-        rbac_v1.read_cluster_role(name=nginx_controller_name);
+        rbac_v1.read_cluster_role(name=nginx_cluster_resource_name);
         raise AssertionError("NGINX controller ClusterRole should have been deleted");
     } except ApiException as e {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
     try {
-        rbac_v1.read_cluster_role_binding(name=nginx_controller_name);
+        rbac_v1.read_cluster_role_binding(name=nginx_cluster_resource_name);
         raise AssertionError(
             "NGINX controller ClusterRoleBinding should have been deleted"
         );

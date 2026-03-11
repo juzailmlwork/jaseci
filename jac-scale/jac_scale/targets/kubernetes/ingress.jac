@@ -34,8 +34,9 @@ obj IngressDeployer {
         networking_v1: Any
     ) -> None {
         controller_name = f"{app_name}-ingress-nginx";
+        cluster_resource_name = f"{namespace}-{app_name}-ingress-nginx";
         configmap_name = f"{app_name}-nginx-configuration";
-        ingress_class_name = f"{app_name}-nginx";
+        ingress_class_name = f"{namespace}-{app_name}-nginx";
         service_name = f"{controller_name}-service";
 
         # --- ServiceAccount ---
@@ -65,7 +66,7 @@ obj IngressDeployer {
             'apiVersion': 'rbac.authorization.k8s.io/v1',
             'kind': 'ClusterRole',
             'metadata': {
-                'name': controller_name,
+                'name': cluster_resource_name,
                 'labels': {'app': controller_name, 'managed': 'jac-scale'}
             },
             'rules': [
@@ -127,8 +128,8 @@ obj IngressDeployer {
             ]
         };
         try {
-            rbac_v1.read_cluster_role(name=controller_name);
-            rbac_v1.replace_cluster_role(name=controller_name, body=cluster_role);
+            rbac_v1.read_cluster_role(name=cluster_resource_name);
+            rbac_v1.replace_cluster_role(name=cluster_resource_name, body=cluster_role);
         } except ApiException as e {
             if e.status == 404 {
                 rbac_v1.create_cluster_role(body=cluster_role);
@@ -142,13 +143,13 @@ obj IngressDeployer {
             'apiVersion': 'rbac.authorization.k8s.io/v1',
             'kind': 'ClusterRoleBinding',
             'metadata': {
-                'name': controller_name,
+                'name': cluster_resource_name,
                 'labels': {'app': controller_name, 'managed': 'jac-scale'}
             },
             'roleRef': {
                 'apiGroup': 'rbac.authorization.k8s.io',
                 'kind': 'ClusterRole',
-                'name': controller_name
+                'name': cluster_resource_name
             },
             'subjects': [
                 {
@@ -159,8 +160,8 @@ obj IngressDeployer {
             ]
         };
         try {
-            rbac_v1.read_cluster_role_binding(name=controller_name);
-            rbac_v1.replace_cluster_role_binding(name=controller_name, body=crb);
+            rbac_v1.read_cluster_role_binding(name=cluster_resource_name);
+            rbac_v1.replace_cluster_role_binding(name=cluster_resource_name, body=crb);
         } except ApiException as e {
             if e.status == 404 {
                 rbac_v1.create_cluster_role_binding(body=crb);
@@ -170,10 +171,13 @@ obj IngressDeployer {
         }
 
         # --- ConfigMap ---
-        # allow-snippet-annotations is required so that configuration-snippet
-        # annotations on Ingress resources (e.g. sub_filter for RedisInsight asset
-        # path rewriting) are accepted by the controller. Disabled by default in
-        # nginx-ingress >= v1.9.0, so we must opt-in explicitly.
+        # allow-snippet-annotations + annotations-risk-level: Critical are required
+        # so that configuration-snippet annotations on Ingress resources (e.g.
+        # sub_filter for RedisInsight asset path rewriting) are accepted by the
+        # controller. Disabled by default in nginx-ingress >= v1.9.0; enabling it
+        # allows any principal with Ingress write access in this namespace to inject
+        # arbitrary NGINX config snippets. Avoid in multi-tenant clusters where
+        # untrusted users can create Ingress resources.
         cm = {
             'apiVersion': 'v1',
             'kind': 'ConfigMap',
@@ -553,8 +557,8 @@ obj IngressDeployer {
                 'stringData': {'auth': htpasswd_line}
             };
             try {
-                core_v1.read_namespaced_secret(
-                    name=ri_auth_secret_name, namespace=namespace
+                core_v1.replace_namespaced_secret(
+                    name=ri_auth_secret_name, namespace=namespace, body=ri_auth_secret
                 );
             } except ApiException as e {
                 if e.status == 404 {
@@ -655,6 +659,37 @@ obj IngressDeployer {
         }
     }
 
+    """Deploy the full ingress stack: NGINX controller, wait for readiness, then routing rules."""
+    def deploy(
+        app_name: str,
+        namespace: str,
+        cluster_env: str,
+        service_port: int,
+        grafana_enabled: bool,
+        redis_dashboard: bool,
+        mongo_dashboard: bool,
+        apps_v1: Any,
+        core_v1: Any,
+        rbac_v1: Any,
+        networking_v1: Any
+    ) -> None {
+        self._deploy_nginx_controller(
+            app_name, namespace, cluster_env, apps_v1, core_v1, rbac_v1, networking_v1
+        );
+        self._wait_for_nginx_ready(app_name, namespace, apps_v1);
+        self._deploy_ingress_resource(
+            app_name,
+            namespace,
+            f"{namespace}-{app_name}-nginx",
+            service_port,
+            grafana_enabled,
+            redis_dashboard,
+            mongo_dashboard,
+            networking_v1,
+            core_v1
+        );
+    }
+
     """Tear down all ingress resources created by this deployer."""
     def destroy(
         app_name: str,
@@ -665,7 +700,8 @@ obj IngressDeployer {
         networking_v1: Any
     ) -> None {
         controller_name = f"{app_name}-ingress-nginx";
-        ingress_class_name = f"{app_name}-nginx";
+        cluster_resource_name = f"{namespace}-{app_name}-ingress-nginx";
+        ingress_class_name = f"{namespace}-{app_name}-nginx";
         ingress_name = f"{app_name}-ingress";
         redis_ingress_name = f"{app_name}-redis-insight-ingress";
         service_name = f"{controller_name}-service";
@@ -680,6 +716,12 @@ obj IngressDeployer {
             redis_ingress_name,
             namespace,
             'Ingress'
+        );
+        delete_if_exists(
+            core_v1.delete_namespaced_secret,
+            f"{app_name}-redis-insight-auth",
+            namespace,
+            'Secret'
         );
 
         # Delete controller namespaced resources
@@ -707,14 +749,14 @@ obj IngressDeployer {
 
         # Delete cluster-scoped resources (no namespace parameter)
         try {
-            rbac_v1.delete_cluster_role(name=controller_name);
+            rbac_v1.delete_cluster_role(name=cluster_resource_name);
         } except ApiException as e {
             if e.status != 404 {
                 raise;
             }
         }
         try {
-            rbac_v1.delete_cluster_role_binding(name=controller_name);
+            rbac_v1.delete_cluster_role_binding(name=cluster_resource_name);
         } except ApiException as e {
             if e.status != 404 {
                 raise;

@@ -1449,7 +1449,7 @@ jac-scale can deploy a full observability stack (Prometheus + Grafana + kube-sta
 | Component | Purpose |
 |-----------|---------|
 | **Prometheus** | Collects and stores metrics (ClusterIP - internal only, scraped by Grafana) |
-| **Grafana** | Dashboard UI - served via NGINX Ingress at `/grafana` on local clusters, NLB on AWS |
+| **Grafana** | Dashboard UI - served via NGINX Ingress at `/grafana` (NodePort locally, NLB on AWS) |
 | **kube-state-metrics** | K8s object state: pod counts, replica health, restart counts |
 | **node-exporter** | Host-level metrics: CPU, memory, disk, network per node |
 
@@ -1474,7 +1474,7 @@ After deployment, access:
 
 - **Grafana:** `http://localhost:<ingress_node_port>/grafana` - log in with `admin` / `<prometheus_admin_password>`
 
-On AWS clusters, Grafana is exposed via a Network Load Balancer (NLB) instead of the NGINX Ingress.
+On AWS clusters, the NGINX Ingress controller is exposed via a Network Load Balancer (NLB). Grafana is accessible at `<nlb-url>/grafana`.
 
 **Prometheus scrape targets:**
 
