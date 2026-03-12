@@ -616,7 +616,7 @@ impl ensure_namespace_exists(namespace: str) -> None {
                 body={
                     'metadata': {
                         'labels': {
-                            'pod-security.kubernetes.io/enforce': 'restricted',
+                            'pod-security.kubernetes.io/enforce': 'baseline',
                             'pod-security.kubernetes.io/warn': 'restricted'
                         }
                     }
@@ -637,7 +637,7 @@ impl ensure_namespace_exists(namespace: str) -> None {
                     'metadata': {
                         'name': namespace,
                         'labels': {
-                            'pod-security.kubernetes.io/enforce': 'restricted',
+                            'pod-security.kubernetes.io/enforce': 'baseline',
                             'pod-security.kubernetes.io/warn': 'restricted'
                         }
                     }
