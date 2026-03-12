@@ -998,8 +998,11 @@ obj KubernetesTarget(DeploymentTarget) {
                     k8s_cluster_config.load_incluster_config();
                 }
                 core_v1 = client.CoreV1Api();
+                # The app service is ClusterIP; the NLB is on the NGINX ingress
+                # controller's LoadBalancer service — same source as get_service_url().
+                ingress_svc_name = f"{app_name}-ingress-nginx-service";
                 service_obj = core_v1.read_namespaced_service(
-                    f"{app_name}-service", namespace
+                    ingress_svc_name, namespace
                 );
                 nlb_ingress = service_obj.status.load_balancer.ingress;
                 if (nlb_ingress and (len(nlb_ingress) > 0)) {
@@ -1008,7 +1011,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 } else {
                     if self.logger {
                         self.logger.info(
-                            f"NLB is being provisioned. Run 'kubectl get svc {app_name}-service -n {namespace}' to get the endpoint."
+                            f"NLB is being provisioned. Run 'kubectl get svc {ingress_svc_name} -n {namespace}' to get the endpoint."
                         );
                     }
                 }
