@@ -454,15 +454,24 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         }
 
         for container in statuses {
-            waiting = container.state and container.state.waiting;
-            in_crash_loop = waiting
-            and waiting.reason in ('CrashLoopBackOff', 'OOMKilled', 'Error');
-            if (in_crash_loop) {
-                console.print(
-                    f"Pod {pod.metadata.name} container "
-                    f"{container.name} is in {waiting.reason}"
-                );
-                return True;
+            # Fast-exit: restarted AND not currently running means it crashed
+            # and hasn't recovered. A pod that restarts once then stabilises
+            # (e.g. MongoDB with readOnlyRootFilesystem) will have restart_count>0
+            # but state.running set, so it passes this check.
+            if container.restart_count > 0 {
+                is_running = container.state and container.state.running;
+                if not is_running {
+                    reason = (
+                        container.state.waiting.reason
+                            if (container.state and container.state.waiting)
+                            else "unknown"
+                    );
+                    console.print(
+                        f"Pod {pod.metadata.name} container "
+                        f"{container.name} restarted and is not running (reason: {reason})"
+                    );
+                    return True;
+                }
             }
         }
     }
