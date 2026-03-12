@@ -328,19 +328,19 @@ test "check pods restarted selector and return values" {
     }
 
     # --- Case 2: one pod in CrashLoopBackOff → True ---
-    crash_container = unittest.mock.MagicMock();
-    crash_state = unittest.mock.MagicMock();
-    crash_state.reason = "CrashLoopBackOff";
-    crash_container.state.waiting = crash_state;
-    crash_container.restart_count = 1;
+    crash_container = unittest.mock.MagicMock()
+    crash_state = unittest.mock.MagicMock()
+    crash_state.reason = "CrashLoopBackOff"
+    crash_container.state.waiting = crash_state
+    crash_container.restart_count = 1  # must be >= 1 to trigger True
 
-    pod_crash = unittest.mock.MagicMock();
-    pod_crash.status.container_statuses = [crash_container];
+    pod_crash = unittest.mock.MagicMock()
+    pod_crash.status.container_statuses = [crash_container]
 
-    resp_restarted = unittest.mock.MagicMock();
-    resp_restarted.items = [pod_crash];
+    resp_restarted = unittest.mock.MagicMock()
+    resp_restarted.items = [pod_crash]
 
-    fake_v1.list_namespaced_pod.return_value = resp_restarted;
+    fake_v1.list_namespaced_pod.return_value = resp_restarted
 
     with unittest.mock.patch.object(utils.config, "load_kube_config") {
         with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1 ) {
