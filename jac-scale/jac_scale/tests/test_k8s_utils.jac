@@ -300,9 +300,9 @@ test "check pods restarted selector and return values" {
         f"{app_name}-redis-insight"
     ];
 
-    # --- Case 1: no restarts → False, single API call with correct selector ---
+    # --- Case 1: pod running stable (no crash loop) → False, single API call with correct selector ---
     clean = unittest.mock.MagicMock();
-    clean.restart_count = 0;
+    clean.state.waiting = None;
     pod_clean = unittest.mock.MagicMock();
     pod_clean.status.container_statuses = [clean];
     resp_clean = unittest.mock.MagicMock();
@@ -323,11 +323,13 @@ test "check pods restarted selector and return values" {
         assert label in selector , f"Label '{label}' missing from selector '{selector}'";
     }
 
-    # --- Case 2: one pod restarted → True ---
-    restarted = unittest.mock.MagicMock();
-    restarted.restart_count = 1;
+    # --- Case 2: one pod in CrashLoopBackOff → True ---
+    crash_waiting = unittest.mock.MagicMock();
+    crash_waiting.reason = 'CrashLoopBackOff';
+    crash_container = unittest.mock.MagicMock();
+    crash_container.state.waiting = crash_waiting;
     pod_restarted = unittest.mock.MagicMock();
-    pod_restarted.status.container_statuses = [restarted];
+    pod_restarted.status.container_statuses = [crash_container];
     resp_restarted = unittest.mock.MagicMock();
     resp_restarted.items = [pod_clean, pod_restarted];
     fake_v1.list_namespaced_pod.return_value = resp_restarted;

@@ -454,10 +454,13 @@ impl check_pods_restarted(namespace: str, app_name: str) -> bool {
         }
 
         for container in statuses {
-            if (container.restart_count > 0) {
+            waiting = container.state and container.state.waiting;
+            in_crash_loop = waiting
+            and waiting.reason in ('CrashLoopBackOff', 'OOMKilled', 'Error');
+            if (in_crash_loop) {
                 console.print(
                     f"Pod {pod.metadata.name} container "
-                    f"{container.name} restarted "
+                    f"{container.name} is in {waiting.reason}"
                 );
                 return True;
             }
