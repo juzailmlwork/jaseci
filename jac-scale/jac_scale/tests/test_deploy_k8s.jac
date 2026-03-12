@@ -497,8 +497,8 @@ test "deploy all in one" {
     assert grafana_deploy.spec.replicas == 1;
     grafana_container = grafana_deploy.spec.template.spec.containers[0];
     assert grafana_container.image == "grafana/grafana:latest";
-    assert len(grafana_container.volume_mounts) == 3;
-    print(f"Grafana Deployment '{grafana_name}' exists with 3 volume mounts");
+    assert len(grafana_container.volume_mounts) == 5;
+    print(f"Grafana Deployment '{grafana_name}' exists with 5 volume mounts");
 
     grafana_service = core_v1.read_namespaced_service(
         name=f"{grafana_name}-service", namespace=namespace
