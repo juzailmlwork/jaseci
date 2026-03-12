@@ -775,38 +775,6 @@ obj KubernetesTarget(DeploymentTarget) {
                 self._apply_provider_service_account(
                     insight_result['service_account'], namespace, core_v1
                 );
-                if 'auth_configmap' in insight_result {
-                    try {
-                        core_v1.read_namespaced_config_map(
-                            name=insight_result['auth_configmap']['metadata']['name'],
-                            namespace=namespace
-                        );
-                    } except ApiException as e {
-                        if e.status == 404 {
-                            core_v1.create_namespaced_config_map(
-                                namespace=namespace,
-                                body=insight_result['auth_configmap']
-                            );
-                        } else {
-                            raise;
-                        }
-                    }
-                    try {
-                        core_v1.read_namespaced_secret(
-                            name=insight_result['auth_secret']['metadata']['name'],
-                            namespace=namespace
-                        );
-                    } except ApiException as e {
-                        if e.status == 404 {
-                            core_v1.create_namespaced_secret(
-                                namespace=namespace, body=insight_result['auth_secret']
-                            );
-                        } else {
-                            raise;
-                        }
-                    }
-                }
-                insight_result = redis_provider.deploy_dashboard();
                 try {
                     apps_v1.patch_namespaced_deployment(
                         name=insight_result['deployment_name'],
@@ -918,8 +886,18 @@ obj KubernetesTarget(DeploymentTarget) {
         app_name: str, namespace: str, networking_v1: Any
     ) -> None {
         egress_rules = [
-            # DNS
+            # DNS — explicit kube-system selector so CNIs that evaluate policy
+            # before DNAT (e.g. Flannel) can reach kube-dns.
             {
+                'to': [
+                    {
+                        'namespaceSelector': {
+                            'matchLabels': {
+                                'kubernetes.io/metadata.name': 'kube-system'
+                            }
+                        }
+                    }
+                ],
                 'ports': [
                     {'protocol': 'UDP', 'port': 53},
                     {'protocol': 'TCP', 'port': 53}
