@@ -422,7 +422,7 @@ obj IngressDeployer {
             elapsed = elapsed + poll;
         }
         if self.logger {
-            self.logger.warning(
+            self.logger.warn(
                 f"NGINX controller '{controller_name}' not ready after {max_wait}s, proceeding anyway"
             );
         }
