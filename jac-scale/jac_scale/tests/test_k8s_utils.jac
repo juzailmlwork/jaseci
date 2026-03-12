@@ -338,7 +338,7 @@ test "check pods restarted selector and return values" {
     pod_crash.status.container_statuses = [crash_container];
 
     resp_restarted = unittest.mock.MagicMock();
-    resp_restarted.items = [pod_clean, pod_crash];
+    resp_restarted.items = [pod_crash];
 
     fake_v1.list_namespaced_pod.return_value = resp_restarted;
 
