@@ -334,6 +334,7 @@ test "check pods restarted selector and return values" {
     crash_state.reason = "CrashLoopBackOff";
     crash_container.state = unittest.mock.MagicMock();  # FIX: assign state as MagicMock
     crash_container.state.waiting = crash_state;
+    crash_container.state.running = None;  # ensure not running so selector returns True
     crash_container.restart_count = 1;
 
     pod_crash = unittest.mock.MagicMock();
