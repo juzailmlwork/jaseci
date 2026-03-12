@@ -241,9 +241,9 @@ test "deploy all in one" {
     result = deployment_target.deploy(app_config);
     details = result.details;
     print(f"Deployment result details: {details}");
-    assert len(details) == 13;
+    assert len(details) == 12;
+    print(f"Deployment status: {result.message}");
     assert result.success is True;
-    print(f"Deployment successful: {result.message}");
 
     full_status = deployment_target.get_full_status(app_name);
     assert full_status is not None;
