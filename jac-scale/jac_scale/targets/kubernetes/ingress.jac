@@ -239,7 +239,6 @@ obj IngressDeployer {
                     'metadata': {'labels': {'app': controller_name}},
                     'spec': {
                         'serviceAccountName': controller_name,
-                        'automountServiceAccountToken': False,
                         'securityContext': {
                             'seccompProfile': {'type': 'RuntimeDefault'}
                         },
@@ -288,6 +287,26 @@ obj IngressDeployer {
                                     {'name': 'https', 'containerPort': 443},
                                     {'name': 'webhook', 'containerPort': 8443}
                                 ],
+                                'readinessProbe': {
+                                    'httpGet': {
+                                        'path': '/healthz',
+                                        'port': 10254,
+                                        'scheme': 'HTTP'
+                                    },
+                                    'initialDelaySeconds': 10,
+                                    'periodSeconds': 10,
+                                    'failureThreshold': 3
+                                },
+                                'livenessProbe': {
+                                    'httpGet': {
+                                        'path': '/healthz',
+                                        'port': 10254,
+                                        'scheme': 'HTTP'
+                                    },
+                                    'initialDelaySeconds': 10,
+                                    'periodSeconds': 10,
+                                    'failureThreshold': 3
+                                },
                                 'resources': {
                                     'requests': {'cpu': '100m', 'memory': '90Mi'},
                                     'limits': {'cpu': '500m', 'memory': '256Mi'}
