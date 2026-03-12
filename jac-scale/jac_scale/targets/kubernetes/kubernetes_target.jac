@@ -165,6 +165,11 @@ obj KubernetesTarget(DeploymentTarget) {
 
         # Base setup
         commands.append('export DEBIAN_FRONTEND=noninteractive');
+        # Disable apt sandbox: CAP_SETUID/CAP_SETGID are dropped in the container
+        # security context, so apt cannot drop privileges to the _apt user.
+        commands.append(
+            'echo \'APT::Sandbox::User "root";\' > /etc/apt/apt.conf.d/00sandbox'
+        );
         commands.append('apt-get update');
 
         # Install base packages (curl and unzip needed for Bun installation)
