@@ -1485,14 +1485,38 @@ test "enable tls raises when no domain configured" {
         "kubernetes", target_config, logger
     );
 
+    # Return an ingress with no annotations so domain falls back to the empty
+    # config value, causing IngressDeployer.enable_tls to raise "No domain found"
+    mock_networking_v1 = unittest.mock.MagicMock();
+    mock_networking_v1.read_namespaced_ingress.return_value = SimpleNamespace(
+        metadata=SimpleNamespace(annotations=None)
+    );
+
     raised = False;
     with unittest.mock.patch(
         "jac_scale.targets.kubernetes.kubernetes_target.k8s_cluster_config"
     ) {
-        try {
-            deployment_target.enable_tls("myapp");
-        } except Exception {
-            raised = True;
+        with unittest.mock.patch(
+            "jac_scale.targets.kubernetes.kubernetes_target.client.NetworkingV1Api",
+            return_value=mock_networking_v1
+        ) {
+            with unittest.mock.patch(
+                "jac_scale.targets.kubernetes.kubernetes_target.client.CustomObjectsApi"
+            ) {
+                with unittest.mock.patch(
+                    "jac_scale.targets.kubernetes.kubernetes_target.client.CoreV1Api"
+                ) {
+                    with unittest.mock.patch(
+                        "jac_scale.targets.kubernetes.kubernetes_target.client.AppsV1Api"
+                    ) {
+                        try {
+                            deployment_target.enable_tls("myapp");
+                        } except Exception {
+                            raised = True;
+                        }
+                    }
+                }
+            }
         }
     }
     assert raised , "enable_tls should raise when no domain is configured";
