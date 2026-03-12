@@ -4,6 +4,8 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.2.6 (Unreleased)
 
+- **Kubernetes Security Hardening**: Every generated container now enforces `allowPrivilegeEscalation: false`, `capabilities.drop: ALL`, and `seccompProfile: RuntimeDefault`. Static/pre-built containers additionally set `runAsNonRoot: true`, `runAsUser: 1000`, and `readOnlyRootFilesystem: true`. The runtime-install container (which runs `apt-get` and `pip` at startup) retains only the minimum capabilities required (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `FSETID`, `SETUID`, `SETGID`) and keeps `readOnlyRootFilesystem: false` for package writes. Every workload receives a dedicated `ServiceAccount` with `automountServiceAccountToken: false`. A default-deny `NetworkPolicy` is generated per app with explicit egress allowlists for DNS (targeting `kube-system` via namespace selector), intra-namespace services, and external HTTP/HTTPS (for runtime package installs), plus an ingress rule for the app container port. Non-default namespaces are labeled with `pod-security.kubernetes.io/enforce: restricted` and `pod-security.kubernetes.io/warn: restricted` on both create and update.
+
 ## jac-scale 0.2.5 (Latest Release)
 
 - **Fix: Walker Route OpenAPI Parameter Naming**: Fixed inconsistency where walker routes with node parameters used `{nd}` in URL paths but declared `node` in OpenAPI schema, causing FastAPI validation errors (`"Field required"` for parameter `node`). The OpenAPI schema now correctly uses `nd` to match the actual path variable and function parameter. This fixes requests to `/walker/{walker_name}/{node_id}` endpoints. Note: `node` is a reserved Jac keyword, so `nd` is used as the parameter name throughout.
@@ -15,7 +17,6 @@ This document provides a summary of new features, improvements, and bug fixes in
 - **Fix: Parser Strictness Compliance**: Moved docstrings before signatures in `kubernetes_utils.impl.jac` and converted nested function docstring to comment in `api.cl.jac` to comply with the stricter RD parser.
 - [Internal] Refactor: Extract graph visualizer HTML into a standalone template file.
 - **User storage now supports both MongoDB and SQLite**: User authentication and management automatically uses SQLite when MongoDB is not configured, maintaining full backward compatibility with existing installations.
-- **Kubernetes Security Hardening**: All generated Kubernetes manifests now enforce `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, and `capabilities.drop: ALL` on every container; each workload gets a dedicated `ServiceAccount` with `automountServiceAccountToken: false`; a default-deny `NetworkPolicy` is generated per namespace with allowlists for DNS, intra-namespace, and external HTTP/HTTPS traffic; and namespaces are labeled with `pod-security.kubernetes.io/enforce: restricted` and `pod-security.kubernetes.io/warn: restricted` (applied on both create and update).
 - **Fix: Include `redis.conf.template` in package distribution**: Fixed `FileNotFoundError` during Redis deployment when jac-scale is installed via pip (non-editable install). The `redis.conf.template` file is now correctly included in the wheel distribution via `package-data` configuration in `pyproject.toml`.
 
 ## jac-scale 0.2.4
