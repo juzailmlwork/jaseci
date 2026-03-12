@@ -60,7 +60,7 @@ obj KubernetesConfig(BaseConfig) {
         ingress_node_port: int = 30080,
         # Domain / TLS configuration
         domain: str = "",
-        cert_manager_email: str = "juzailmlwork@gmail.com";
+        cert_manager_email: str = "";
 
     override def to_dict -> dict[str, Any] {
         base = super.to_dict();
@@ -187,9 +187,7 @@ obj KubernetesConfig(BaseConfig) {
             redis_password=config.get('redis_password', 'password'),
             ingress_node_port=config.get('ingress_node_port', 30080),
             domain=config.get('domain', ''),
-            cert_manager_email=config.get(
-                'cert_manager_email', 'juzailmlwork@gmail.com'
-            )
+            cert_manager_email=config.get('cert_manager_email', '')
         );
     }
 }

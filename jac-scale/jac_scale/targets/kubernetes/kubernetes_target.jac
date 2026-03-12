@@ -1041,17 +1041,20 @@ obj KubernetesTarget(DeploymentTarget) {
             details["health_check_of_deployment"] = deployment_details;
             service_url = self.get_service_url(app_name);
 
-            # Print CNAME instructions when a custom domain is set on AWS
-            if self.k8s_config.domain and cluster_env == 'aws' {
-                nlb_hostname = self._get_nlb_hostname(app_name);
-                if nlb_hostname and self.logger {
+            # Print DNS instructions when a custom domain is set
+            if self.k8s_config.domain {
+                lb_endpoint = self._get_lb_endpoint(app_name);
+                if lb_endpoint and self.logger {
+                    import re;
+                    is_ip = bool(re.match(r'^\d+\.\d+\.\d+\.\d+$', lb_endpoint));
+                    record_type = "A" if is_ip else "CNAME";
                     self.logger.info(f"\n{'=' * 62}");
                     self.logger.info(
-                        f"ACTION REQUIRED — add a CNAME record in your DNS provider:"
+                        f"ACTION REQUIRED — add a {record_type} record in your DNS provider:"
                     );
-                    self.logger.info(f"  Type   : CNAME");
+                    self.logger.info(f"  Type   : {record_type}");
                     self.logger.info(f"  Name   : {self.k8s_config.domain}");
-                    self.logger.info(f"  Value  : {nlb_hostname}");
+                    self.logger.info(f"  Value  : {lb_endpoint}");
                     self.logger.info(
                         f"\nAfter the record propagates, enable HTTPS with:"
                     );
@@ -1631,8 +1634,8 @@ obj KubernetesTarget(DeploymentTarget) {
         }
     }
 
-    """Return the raw NLB hostname (AWS only) for CNAME instructions."""
-    def _get_nlb_hostname(app_name: str) -> (str | None) {
+    """Return the LoadBalancer hostname or IP for DNS instructions (any cloud env)."""
+    def _get_lb_endpoint(app_name: str) -> (str | None) {
         try {
             try {
                 k8s_cluster_config.load_kube_config();
@@ -1651,7 +1654,9 @@ obj KubernetesTarget(DeploymentTarget) {
             }
         } except Exception as e {
             if self.logger {
-                self.logger.debug(f"Could not get NLB hostname for '{app_name}': {e}");
+                self.logger.debug(
+                    f"Could not get LoadBalancer endpoint for '{app_name}': {e}"
+                );
             }
         }
         return None;
@@ -1689,8 +1694,8 @@ obj KubernetesTarget(DeploymentTarget) {
             cluster_env = cluster_type();
 
             if cluster_env == 'aws' {
-                # Resolve the ingress controller's NLB hostname
-                endpoint = self._get_nlb_hostname(app_name);
+                # Resolve the ingress controller's LoadBalancer endpoint
+                endpoint = self._get_lb_endpoint(app_name);
                 if endpoint {
                     return f"http://{endpoint}";
                 }

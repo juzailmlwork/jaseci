@@ -56,6 +56,11 @@ def _scale_pre_hook(context: HookContext) -> None {
                     "No domain configured. Set 'domain' under [plugins.scale.kubernetes] in jac.toml before running --enable-tls."
                 );
             }
+            if not target_config.get('cert_manager_email', '') {
+                raise ValueError(
+                    "No cert_manager_email configured. Set 'cert_manager_email' under [plugins.scale.kubernetes] in jac.toml before running --enable-tls."
+                );
+            }
             app_name = target_config.get('app_name', 'jaseci');
             deployment_target.enable_tls(app_name);
             context.set_data("cancel_execution", True);
@@ -223,7 +228,7 @@ class JacCmd {
                     help="Image registry (dockerhub, ecr, gcr, etc.)",
                 ),
                 Arg.create(
-                    "enable_tls",
+                    "enable-tls",
                     typ=bool,
                     default=False,
                     help="Enable HTTPS via Let's Encrypt (run after pointing your domain CNAME to the NLB)",

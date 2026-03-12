@@ -1077,12 +1077,31 @@ obj IngressDeployer {
             'Secret'
         );
 
-        # Delete TLS secret (created by cert-manager) and Issuer
+        # Delete TLS secret, ACME private key, Certificate CRD, and Issuer
         delete_if_exists(
             core_v1.delete_namespaced_secret, f"{app_name}-tls", namespace, 'Secret'
         );
+        delete_if_exists(
+            core_v1.delete_namespaced_secret,
+            'letsencrypt-prod-key',
+            namespace,
+            'Secret'
+        );
         try {
             custom_api = client.CustomObjectsApi();
+            custom_api.delete_namespaced_custom_object(
+                group='cert-manager.io',
+                version='v1',
+                namespace=namespace,
+                plural='certificates',
+                name=f"{app_name}-tls"
+            );
+        } except ApiException as e {
+            if e.status != 404 {
+                raise;
+            }
+        }
+        try {
             custom_api.delete_namespaced_custom_object(
                 group='cert-manager.io',
                 version='v1',

@@ -199,6 +199,7 @@ test "deploy all in one" {
     core_v1 = client.CoreV1Api();
     rbac_v1 = client.RbacAuthorizationV1Api();
     networking_v1 = client.NetworkingV1Api();
+    custom_api = client.CustomObjectsApi();
 
     namespace = "all-in-one";
     app_name = namespace;
@@ -1240,6 +1241,50 @@ test "deploy all in one" {
     }
 
     print("NGINX Ingress controller cleanup verified");
+
+    # Verify TLS / cert-manager resource cleanup
+    tls_secret_name = f"{app_name}-tls";
+    try {
+        core_v1.read_namespaced_secret(name=tls_secret_name, namespace=namespace);
+        raise AssertionError("TLS Secret should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404 for TLS Secret, got {e.status}";
+    }
+
+    try {
+        core_v1.read_namespaced_secret(name='letsencrypt-prod-key', namespace=namespace);
+        raise AssertionError("ACME private key Secret should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404 for letsencrypt-prod-key Secret, got {e.status}";
+    }
+
+    try {
+        custom_api.get_namespaced_custom_object(
+            group='cert-manager.io',
+            version='v1',
+            namespace=namespace,
+            plural='certificates',
+            name=tls_secret_name
+        );
+        raise AssertionError("cert-manager Certificate CRD should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404 for Certificate CRD, got {e.status}";
+    }
+
+    try {
+        custom_api.get_namespaced_custom_object(
+            group='cert-manager.io',
+            version='v1',
+            namespace=namespace,
+            plural='issuers',
+            name='letsencrypt-prod'
+        );
+        raise AssertionError("cert-manager Issuer should have been deleted");
+    } except ApiException as e {
+        assert e.status == 404 , f"Expected 404 for Issuer, got {e.status}";
+    }
+
+    print("TLS / cert-manager resource cleanup verified");
 
     # Verify K8s Secret cleanup
     try {

@@ -984,7 +984,7 @@ obj MonitoringDeployer {
                                 'env': [
                                     {
                                         'name': 'GF_SERVER_ROOT_URL',
-                                        'value': f"https://{self.k8s_config.domain}/grafana"
+                                        'value': f"http://{self.k8s_config.domain}/grafana"
                                             if self.k8s_config.domain
                                             else '%(protocol)s://%(domain)s/grafana'
                                     },
