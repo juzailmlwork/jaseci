@@ -520,7 +520,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'selector': {'matchLabels': {'app': insight_name}},
                 'template': {
                     'metadata': {'labels': {'app': insight_name}},
-                    'spec': {'containers': containers}
+                    'spec': pod_spec
                 }
             }
         };
