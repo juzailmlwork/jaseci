@@ -170,6 +170,11 @@ obj KubernetesTarget(DeploymentTarget) {
         commands.append(
             'echo \'APT::Sandbox::User "root";\' > /etc/apt/apt.conf.d/00sandbox'
         );
+        # Remove repos that don't exist yet on Debian testing (trixie) to prevent
+        # apt-get update from failing with "no Release file" errors.
+        commands.append(
+            'sed -i \'/trixie-updates\\|trixie-security/d\' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true'
+        );
         commands.append('apt-get update');
 
         # Install base packages (curl and unzip needed for Bun installation)
@@ -259,10 +264,26 @@ obj KubernetesTarget(DeploymentTarget) {
         # Containers that install packages at runtime (apt-get, pip) need root
         # and a writable filesystem. Pre-built image containers can be fully locked down.
         if needs_root {
+            # Drop ALL then add back only what apt/pip need at runtime:
+            #   CHOWN       — chown files during package post-install scripts
+            #   DAC_OVERRIDE — access _apt-owned /var/lib/apt/lists/partial/
+            #   FOWNER      — chmod directories not owned by the running uid
+            #   FSETID      — preserve SUID/SGID bits written by package scripts
+            #   SETUID/SETGID — some package post-install scripts switch uid/gid
             security_context = {
                 'readOnlyRootFilesystem': False,
                 'allowPrivilegeEscalation': False,
-                'capabilities': {'drop': ['ALL']},
+                'capabilities': {
+                    'drop': ['ALL'],
+                    'add': [
+                        'CHOWN',
+                        'DAC_OVERRIDE',
+                        'FOWNER',
+                        'FSETID',
+                        'SETUID',
+                        'SETGID'
+                    ]
+                },
                 'seccompProfile': {'type': 'RuntimeDefault'}
             };
         } else {
