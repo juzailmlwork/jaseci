@@ -241,7 +241,7 @@ test "deploy all in one" {
     result = deployment_target.deploy(app_config);
     details = result.details;
     print(f"Deployment result details: {details}");
-    assert len(details) == 12;
+    assert len(details) == 13;
     print(f"Deployment status: {result.message}");
     assert result.success is True;
 
