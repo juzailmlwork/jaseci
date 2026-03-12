@@ -239,10 +239,24 @@ obj IngressDeployer {
                     'metadata': {'labels': {'app': controller_name}},
                     'spec': {
                         'serviceAccountName': controller_name,
+                        'automountServiceAccountToken': False,
+                        'securityContext': {
+                            'seccompProfile': {'type': 'RuntimeDefault'}
+                        },
                         'containers': [
                             {
                                 'name': 'controller',
                                 'image': 'registry.k8s.io/ingress-nginx/controller:v1.12.0',
+                                'securityContext': {
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 101,
+                                    'allowPrivilegeEscalation': False,
+                                    'capabilities': {
+                                        'drop': ['ALL'],
+                                        'add': ['NET_BIND_SERVICE']
+                                    },
+                                    'seccompProfile': {'type': 'RuntimeDefault'}
+                                },
                                 'args': [
                                     '/nginx-ingress-controller',
                                     f"--ingress-class={ingress_class_name}",
