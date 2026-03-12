@@ -1024,6 +1024,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 (deployment_status, deployment_details) = check_deployment_status(
                     self.k8s_config.ingress_node_port,
                     path,
+                    max_retries=48,
                     nlb_url=nlb_url,
                     namespace=namespace,
                     app_name=app_name
