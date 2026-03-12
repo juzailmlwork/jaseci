@@ -302,6 +302,7 @@ test "check pods restarted selector and return values" {
 
     # --- Case 1: pod running stable (no crash loop) → False, single API call with correct selector ---
     clean = unittest.mock.MagicMock();
+    clean.restart_count = 0;
     clean.state.waiting = None;
     pod_clean = unittest.mock.MagicMock();
     pod_clean.status.container_statuses = [clean];
@@ -328,6 +329,7 @@ test "check pods restarted selector and return values" {
     crash_waiting.reason = 'CrashLoopBackOff';
     crash_container = unittest.mock.MagicMock();
     crash_container.state.waiting = crash_waiting;
+    crash_container.restart_count = 1;
     pod_restarted = unittest.mock.MagicMock();
     pod_restarted.status.container_statuses = [crash_container];
     resp_restarted = unittest.mock.MagicMock();
