@@ -367,12 +367,16 @@ obj KubernetesTarget(DeploymentTarget) {
                 f"until wget -q -O {self.k8s_config.app_mount_path}/code.tar.gz {code_server_url}; do sleep 2; done && tar xzf {self.k8s_config.app_mount_path}/code.tar.gz -C {self.k8s_config.app_mount_path}/ && rm {self.k8s_config.app_mount_path}/code.tar.gz"
             ],
             'volumeMounts': [
-                {'name': 'app-code', 'mountPath': self.k8s_config.app_mount_path}
+                {'name': 'app-code', 'mountPath': self.k8s_config.app_mount_path},
+                {'name': 'tmp', 'mountPath': '/tmp'}
             ]
         };
 
         # Only emptyDir - no PVC mount on app pods, so they can schedule on any node
-        volumes = [{'name': 'app-code', 'emptyDir': {}}];
+        volumes = [
+            {'name': 'app-code', 'emptyDir': {}},
+            {'name': 'tmp', 'emptyDir': {}}
+        ];
 
         return {'volumes': volumes, 'build_container': build_container};
     }
@@ -1250,6 +1254,10 @@ obj KubernetesTarget(DeploymentTarget) {
                         {
                             'name': 'app-code',
                             'mountPath': self.k8s_config.app_mount_path
+                        },
+                        {
+                            'name': 'tmp',
+                            'mountPath': '/tmp'
                         }
                     ],
                     secret_ref_name=secret_ref_name,
