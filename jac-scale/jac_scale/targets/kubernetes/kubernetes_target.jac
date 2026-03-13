@@ -442,7 +442,8 @@ obj KubernetesTarget(DeploymentTarget) {
                                 # readOnlyRootFilesystem=False: busybox httpd writes
                                 # the tarball to /tmp before serving it.
                                 'securityContext': {
-                                    'runAsUser': 0,
+                                    'runAsNonRoot': True,
+                                    'runAsUser': 1000,
                                     'readOnlyRootFilesystem': False,
                                     'allowPrivilegeEscalation': False,
                                     'capabilities': {'drop': ['ALL']},

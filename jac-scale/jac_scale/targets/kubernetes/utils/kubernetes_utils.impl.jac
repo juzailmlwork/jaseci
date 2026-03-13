@@ -202,7 +202,7 @@ impl sync_code_to_pvc(
                 '--',
                 'sh',
                 '-c',
-                'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
+                'tar -xzf /tmp/jaseci-code.tar.gz -C /data/workspace && chmod -R a+rX /data/workspace && rm -f /tmp/jaseci-code.tar.gz'
             ]
         );
         # Remove jac.local.toml which is meant for local dev overrides only
