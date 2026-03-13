@@ -947,7 +947,11 @@ obj KubernetesTarget(DeploymentTarget) {
                 'pod_selector': {'matchLabels': {'app': app_name}},
                 'ingress_rules': [
                     # App container port — accepts traffic from NodePort/LoadBalancer
-                    {'ports': [{'protocol': 'TCP', 'port': self.k8s_config.container_port}]}
+                    {
+                        'ports': [
+                            {'protocol': 'TCP', 'port': self.k8s_config.container_port}
+                        ]
+                    }
                 ]
             },
             {
@@ -958,7 +962,11 @@ obj KubernetesTarget(DeploymentTarget) {
                     {
                         'from': [
                             {'podSelector': {'matchLabels': {'app': app_name}}},
-                            {'podSelector': {'matchLabels': {'app': f"{app_name}-mongo-express"}}}
+                            {
+                                'podSelector': {
+                                    'matchLabels': {'app': f"{app_name}-mongo-express"}
+                                }
+                            }
                         ],
                         'ports': [{'protocol': 'TCP', 'port': 27017}]
                     }
@@ -972,7 +980,11 @@ obj KubernetesTarget(DeploymentTarget) {
                     {
                         'from': [
                             {'podSelector': {'matchLabels': {'app': app_name}}},
-                            {'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}}
+                            {
+                                'podSelector': {
+                                    'matchLabels': {'app': f"{app_name}-redis-insight"}
+                                }
+                            }
                         ],
                         'ports': [{'protocol': 'TCP', 'port': 6379}]
                     }
@@ -982,35 +994,35 @@ obj KubernetesTarget(DeploymentTarget) {
             {
                 'name': f"{app_name}-prometheus-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-prometheus"}},
-                'ingress_rules': []  # Deny all ingress
+                'ingress_rules': []
             },
             {
                 'name': f"{app_name}-grafana-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-grafana"}},
-                'ingress_rules': []  # Deny all ingress (accessed via Ingress)
+                'ingress_rules': []
             },
             {
                 'name': f"{app_name}-code-server-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-code-server"}},
                 'ingress_rules': [
-                # Code-server port — accepts traffic from main app
-                {
-                    'from': [
-                        {'podSelector': {'matchLabels': {'app': app_name}}}
-                    ],
-                    'ports': [{'protocol': 'TCP', 'port': 8080}]
-                }
-            ]
+                    # Code-server port — accepts traffic from main app
+                    {
+                        'from': [{'podSelector': {'matchLabels': {'app': app_name}}}],
+                        'ports': [{'protocol': 'TCP', 'port': 8080}]
+                    }
+                ]
             },
             {
                 'name': f"{app_name}-kube-state-metrics-network-policy",
-                'pod_selector': {'matchLabels': {'app': f"{app_name}-kube-state-metrics"}},
-                'ingress_rules': []  # Deny all ingress (scraped by Prometheus)
+                'pod_selector': {
+                    'matchLabels': {'app': f"{app_name}-kube-state-metrics"}
+                },
+                'ingress_rules': []
             },
             {
                 'name': f"{app_name}-node-exporter-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-node-exporter"}},
-                'ingress_rules': []  # Deny all ingress (scraped by Prometheus)
+                'ingress_rules': []
             }
         ];
 
@@ -1047,7 +1059,9 @@ obj KubernetesTarget(DeploymentTarget) {
                     );
                     if self.logger {
                         self.logger.info(
-                            f"Created NetworkPolicy '{policy_config['name']}' in namespace '{namespace}'"
+                            f"Created NetworkPolicy '{policy_config[
+                                'name'
+                            ]}' in namespace '{namespace}'"
                         );
                     }
                 } else {
@@ -1263,10 +1277,7 @@ obj KubernetesTarget(DeploymentTarget) {
                             'name': 'app-code',
                             'mountPath': self.k8s_config.app_mount_path
                         },
-                        {
-                            'name': 'tmp',
-                            'mountPath': '/tmp'
-                        }
+                        {'name': 'tmp', 'mountPath': '/tmp'}
                     ],
                     secret_ref_name=secret_ref_name,
                     needs_root=True

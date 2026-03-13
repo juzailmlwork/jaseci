@@ -1536,7 +1536,9 @@ test "kubernetes database provider security context" {
         'kubernetes_mongo', None, {'app_name': 'test-app'}
     );
     mongo_deploy = mongo_provider.deploy();
-    mongo_container = mongo_deploy['deployment']['spec']['template']['spec']['containers'][0];
+    mongo_container = mongo_deploy['deployment']['spec']['template']['spec'][
+        'containers'
+    ][0];
     mongo_sc = mongo_container['securityContext'];
     assert mongo_sc['runAsNonRoot'] is True;
     assert mongo_sc['readOnlyRootFilesystem'] is True;
@@ -1548,7 +1550,9 @@ test "kubernetes database provider security context" {
         'kubernetes_redis', None, {'app_name': 'test-app'}
     );
     redis_deploy = redis_provider.deploy();
-    redis_container = redis_deploy['deployment']['spec']['template']['spec']['containers'][0];
+    redis_container = redis_deploy['deployment']['spec']['template']['spec'][
+        'containers'
+    ][0];
     redis_sc = redis_container['securityContext'];
     assert redis_sc['runAsNonRoot'] is True;
     assert redis_sc['readOnlyRootFilesystem'] is True;
@@ -1596,15 +1600,20 @@ test "kubernetes target security policy dicts" {
 
     obj FakeNetworkingV1 {
         has created_policies: list = [];
+
         def read_namespaced_network_policy(name: str, namespace: str) {
             e = ApiException();
             e.status = 404;
             raise e;
         }
+
         def create_namespaced_network_policy(namespace: str, body: dict[(str, Any)]) {
             self.created_policies.append(body);
         }
-        def replace_namespaced_network_policy(name: str, namespace: str, body: dict[(str, Any)]) {
+
+        def replace_namespaced_network_policy(
+            name: str, namespace: str, body: dict[(str, Any)]
+        ) {
             # Not used in this test
             self.created_policies.append(body);
         }
@@ -1623,6 +1632,7 @@ test "kubernetes target security policy dicts" {
         f"{app_name}-code-server-network-policy",
         f"{app_name}-kube-state-metrics-network-policy",
         f"{app_name}-node-exporter-network-policy",
+
     ];
     created_names = [p['metadata']['name'] for p in fake_net.created_policies];
     for name in expected_policy_names {
@@ -1638,7 +1648,9 @@ test "kubernetes target security policy dicts" {
         # Egress should include DNS access to kube-system
         egress_rules = p['spec']['egress'];
         assert any(
-            rule.get('to', [])[0].get('namespaceSelector', {}).get('matchLabels', {}).get(
+            rule.get('to', [])[0].get('namespaceSelector', {}).get(
+                'matchLabels', {}
+            ).get(
                 'kubernetes.io/metadata.name'
             ) == 'kube-system'
             for rule in egress_rules
@@ -1648,7 +1660,11 @@ test "kubernetes target security policy dicts" {
 
     # Verify app policy allows inbound traffic on correct container port
     app_policy = next(
-        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-network-policy"),
+        (
+            p
+            for p in fake_net.created_policies
+            if p['metadata']['name'] == f"{app_name}-network-policy"
+        ),
         None
     );
     assert app_policy is not None;
@@ -1657,22 +1673,34 @@ test "kubernetes target security policy dicts" {
 
     # Verify MongoDB and Redis policies allow traffic from both app and dashboard pods.
     mongo_policy = next(
-        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-mongodb-network-policy"),
+        (
+            p
+            for p in fake_net.created_policies
+            if p['metadata']['name'] == f"{app_name}-mongodb-network-policy"
+        ),
         None
     );
     assert mongo_policy is not None;
     mongo_from = mongo_policy['spec']['ingress'][0]['from'];
     assert {'podSelector': {'matchLabels': {'app': app_name}}} in mongo_from;
-    assert {'podSelector': {'matchLabels': {'app': f"{app_name}-mongo-express"}}} in mongo_from;
+    assert {
+        'podSelector': {'matchLabels': {'app': f"{app_name}-mongo-express"}}
+    } in mongo_from;
     assert mongo_policy['spec']['ingress'][0]['ports'][0]['port'] == 27017;
 
     redis_policy = next(
-        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-redis-network-policy"),
+        (
+            p
+            for p in fake_net.created_policies
+            if p['metadata']['name'] == f"{app_name}-redis-network-policy"
+        ),
         None
     );
     assert redis_policy is not None;
     redis_from = redis_policy['spec']['ingress'][0]['from'];
     assert {'podSelector': {'matchLabels': {'app': app_name}}} in redis_from;
-    assert {'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}} in redis_from;
+    assert {
+        'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}
+    } in redis_from;
     assert redis_policy['spec']['ingress'][0]['ports'][0]['port'] == 6379;
 }
