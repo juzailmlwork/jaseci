@@ -1565,6 +1565,28 @@ test "kubernetes database provider security context" {
     assert redis_deploy['service_account']['automountServiceAccountToken'] is False;
 }
 
+# Fake networking client for use in kubernetes target security policy dicts test.
+obj FakeNetworkingV1 {
+    has created_policies: list = [];
+
+    def read_namespaced_network_policy(name: str, namespace: str) {
+        e = ApiException();
+        e.status = 404;
+        raise e;
+    }
+
+    def create_namespaced_network_policy(namespace: str, body: dict[(str, Any)]) {
+        self.created_policies.append(body);
+    }
+
+    def replace_namespaced_network_policy(
+        name: str, namespace: str, body: dict[(str, Any)]
+    ) {
+        # Not used in this test
+        self.created_policies.append(body);
+    }
+}
+
 # Verify KubernetesTarget container/security settings and NetworkPolicy structure.
 test "kubernetes target security policy dicts" {
     # Build a target with default config
@@ -1597,27 +1619,6 @@ test "kubernetes target security policy dicts" {
     # Verify NetworkPolicy dict structure via deploy function (using fake client)
     app_name = 'test-app';
     namespace = 'test-ns';
-
-    obj FakeNetworkingV1 {
-        has created_policies: list = [];
-
-        def read_namespaced_network_policy(name: str, namespace: str) {
-            e = ApiException();
-            e.status = 404;
-            raise e;
-        }
-
-        def create_namespaced_network_policy(namespace: str, body: dict[(str, Any)]) {
-            self.created_policies.append(body);
-        }
-
-        def replace_namespaced_network_policy(
-            name: str, namespace: str, body: dict[(str, Any)]
-        ) {
-            # Not used in this test
-            self.created_policies.append(body);
-        }
-    }
 
     fake_net = FakeNetworkingV1();
     deployment_target._deploy_network_policy(app_name, namespace, fake_net);
