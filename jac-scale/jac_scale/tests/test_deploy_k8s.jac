@@ -242,9 +242,12 @@ test "deploy all in one" {
     result = deployment_target.deploy(app_config);
     details = result.details;
     print(f"Deployment result details: {details}");
-    assert len(details) == 13;
     print(f"Deployment status: {result.message}");
+    subprocess.run(["kubectl", "get", "pods", "-n", "all-in-one"]);
+    subprocess.run(["kubectl", "logs", "-n", "all-in-one", "-l", "app=all-in-one", "--tail=50"]);
+    subprocess.run(["kubectl", "describe", "pod", "-n", "all-in-one", "-l", "app=all-in-one"]);
     assert result.success is True;
+    assert len(details) == 13;
 
     full_status = deployment_target.get_full_status(app_name);
     assert full_status is not None;
