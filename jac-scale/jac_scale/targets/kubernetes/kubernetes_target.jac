@@ -452,7 +452,7 @@ obj KubernetesTarget(DeploymentTarget) {
                                 'command': [
                                     'sh',
                                     '-c',
-                                    f"tar czf /tmp/code.tar.gz -C {self.k8s_config.workspace_path} --exclude='.jac' . && httpd -f -p 8080 -h /tmp"
+                                    f"until [ -f {self.k8s_config.workspace_path}/main.jac ]; do sleep 1; done && tar czf /tmp/code.tar.gz -C {self.k8s_config.workspace_path} --exclude='.jac' . && httpd -f -p 8080 -h /tmp"
                                 ],
                                 'ports': [{'containerPort': 8080}],
                                 'volumeMounts': [
