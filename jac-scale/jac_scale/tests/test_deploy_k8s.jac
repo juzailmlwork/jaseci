@@ -17,6 +17,7 @@ import from jac_scale.abstractions.config.app_config { AppConfig }
 import from jac_scale.abstractions.models.deployment_result { DeploymentResult }
 import from jac_scale.config_loader { JacScaleConfig, get_scale_config }
 import from jac_scale.factories.deployment_factory { DeploymentTargetFactory }
+import from jac_scale.factories.database_factory { DatabaseProviderFactory }
 import from jac_scale.factories.utility_factory { UtilityFactory }
 
 """Get current git repository URL, branch, and commit hash.
@@ -1523,4 +1524,155 @@ test "redis template file in package" {
             "Ensure it's included via pyproject.toml package-data"
         );
     }
+}
+
+
+# Unit tests for security hardening patterns (dict construction)
+# These tests do not require a live Kubernetes cluster.
+
+# Verify database provider manifests include secure container security contexts.
+test "kubernetes database provider security context" {
+    mongo_provider = DatabaseProviderFactory.create(
+        'kubernetes_mongo', None, {'app_name': 'test-app'}
+    );
+    mongo_deploy = mongo_provider.deploy();
+    mongo_container = mongo_deploy['deployment']['spec']['template']['spec']['containers'][0];
+    mongo_sc = mongo_container['securityContext'];
+    assert mongo_sc['runAsNonRoot'] is True;
+    assert mongo_sc['readOnlyRootFilesystem'] is True;
+    assert mongo_sc['allowPrivilegeEscalation'] is False;
+    assert mongo_sc['capabilities']['drop'] == ['ALL'];
+    assert mongo_sc['seccompProfile']['type'] == 'RuntimeDefault';
+
+    redis_provider = DatabaseProviderFactory.create(
+        'kubernetes_redis', None, {'app_name': 'test-app'}
+    );
+    redis_deploy = redis_provider.deploy();
+    redis_container = redis_deploy['deployment']['spec']['template']['spec']['containers'][0];
+    redis_sc = redis_container['securityContext'];
+    assert redis_sc['runAsNonRoot'] is True;
+    assert redis_sc['readOnlyRootFilesystem'] is True;
+    assert redis_sc['allowPrivilegeEscalation'] is False;
+    assert redis_sc['capabilities']['drop'] == ['ALL'];
+    assert redis_sc['seccompProfile']['type'] == 'RuntimeDefault';
+
+    # ServiceAccounts should not auto-mount tokens
+    assert mongo_deploy['service_account']['automountServiceAccountToken'] is False;
+    assert redis_deploy['service_account']['automountServiceAccountToken'] is False;
+}
+
+# Verify KubernetesTarget container/security settings and NetworkPolicy structure.
+test "kubernetes target security policy dicts" {
+    # Build a target with default config
+    scale_config = get_scale_config();
+    target_config = scale_config.get_kubernetes_config();
+    target_config['app_name'] = 'test-app';
+    target_config['namespace'] = 'test-ns';
+    logger = UtilityFactory.create_logger('standard');
+    deployment_target = DeploymentTargetFactory.create(
+        'kubernetes', target_config, logger
+    );
+
+    # Verify container security context produced by _build_container_config
+    probe_configs = deployment_target._build_probe_config('/health');
+    resources = deployment_target._build_resource_config();
+    container = deployment_target._build_container_config(
+        'test-app',
+        'example/image:latest',
+        probe_configs,
+        resources,
+        secret_ref_name='test-secret'
+    );
+    sc = container['securityContext'];
+    assert sc['runAsNonRoot'] is True;
+    assert sc['readOnlyRootFilesystem'] is True;
+    assert sc['allowPrivilegeEscalation'] is False;
+    assert sc['capabilities']['drop'] == ['ALL'];
+    assert sc['seccompProfile']['type'] == 'RuntimeDefault';
+
+    # Verify NetworkPolicy dict structure via deploy function (using fake client)
+    app_name = 'test-app';
+    namespace = 'test-ns';
+
+    obj FakeNetworkingV1 {
+        has created_policies: list = [];
+        def read_namespaced_network_policy(name: str, namespace: str) {
+            e = ApiException();
+            e.status = 404;
+            raise e;
+        }
+        def create_namespaced_network_policy(namespace: str, body: dict[(str, Any)]) {
+            self.created_policies.append(body);
+        }
+        def replace_namespaced_network_policy(name: str, namespace: str, body: dict[(str, Any)]) {
+            # Not used in this test
+            self.created_policies.append(body);
+        }
+    }
+
+    fake_net = FakeNetworkingV1();
+    deployment_target._deploy_network_policy(app_name, namespace, fake_net);
+
+    # Should have created all component policies
+    expected_policy_names = [
+        f"{app_name}-network-policy",
+        f"{app_name}-mongodb-network-policy",
+        f"{app_name}-redis-network-policy",
+        f"{app_name}-prometheus-network-policy",
+        f"{app_name}-grafana-network-policy",
+        f"{app_name}-code-server-network-policy",
+        f"{app_name}-kube-state-metrics-network-policy",
+        f"{app_name}-node-exporter-network-policy",
+    ];
+    created_names = [p['metadata']['name'] for p in fake_net.created_policies];
+    for name in expected_policy_names {
+        assert name in created_names;
+    }
+
+    # Verify common metadata/structure for all policies
+    for p in fake_net.created_policies {
+        assert p['metadata']['labels']['app'] == app_name;
+        assert p['metadata']['labels']['managed'] == 'jac-scale';
+        assert p['spec']['policyTypes'] == ['Ingress', 'Egress'];
+        assert p['spec']['podSelector']['matchLabels']['app'] is not None;
+        # Egress should include DNS access to kube-system
+        egress_rules = p['spec']['egress'];
+        assert any(
+            rule.get('to', [])[0].get('namespaceSelector', {}).get('matchLabels', {}).get(
+                'kubernetes.io/metadata.name'
+            ) == 'kube-system'
+            for rule in egress_rules
+            if rule.get('to')
+        );
+    }
+
+    # Verify app policy allows inbound traffic on correct container port
+    app_policy = next(
+        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-network-policy"),
+        None
+    );
+    assert app_policy is not None;
+    app_ports = app_policy['spec']['ingress'][0]['ports'];
+    assert app_ports[0]['port'] == deployment_target.k8s_config.container_port;
+
+    # Verify MongoDB and Redis policies allow traffic from both app and dashboard pods.
+    mongo_policy = next(
+        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-mongodb-network-policy"),
+        None
+    );
+    assert mongo_policy is not None;
+    mongo_from = mongo_policy['spec']['ingress'][0]['from'];
+    assert {'podSelector': {'matchLabels': {'app': app_name}}} in mongo_from;
+    assert {'podSelector': {'matchLabels': {'app': f"{app_name}-mongo-express"}}} in mongo_from;
+    assert mongo_policy['spec']['ingress'][0]['ports'][0]['port'] == 27017;
+
+    redis_policy = next(
+        (p for p in fake_net.created_policies if p['metadata']['name'] == f"{app_name}-redis-network-policy"),
+        None
+    );
+    assert redis_policy is not None;
+    redis_from = redis_policy['spec']['ingress'][0]['from'];
+    assert {'podSelector': {'matchLabels': {'app': app_name}}} in redis_from;
+    assert {'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}} in redis_from;
+    assert redis_policy['spec']['ingress'][0]['ports'][0]['port'] == 6379;
 }
