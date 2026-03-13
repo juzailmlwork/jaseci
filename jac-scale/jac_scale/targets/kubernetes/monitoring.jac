@@ -265,7 +265,7 @@ obj MonitoringDeployer {
             'metadata': {
                 'name': ksm_sa_name,
                 'namespace': namespace,
-                'labels': {'app': ksm_name}
+                'labels': {'app': ksm_name, 'managed': 'jac-scale'}
             }
         };
         try {
@@ -286,7 +286,7 @@ obj MonitoringDeployer {
         cluster_role_body = {
             'apiVersion': 'rbac.authorization.k8s.io/v1',
             'kind': 'ClusterRole',
-            'metadata': {'name': cluster_role_name, 'labels': {'app': ksm_name}},
+            'metadata': {'name': cluster_role_name, 'labels': {'app': ksm_name, 'managed': 'jac-scale'}},
             'rules': [
                 {
                     'apiGroups': [''],
@@ -354,7 +354,7 @@ obj MonitoringDeployer {
             'kind': 'ClusterRoleBinding',
             'metadata': {
                 'name': cluster_role_binding_name,
-                'labels': {'app': ksm_name}
+                'labels': {'app': ksm_name, 'managed': 'jac-scale'}
             },
             'roleRef': {
                 'apiGroup': 'rbac.authorization.k8s.io',
@@ -382,13 +382,13 @@ obj MonitoringDeployer {
             'metadata': {
                 'name': ksm_name,
                 'namespace': namespace,
-                'labels': {'app': ksm_name}
+                'labels': {'app': ksm_name, 'managed': 'jac-scale'}
             },
             'spec': {
                 'replicas': 1,
                 'selector': {'matchLabels': {'app': ksm_name}},
                 'template': {
-                    'metadata': {'labels': {'app': ksm_name}},
+                    'metadata': {'labels': {'app': ksm_name, 'managed': 'jac-scale'}},
                     'spec': {
                         'automountServiceAccountToken': True,
                         'serviceAccountName': ksm_sa_name,
@@ -445,7 +445,7 @@ obj MonitoringDeployer {
             'metadata': {
                 'name': f"{ksm_name}-service",
                 'namespace': namespace,
-                'labels': {'app': ksm_name}
+                'labels': {'app': ksm_name, 'managed': 'jac-scale'}
             },
             'spec': {
                 'type': 'ClusterIP',
@@ -498,12 +498,12 @@ obj MonitoringDeployer {
             'metadata': {
                 'name': ne_name,
                 'namespace': namespace,
-                'labels': {'app': ne_name}
+                'labels': {'app': ne_name, 'managed': 'jac-scale'}
             },
             'spec': {
                 'selector': {'matchLabels': {'app': ne_name}},
                 'template': {
-                    'metadata': {'labels': {'app': ne_name}},
+                    'metadata': {'labels': {'app': ne_name, 'managed': 'jac-scale'}},
                     'spec': {
                         'automountServiceAccountToken': False,
                         'tolerations': [{'operator': 'Exists', 'effect': 'NoSchedule'}],

@@ -615,6 +615,43 @@ test "deploy all in one" {
     assert code_server_service.spec.ports[0].port == 8080;
     print("Code-server service verified: ClusterIP on port 8080");
 
+    # Validate NetworkPolicies were created
+    network_policy_names = [
+        f"{app_name}-network-policy",
+        f"{app_name}-mongodb-network-policy",
+        f"{app_name}-redis-network-policy",
+        f"{app_name}-prometheus-network-policy",
+        f"{app_name}-grafana-network-policy",
+        f"{app_name}-code-server-network-policy",
+        f"{app_name}-kube-state-metrics-network-policy",
+        f"{app_name}-node-exporter-network-policy"
+    ];
+    for policy_name in network_policy_names {
+        policy = networking_v1.read_namespaced_network_policy(
+            name=policy_name, namespace=namespace
+        );
+        assert policy.metadata.name == policy_name;
+        assert policy.spec.policy_types == ["Ingress", "Egress"];
+        print(f"NetworkPolicy '{policy_name}' exists with correct policy types");
+    }
+
+    # Validate MongoDB/Redis NetworkPolicy ingress allows dashboard pods
+    mongo_policy = networking_v1.read_namespaced_network_policy(
+        name=f"{app_name}-mongodb-network-policy", namespace=namespace
+    );
+    mongo_ingress = mongo_policy.spec.ingress[0];
+    mongo_from = [f.pod_selector.match_labels for f in mongo_ingress.from_];
+    assert {'app': app_name} in mongo_from;
+    assert {'app': f"{app_name}-mongo-express"} in mongo_from;
+
+    redis_policy = networking_v1.read_namespaced_network_policy(
+        name=f"{app_name}-redis-network-policy", namespace=namespace
+    );
+    redis_ingress = redis_policy.spec.ingress[0];
+    redis_from = [f.pod_selector.match_labels for f in redis_ingress.from_];
+    assert {'app': app_name} in redis_from;
+    assert {'app': f"{app_name}-redis-insight"} in redis_from;
+
     # Validate K8s Secret was created with correct data
     secret = core_v1.read_namespaced_secret(
         name=f"{app_name}-secrets", namespace=namespace
@@ -897,21 +934,33 @@ test "deploy all in one" {
         assert e.status == 404 , f"Expected 404, got {e.status}";
     }
 
-    # Verify NetworkPolicy is gone
+    # Verify NetworkPolicies are gone
     networking_v1 = client.NetworkingV1Api();
-    try {
-        networking_v1.read_namespaced_network_policy(
-            name=f"{app_name}-network-policy", namespace=namespace
-        );
-        raise AssertionError(
-            "NetworkPolicy should have been deleted by application component destroy"
-        );
-    } except ApiException as e {
-        assert e.status == 404 , f"Expected 404, got {e.status}";
+    network_policy_names = [
+        f"{app_name}-network-policy",
+        f"{app_name}-mongodb-network-policy",
+        f"{app_name}-redis-network-policy",
+        f"{app_name}-prometheus-network-policy",
+        f"{app_name}-grafana-network-policy",
+        f"{app_name}-code-server-network-policy",
+        f"{app_name}-kube-state-metrics-network-policy",
+        f"{app_name}-node-exporter-network-policy"
+    ];
+    for policy_name in network_policy_names {
+        try {
+            networking_v1.read_namespaced_network_policy(
+                name=policy_name, namespace=namespace
+            );
+            raise AssertionError(
+                f"NetworkPolicy '{policy_name}' should have been deleted by application component destroy"
+            );
+        } except ApiException as e {
+            assert e.status == 404 , f"Expected 404 for {policy_name}, got {e.status}";
+        }
     }
 
     print(
-        "Application component (HPA + Deployment + Service + Secret + code-server + PVCs + SAs + NetworkPolicy) removed"
+        "Application component (HPA + Deployment + Service + Secret + code-server + PVCs + SAs + NetworkPolicies) removed"
     );
 
     # Verify cache and database are still running

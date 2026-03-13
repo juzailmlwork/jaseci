@@ -895,18 +895,19 @@ obj KubernetesTarget(DeploymentTarget) {
         }
     }
 
-    """Generate and apply a NetworkPolicy for the app namespace.
+    """Generate and apply NetworkPolicies for the app namespace.
 
-    Policy type: default-deny all ingress/egress with explicit allowlists for:
-      - DNS egress (UDP/TCP port 53)
-      - Intra-namespace traffic (for MongoDB, Redis, code-server, etc.)
-      - External HTTPS/HTTP egress (for runtime pip/apt installs)
-      - Ingress to the app container port (from NodePort/LoadBalancer traffic)
+    Creates separate policies for each component to enforce proper isolation:
+      - Main app: allows ingress on container port, allows egress to DNS and intra-namespace
+      - MongoDB: allows ingress on 27017 from main app, allows egress to DNS and intra-namespace
+      - Redis: allows ingress on 6379 from main app, allows egress to DNS and intra-namespace
+      - Other components: deny all ingress, allow egress to DNS and intra-namespace
     """
     def _deploy_network_policy(
         app_name: str, namespace: str, networking_v1: Any
     ) -> None {
-        egress_rules = [
+        # Common egress rules for all policies
+        common_egress_rules = [
             # DNS — explicit kube-system selector so CNIs that evaluate policy
             # before DNAT (e.g. Flannel) can reach kube-dns.
             {
@@ -924,7 +925,7 @@ obj KubernetesTarget(DeploymentTarget) {
                     {'protocol': 'TCP', 'port': 53}
                 ]
             },
-            # All pods within the same namespace (MongoDB, Redis, code-server, etc.)
+            # All pods within the same namespace
             {'to': [{'podSelector': {}}]},
             # External HTTPS — needed for pip/apt installs during runtime setup
             {
@@ -935,50 +936,111 @@ obj KubernetesTarget(DeploymentTarget) {
             }
         ];
 
-        ingress_rules = [
-            # App container port — accepts traffic from NodePort/LoadBalancer and
-            # from Prometheus scraping within the namespace.
-            {'ports': [{'protocol': 'TCP', 'port': self.k8s_config.container_port}]}
+        # Define policies for each component
+        policies = [
+            {
+                'name': f"{app_name}-network-policy",
+                'pod_selector': {'matchLabels': {'app': app_name}},
+                'ingress_rules': [
+                    # App container port — accepts traffic from NodePort/LoadBalancer
+                    {'ports': [{'protocol': 'TCP', 'port': self.k8s_config.container_port}]}
+                ]
+            },
+            {
+                'name': f"{app_name}-mongodb-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-mongodb"}},
+                'ingress_rules': [
+                    # MongoDB port — accepts traffic from main app and mongo-express dashboard
+                    {
+                        'from': [
+                            {'podSelector': {'matchLabels': {'app': app_name}}},
+                            {'podSelector': {'matchLabels': {'app': f"{app_name}-mongo-express"}}}
+                        ],
+                        'ports': [{'protocol': 'TCP', 'port': 27017}]
+                    }
+                ]
+            },
+            {
+                'name': f"{app_name}-redis-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-redis"}},
+                'ingress_rules': [
+                    # Redis port — accepts traffic from main app and RedisInsight dashboard
+                    {
+                        'from': [
+                            {'podSelector': {'matchLabels': {'app': app_name}}},
+                            {'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}}
+                        ],
+                        'ports': [{'protocol': 'TCP', 'port': 6379}]
+                    }
+                ]
+            },
+            # Add policies for other components that should deny all ingress
+            {
+                'name': f"{app_name}-prometheus-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-prometheus"}},
+                'ingress_rules': []  # Deny all ingress
+            },
+            {
+                'name': f"{app_name}-grafana-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-grafana"}},
+                'ingress_rules': []  # Deny all ingress (accessed via Ingress)
+            },
+            {
+                'name': f"{app_name}-code-server-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-code-server"}},
+                'ingress_rules': []  # Deny all ingress (accessed via Ingress)
+            },
+            {
+                'name': f"{app_name}-kube-state-metrics-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-kube-state-metrics"}},
+                'ingress_rules': []  # Deny all ingress (scraped by Prometheus)
+            },
+            {
+                'name': f"{app_name}-node-exporter-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-node-exporter"}},
+                'ingress_rules': []  # Deny all ingress (scraped by Prometheus)
+            }
         ];
 
-        network_policy = {
-            'apiVersion': 'networking.k8s.io/v1',
-            'kind': 'NetworkPolicy',
-            'metadata': {
-                'name': f"{app_name}-network-policy",
-                'namespace': namespace,
-                'labels': {'app': app_name, 'managed': 'jac-scale'}
-            },
-            'spec': {
-                'podSelector': {'matchLabels': {'app': app_name}},
-                'policyTypes': ['Ingress', 'Egress'],
-                'ingress': ingress_rules,
-                'egress': egress_rules
-            }
-        };
-
-        try {
-            networking_v1.read_namespaced_network_policy(
-                name=f"{app_name}-network-policy", namespace=namespace
-            );
-            networking_v1.replace_namespaced_network_policy(
-                name=f"{app_name}-network-policy",
-                namespace=namespace,
-                body=network_policy
-            );
-        } except ApiException as e {
-            if e.status == 404 {
-                networking_v1.create_namespaced_network_policy(
-                    namespace=namespace, body=network_policy
-                );
-                if self.logger {
-                    self.logger.info(
-                        f"Created NetworkPolicy '{app_name}-network-policy' in namespace '{namespace}'"
-                    );
+        for policy_config in policies {
+            network_policy = {
+                'apiVersion': 'networking.k8s.io/v1',
+                'kind': 'NetworkPolicy',
+                'metadata': {
+                    'name': policy_config['name'],
+                    'namespace': namespace,
+                    'labels': {'app': app_name, 'managed': 'jac-scale'}
+                },
+                'spec': {
+                    'podSelector': policy_config['pod_selector'],
+                    'policyTypes': ['Ingress', 'Egress'],
+                    'ingress': policy_config['ingress_rules'],
+                    'egress': common_egress_rules
                 }
-            } else {
-                raise;
-            }
+            };
+
+            try {
+                networking_v1.read_namespaced_network_policy(
+                    name=policy_config['name'], namespace=namespace
+                );
+                networking_v1.replace_namespaced_network_policy(
+                    name=policy_config['name'],
+                    namespace=namespace,
+                    body=network_policy
+                );
+            } except ApiException as e {
+                if e.status == 404 {
+                    networking_v1.create_namespaced_network_policy(
+                        namespace=namespace, body=network_policy
+                    );
+                    if self.logger {
+                        self.logger.info(
+                            f"Created NetworkPolicy '{policy_config['name']}' in namespace '{namespace}'"
+                        );
+                    }
+                } else {
+                    raise;
+                }
         }
     }
 
@@ -1601,12 +1663,25 @@ obj KubernetesTarget(DeploymentTarget) {
             'ServiceAccount'
         );
         networking_v1 = client.NetworkingV1Api();
-        delete_if_exists(
-            networking_v1.delete_namespaced_network_policy,
+        # Delete all NetworkPolicies for this app
+        network_policy_names = [
             f"{app_name}-network-policy",
-            namespace,
-            'NetworkPolicy'
-        );
+            f"{app_name}-mongodb-network-policy",
+            f"{app_name}-redis-network-policy",
+            f"{app_name}-prometheus-network-policy",
+            f"{app_name}-grafana-network-policy",
+            f"{app_name}-code-server-network-policy",
+            f"{app_name}-kube-state-metrics-network-policy",
+            f"{app_name}-node-exporter-network-policy"
+        ];
+        for policy_name in network_policy_names {
+            delete_if_exists(
+                networking_v1.delete_namespaced_network_policy,
+                policy_name,
+                namespace,
+                'NetworkPolicy'
+            );
+        }
     }
 
     def _destroy_database(

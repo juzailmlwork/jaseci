@@ -189,7 +189,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'labels': {
                     'app': redis_name,
                     'component': 'cache',
-                    'managed-by': 'jac-scale'
+                    'managed': 'jac-scale'
                 }
             },
             'stringData': {
@@ -208,7 +208,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'labels': {
                     'app': redis_name,
                     'component': 'cache',
-                    'managed-by': 'jac-scale'
+                    'managed': 'jac-scale'
                 },
                 'annotations': {
                     'config-hash': config_hash,
@@ -227,7 +227,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'labels': {
                     'app': redis_name,
                     'component': 'cache',
-                    'managed-by': 'jac-scale'
+                    'managed': 'jac-scale'
                 }
             },
             'automountServiceAccountToken': False
@@ -242,7 +242,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'labels': {
                     'app': redis_name,
                     'component': 'cache',
-                    'managed-by': 'jac-scale'
+                    'managed': 'jac-scale'
                 }
             },
             'spec': {
@@ -250,7 +250,7 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'selector': {'matchLabels': {'app': redis_name}},
                 'template': {
                     'metadata': {
-                        'labels': {'app': redis_name, 'component': 'cache'},
+                        'labels': {'app': redis_name, 'component': 'cache', 'managed': 'jac-scale'},
                         'annotations': {
                             # This annotation triggers pod restart when config changes
                             'redis-config-hash': config_hash,
