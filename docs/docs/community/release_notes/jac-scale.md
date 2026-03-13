@@ -4,7 +4,7 @@ This document provides a summary of new features, improvements, and bug fixes in
 
 ## jac-scale 0.2.6 (Unreleased)
 
-- **Kubernetes Security Hardening**: Every generated container now enforces `allowPrivilegeEscalation: false`, `capabilities.drop: ALL`, and `seccompProfile: RuntimeDefault`. Static/pre-built containers additionally set `runAsNonRoot: true`, `runAsUser: 1000`, and `readOnlyRootFilesystem: true`. The runtime-install container (which runs `apt-get` and `pip` at startup) retains only the minimum capabilities required (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `FSETID`, `SETUID`, `SETGID`) and keeps `readOnlyRootFilesystem: false` for package writes. Every workload receives a dedicated `ServiceAccount` with `automountServiceAccountToken: false`. A default-deny `NetworkPolicy` is generated per app with explicit egress allowlists for DNS (targeting `kube-system` via namespace selector), intra-namespace services, and external HTTP/HTTPS (for runtime package installs), plus an ingress rule for the app container port. Non-default namespaces are labeled with `pod-security.kubernetes.io/enforce: restricted` and `pod-security.kubernetes.io/warn: restricted` on both create and update.
+- **Kubernetes Security Hardening**: Added container-level security contexts (`allowPrivilegeEscalation: false`, `drop: ALL`, `readOnlyRootFilesystem`, `seccompProfile: RuntimeDefault`), dedicated `ServiceAccount` per workload, default-deny `NetworkPolicy`, and `pod-security.kubernetes.io/enforce: baseline` namespace labels.
 
 ## jac-scale 0.2.5 (Latest Release)
 
