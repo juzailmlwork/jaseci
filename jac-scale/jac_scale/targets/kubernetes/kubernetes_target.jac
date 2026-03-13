@@ -452,7 +452,7 @@ obj KubernetesTarget(DeploymentTarget) {
                                 'command': [
                                     'sh',
                                     '-c',
-                                    f"until [ -f {self.k8s_config.workspace_path}/main.jac ]; do sleep 1; done && tar czf /tmp/code.tar.gz -C {self.k8s_config.workspace_path} --exclude='.jac' . && httpd -f -p 8080 -h /tmp"
+                                    f"echo 'Code-server starting' && tar czf /tmp/code.tar.gz -C {self.k8s_config.workspace_path} --exclude='.jac' . && echo 'Tar completed' && httpd -f -p 8080 -h /tmp"
                                 ],
                                 'ports': [{'containerPort': 8080}],
                                 'volumeMounts': [
@@ -992,7 +992,15 @@ obj KubernetesTarget(DeploymentTarget) {
             {
                 'name': f"{app_name}-code-server-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-code-server"}},
-                'ingress_rules': []  # Deny all ingress (accessed via Ingress)
+                'ingress_rules': [
+                # Code-server port — accepts traffic from main app
+                {
+                    'from': [
+                        {'podSelector': {'matchLabels': {'app': app_name}}}
+                    ],
+                    'ports': [{'protocol': 'TCP', 'port': 8080}]
+                }
+            ]
             },
             {
                 'name': f"{app_name}-kube-state-metrics-network-policy",
