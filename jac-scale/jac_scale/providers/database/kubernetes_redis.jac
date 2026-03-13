@@ -276,7 +276,8 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                                     'runAsUser': 999,
                                     'readOnlyRootFilesystem': True,
                                     'allowPrivilegeEscalation': False,
-                                    'capabilities': {'drop': ['ALL']}
+                                    'capabilities': {'drop': ['ALL']},
+                                    'seccompProfile': {'type': 'RuntimeDefault'}
                                 },
                                 'ports': [
                                     {'containerPort': redis_port, 'name': 'redis'}

@@ -70,7 +70,8 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                                     'runAsUser': 999,
                                     'readOnlyRootFilesystem': True,
                                     'allowPrivilegeEscalation': False,
-                                    'capabilities': {'drop': ['ALL']}
+                                    'capabilities': {'drop': ['ALL']},
+                                    'seccompProfile': {'type': 'RuntimeDefault'}
                                 },
                                 'ports': [{'containerPort': mongodb_port}],
                                 'env': [
@@ -259,7 +260,8 @@ obj KubernetesMongoProvider(DatabaseProvider) {
                                     'runAsUser': 1000,
                                     'readOnlyRootFilesystem': True,
                                     'allowPrivilegeEscalation': False,
-                                    'capabilities': {'drop': ['ALL']}
+                                    'capabilities': {'drop': ['ALL']},
+                                    'seccompProfile': {'type': 'RuntimeDefault'}
                                 },
                                 'ports': [{'containerPort': 8081}],
                                 'env': [
