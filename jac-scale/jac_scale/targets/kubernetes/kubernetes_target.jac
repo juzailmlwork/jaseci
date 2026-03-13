@@ -1041,6 +1041,7 @@ obj KubernetesTarget(DeploymentTarget) {
                 } else {
                     raise;
                 }
+            }
         }
     }
 

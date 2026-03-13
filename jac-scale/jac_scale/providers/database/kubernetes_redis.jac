@@ -250,7 +250,11 @@ obj KubernetesRedisProvider(DatabaseProvider) {
                 'selector': {'matchLabels': {'app': redis_name}},
                 'template': {
                     'metadata': {
-                        'labels': {'app': redis_name, 'component': 'cache', 'managed': 'jac-scale'},
+                        'labels': {
+                            'app': redis_name,
+                            'component': 'cache',
+                            'managed': 'jac-scale'
+                        },
                         'annotations': {
                             # This annotation triggers pod restart when config changes
                             'redis-config-hash': config_hash,

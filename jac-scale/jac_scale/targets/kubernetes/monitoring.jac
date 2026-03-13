@@ -286,7 +286,10 @@ obj MonitoringDeployer {
         cluster_role_body = {
             'apiVersion': 'rbac.authorization.k8s.io/v1',
             'kind': 'ClusterRole',
-            'metadata': {'name': cluster_role_name, 'labels': {'app': ksm_name, 'managed': 'jac-scale'}},
+            'metadata': {
+                'name': cluster_role_name,
+                'labels': {'app': ksm_name, 'managed': 'jac-scale'}
+            },
             'rules': [
                 {
                     'apiGroups': [''],
