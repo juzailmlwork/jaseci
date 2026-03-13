@@ -243,10 +243,6 @@ test "deploy all in one" {
     details = result.details;
     print(f"Deployment result details: {details}");
     print(f"Deployment status: {result.message}");
-    subprocess.run(["kubectl", "get", "pods", "-n", "all-in-one"]);
-    subprocess.run(["kubectl", "logs", "-n", "all-in-one", "-l", "app=all-in-one-code-server"]);
-    subprocess.run(["kubectl", "logs", "-n", "all-in-one", "-l", "app=all-in-one", "-c", "build-app", "--tail=50"]);
-    subprocess.run(["kubectl", "describe", "pod", "-n", "all-in-one", "-l", "app=all-in-one"]);
     assert result.success is True;
     assert len(details) == 13;
 
@@ -645,7 +641,7 @@ test "deploy all in one" {
         name=f"{app_name}-mongodb-network-policy", namespace=namespace
     );
     mongo_ingress = mongo_policy.spec.ingress[0];
-    mongo_from = [f.pod_selector.match_labels for f in mongo_ingress.from_];
+    mongo_from = [f.pod_selector.match_labels for f in mongo_ingress._from];
     assert {'app': app_name} in mongo_from;
     assert {'app': f"{app_name}-mongo-express"} in mongo_from;
 
@@ -653,7 +649,7 @@ test "deploy all in one" {
         name=f"{app_name}-redis-network-policy", namespace=namespace
     );
     redis_ingress = redis_policy.spec.ingress[0];
-    redis_from = [f.pod_selector.match_labels for f in redis_ingress.from_];
+    redis_from = [f.pod_selector.match_labels for f in redis_ingress._from];
     assert {'app': app_name} in redis_from;
     assert {'app': f"{app_name}-redis-insight"} in redis_from;
 
