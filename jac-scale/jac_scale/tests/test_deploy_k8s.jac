@@ -1751,6 +1751,7 @@ test "kubernetes target security policy dicts" {
         'podSelector': {'matchLabels': {'app': f"{app_name}-redis-insight"}}
     } in redis_from;
     assert redis_policy['spec']['ingress'][0]['ports'][0]['port'] == 6379;
+}
 # ---------------------------------------------------------------------------
 # Domain / TLS configuration tests (mocked - no live cluster required)
 # ---------------------------------------------------------------------------
