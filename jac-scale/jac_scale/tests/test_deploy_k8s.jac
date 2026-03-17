@@ -22,6 +22,7 @@ import from jac_scale.config_loader { JacScaleConfig, get_scale_config }
 import from jac_scale.factories.deployment_factory { DeploymentTargetFactory }
 import from jac_scale.factories.utility_factory { UtilityFactory }
 import from jac_scale.targets.kubernetes.kubernetes_config { KubernetesConfig }
+import from jac_scale.targets.kubernetes.ingress { IngressDeployer }
 
 """Get current git repository URL, branch, and commit hash.
 
@@ -1520,4 +1521,51 @@ test "enable tls raises when no domain configured" {
         }
     }
     assert raised , "enable_tls should raise when no domain is configured";
+}
+
+test "deploy with domain set stores domain in annotation not ingress host rule" {
+    # Regression test: setting domain in jac.toml before the first deployment
+    # must NOT add a host field to the ingress rule.  Adding a host before TLS
+    # exists causes nginx to reject traffic from the raw NLB hostname, making
+    # the app unreachable.  The fix stores the domain in a jac-scale/domain
+    # annotation so --enable-tls can read it later and add the host + TLS
+    # together in one atomic step.
+    k8s_config = KubernetesConfig(
+        domain="app.example.com", cert_manager_email="user@example.com"
+    );
+    ingress_deployer = IngressDeployer(k8s_config, None);
+
+    mock_networking_v1 = unittest.mock.MagicMock();
+    # Simulate ingress not yet existing (first deploy) so create path is taken
+    mock_networking_v1.replace_namespaced_ingress.side_effect = ApiException(status=404);
+
+    mock_core_v1 = unittest.mock.MagicMock();
+    # Simulate basic-auth secret not yet existing
+    mock_core_v1.read_namespaced_secret.side_effect = ApiException(status=404);
+
+    ingress_deployer._deploy_ingress_resource(
+        app_name="myapp",
+        namespace="default",
+        ingress_class="myapp-nginx",
+        service_port=8000,
+        grafana_enabled=False,
+        redis_dashboard=False,
+        mongo_dashboard=False,
+        networking_v1=mock_networking_v1,
+        core_v1=mock_core_v1
+    );
+
+    assert mock_networking_v1.create_namespaced_ingress.called , "ingress should be created on first deploy";
+    created_body = mock_networking_v1.create_namespaced_ingress.call_args[1]["body"];
+
+    # Rule must NOT have a host - wildcard routing keeps the app reachable via
+    # IP/NLB before TLS is enabled (the original bug: host set here caused nginx
+    # to reject requests arriving via the raw NLB address)
+    rule = created_body["spec"]["rules"][0];
+    assert "host" not in rule , "ingress rule must not set host before TLS is enabled";
+
+    # Domain must be persisted in the annotation so --enable-tls can read it later
+    annotations = created_body["metadata"]["annotations"];
+    assert annotations.get("jac-scale/domain") == "app.example.com" , "domain must be stored in jac-scale/domain annotation for --enable-tls";
+    assert annotations.get("jac-scale/cert-email") == "user@example.com" , "cert_manager_email must be stored in jac-scale/cert-email annotation for --enable-tls";
 }
