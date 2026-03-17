@@ -352,4 +352,28 @@ test "check pods restarted selector and return values" {
     }
 
     assert result_true is True;
+
+    # --- Case 3: restart_count=1 but pod is currently running (e.g. MongoDB/Redis
+    #             readOnlyRootFilesystem restart-then-stabilise) → False ---
+    stabilised_container = unittest.mock.MagicMock();
+    stabilised_container.state = unittest.mock.MagicMock();
+    stabilised_container.state.waiting = None;
+    stabilised_container.state.running = unittest.mock.MagicMock();  # currently running
+    stabilised_container.restart_count = 1;
+
+    pod_stabilised = unittest.mock.MagicMock();
+    pod_stabilised.status.container_statuses = [stabilised_container];
+
+    resp_stabilised = unittest.mock.MagicMock();
+    resp_stabilised.items = [pod_stabilised];
+
+    fake_v1.list_namespaced_pod.return_value = resp_stabilised;
+
+    with unittest.mock.patch.object(utils.config, "load_kube_config") {
+        with unittest.mock.patch.object(utils.client, "CoreV1Api", lambda : fake_v1 ) {
+            result_stabilised = check_pods_restarted(namespace, app_name);
+        }
+    }
+
+    assert result_stabilised is False , "pod that restarted once but is now running should not be flagged as crashed";
 }

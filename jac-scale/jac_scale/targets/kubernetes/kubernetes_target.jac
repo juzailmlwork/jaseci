@@ -990,16 +990,28 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 ]
             },
-            # Add policies for other components that should deny all ingress
+            # Prometheus — allow grafana to query on port 9090
             {
                 'name': f"{app_name}-prometheus-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-prometheus"}},
-                'ingress_rules': []
+                'ingress_rules': [
+                    {
+                        'from': [
+                            {
+                                'podSelector': {
+                                    'matchLabels': {'app': f"{app_name}-grafana"}
+                                }
+                            }
+                        ],
+                        'ports': [{'protocol': 'TCP', 'port': 9090}]
+                    }
+                ]
             },
+            # Grafana — allow ingress controller to reach it on port 3000 (/grafana route)
             {
                 'name': f"{app_name}-grafana-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-grafana"}},
-                'ingress_rules': []
+                'ingress_rules': [{'ports': [{'protocol': 'TCP', 'port': 3000}]}]
             },
             {
                 'name': f"{app_name}-code-server-network-policy",
@@ -1012,17 +1024,53 @@ obj KubernetesTarget(DeploymentTarget) {
                     }
                 ]
             },
+            # kube-state-metrics — allow prometheus to scrape on port 8080
             {
                 'name': f"{app_name}-kube-state-metrics-network-policy",
                 'pod_selector': {
                     'matchLabels': {'app': f"{app_name}-kube-state-metrics"}
                 },
-                'ingress_rules': []
+                'ingress_rules': [
+                    {
+                        'from': [
+                            {
+                                'podSelector': {
+                                    'matchLabels': {'app': f"{app_name}-prometheus"}
+                                }
+                            }
+                        ],
+                        'ports': [{'protocol': 'TCP', 'port': 8080}]
+                    }
+                ]
             },
+            # node-exporter — allow prometheus to scrape on port 9100
             {
                 'name': f"{app_name}-node-exporter-network-policy",
                 'pod_selector': {'matchLabels': {'app': f"{app_name}-node-exporter"}},
-                'ingress_rules': []
+                'ingress_rules': [
+                    {
+                        'from': [
+                            {
+                                'podSelector': {
+                                    'matchLabels': {'app': f"{app_name}-prometheus"}
+                                }
+                            }
+                        ],
+                        'ports': [{'protocol': 'TCP', 'port': 9100}]
+                    }
+                ]
+            },
+            # mongo-express — allow ingress controller to reach it on port 8081 (/db-dashboard route)
+            {
+                'name': f"{app_name}-mongo-express-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-mongo-express"}},
+                'ingress_rules': [{'ports': [{'protocol': 'TCP', 'port': 8081}]}]
+            },
+            # redis-insight — allow ingress controller to reach it on port 5540
+            {
+                'name': f"{app_name}-redis-insight-network-policy",
+                'pod_selector': {'matchLabels': {'app': f"{app_name}-redis-insight"}},
+                'ingress_rules': [{'ports': [{'protocol': 'TCP', 'port': 5540}]}]
             }
         ];
 
@@ -1722,7 +1770,9 @@ obj KubernetesTarget(DeploymentTarget) {
             f"{app_name}-grafana-network-policy",
             f"{app_name}-code-server-network-policy",
             f"{app_name}-kube-state-metrics-network-policy",
-            f"{app_name}-node-exporter-network-policy"
+            f"{app_name}-node-exporter-network-policy",
+            f"{app_name}-mongo-express-network-policy",
+            f"{app_name}-redis-insight-network-policy"
         ];
         for policy_name in network_policy_names {
             delete_if_exists(

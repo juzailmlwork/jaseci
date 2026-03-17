@@ -630,7 +630,9 @@ test "deploy all in one" {
         f"{app_name}-grafana-network-policy",
         f"{app_name}-code-server-network-policy",
         f"{app_name}-kube-state-metrics-network-policy",
-        f"{app_name}-node-exporter-network-policy"
+        f"{app_name}-node-exporter-network-policy",
+        f"{app_name}-mongo-express-network-policy",
+        f"{app_name}-redis-insight-network-policy"
     ];
     for policy_name in network_policy_names {
         policy = networking_v1.read_namespaced_network_policy(
@@ -950,7 +952,9 @@ test "deploy all in one" {
         f"{app_name}-grafana-network-policy",
         f"{app_name}-code-server-network-policy",
         f"{app_name}-kube-state-metrics-network-policy",
-        f"{app_name}-node-exporter-network-policy"
+        f"{app_name}-node-exporter-network-policy",
+        f"{app_name}-mongo-express-network-policy",
+        f"{app_name}-redis-insight-network-policy"
     ];
     for policy_name in network_policy_names {
         try {
