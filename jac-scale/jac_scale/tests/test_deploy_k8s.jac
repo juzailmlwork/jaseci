@@ -1899,3 +1899,43 @@ test "deploy with domain set stores domain in annotation not ingress host rule" 
     assert annotations.get("jac-scale/domain") == "app.example.com" , "domain must be stored in jac-scale/domain annotation for --enable-tls";
     assert annotations.get("jac-scale/cert-email") == "user@example.com" , "cert_manager_email must be stored in jac-scale/cert-email annotation for --enable-tls";
 }
+
+test "redis ingress rule must not set host before TLS is enabled" {
+    # Regression test: the Redis ingress had the same if self.k8s_config.domain →
+    # host-in-rule bug as the main ingress.  Ensure the Redis rule is also
+    # wildcard (no host) when domain is set but --enable-tls has not run yet.
+    k8s_config = KubernetesConfig(
+        domain="app.example.com", cert_manager_email="user@example.com"
+    );
+    ingress_deployer = IngressDeployer(k8s_config, None);
+
+    mock_networking_v1 = unittest.mock.MagicMock();
+    # Simulate ingress not yet existing for both main and Redis ingresses
+    mock_networking_v1.replace_namespaced_ingress.side_effect = ApiException(status=404);
+
+    mock_core_v1 = unittest.mock.MagicMock();
+    # Simulate basic-auth secret not yet existing
+    mock_core_v1.read_namespaced_secret.side_effect = ApiException(status=404);
+
+    ingress_deployer._deploy_ingress_resource(
+        app_name="myapp",
+        namespace="default",
+        ingress_class="myapp-nginx",
+        service_port=8000,
+        grafana_enabled=False,
+        redis_dashboard=True,
+        mongo_dashboard=False,
+        networking_v1=mock_networking_v1,
+        core_v1=mock_core_v1
+    );
+
+    # Two ingresses should be created: main (index 0) and Redis (index 1)
+    assert mock_networking_v1.create_namespaced_ingress.call_count == 2 , "both main and Redis ingresses should be created on first deploy";
+    redis_created_body = mock_networking_v1.create_namespaced_ingress.call_args_list[1][
+        1
+    ]["body"];
+
+    # Redis rule must NOT have a host — same requirement as the main ingress
+    redis_rule = redis_created_body["spec"]["rules"][0];
+    assert "host" not in redis_rule , "Redis ingress rule must not set host before TLS is enabled";
+}
