@@ -345,23 +345,20 @@ test "jac impl err" {
     assert f'"{path_to_file}", line 2' in stdout_value;
 }
 
-test "param name diff" {
-    captured_output = io.StringIO();
-    sys.stdout = captured_output;
-    sys.stderr = captured_output;
-    try {
-        execution.run(fixture_path("decl_defn_param_name.jac"));
-    } except Exception {
-        _ = None;
-    }
-    sys.stdout = sys.__stdout__;
-    sys.stderr = sys.__stderr__;
-
-    expected_stdout_values = ("short_name = 42", "p1 = 64 , p2 = foobar");
-    output = captured_output.getvalue();
-    for exp in expected_stdout_values {
-        assert exp in output;
-    }
+test "param name diff warns" {
+    import from jaclang.jac0core.program { JacProgram }
+    prog = JacProgram();
+    prog.compile(fixture_path("decl_defn_param_name.jac"), no_cgen=True);
+    warn_msgs = [str(w) for w in prog.warnings_had];
+    assert any(
+        "'some_long_paramenter_name'" in m and "'short_name'" in m for m in warn_msgs
+    ) , (f"Expected param name mismatch warning for method1, got: {warn_msgs}");
+    assert any("'param1'" in m and "'p1'" in m for m in warn_msgs) , (
+        f"Expected param name mismatch warning for method2 param1, got: {warn_msgs}"
+    );
+    assert any("'param2'" in m and "'p2'" in m for m in warn_msgs) , (
+        f"Expected param name mismatch warning for method2 param2, got: {warn_msgs}"
+    );
 }
 
 test "jac test err" {
@@ -1845,4 +1842,38 @@ test "jac check reports errors for files inside jaclang source tree" {
     assert "failed" in combined.lower() , (
         "Expected failure output for jaclang-internal file with type errors"
     );
+}
+
+"""Regression: JIR cache must preserve Archetype.body for generic type inference."""
+test "jir cache preserves generic type inference" {
+    import from jaclang.jac0core.program { JacProgram }
+    import from jaclang.jac0core.runtime { JacRuntime }
+
+    with tempfile.TemporaryDirectory() as tmpdir {
+        with open(os.path.join(tmpdir, "lib.jac"), "w") as f {
+            f.write("obj Box[T] { has value: T; def get -> T { return self.value; } }");
+        }
+        with open(os.path.join(tmpdir, "main.jac"), "w") as f {
+            f.write(
+                "import from lib { Box }\nwith entry { print(Box(value=42).get() + 1); }"
+            );
+        }
+        main_path = os.path.join(tmpdir, "main.jac");
+        # Run check twice: first creates cache, second uses it
+        outputs: list[str] = [];
+        for _ in range(2) {
+            JacRuntime.program = JacProgram();
+            (cap_out, cap_err, old_out, old_err) = _capture_output();
+            try {
+                analysis.check([main_path]);
+                outputs.append(cap_out.getvalue() + cap_err.getvalue());
+            } finally {
+                _restore_output(old_out, old_err);
+            }
+        }
+        # E1055 appears if Box[int].get() returns Unknown due to lost type info
+        assert "No matching overload" not in outputs[1] , f"JIR cache lost type info:\n{outputs[
+            1
+        ]}";
+    }
 }
