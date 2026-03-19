@@ -338,15 +338,90 @@ obj KubernetesTarget(DeploymentTarget) {
         sync_image = self.k8s_config.busybox_image;
 
         ensure_pvc_exists(core_v1, namespace, pvc_name, pvc_size);
+
+        # Scale code-server to 0 before syncing so the ReadWriteOnce EBS volume
+        # is released. Without this, EBS causes a Multi-Attach error when the
+        # code-sync pod is scheduled on a different node than code-server.
+        # Track whether code-server was running so we can restore it on failure.
+        code_server_name = f"{app_name}-code-server";
+        code_server_was_running = False;
+        try {
+            apps_v1.read_namespaced_deployment(code_server_name, namespace);
+            apps_v1.patch_namespaced_deployment(
+                code_server_name, namespace, {'spec': {'replicas': 0}}
+            );
+            code_server_was_running = True;
+            if self.logger {
+                self.logger.info(
+                    f"Scaled '{code_server_name}' to 0 to release PVC for code-sync"
+                );
+            }
+            start_time = time.time();
+            while ((time.time() - start_time) < 120) {
+                pod_list = core_v1.list_namespaced_pod(
+                    namespace, label_selector=f"app={code_server_name}"
+                );
+                if (len(pod_list.items) == 0) {
+                    break;
+                }
+                time.sleep(3);
+            }
+        } except ApiException as exc {
+            if (exc.status != 404) {
+                raise;
+            }
+        }
+
         if self.logger {
             self.logger.info('Syncing application code to PVC');
         }
-        sync_code_to_pvc(
-            core_v1, namespace, pvc_name, app_config.code_folder, app_name, sync_image
-        );
-
-        # Deploy code-server to serve code from PVC over HTTP
-        self._deploy_code_server(app_name, namespace, apps_v1, core_v1);
+        try {
+            sync_code_to_pvc(
+                core_v1,
+                namespace,
+                pvc_name,
+                app_config.code_folder,
+                app_name,
+                sync_image
+            );
+            # Deploy code-server to serve code from PVC over HTTP
+            self._deploy_code_server(app_name, namespace, apps_v1, core_v1);
+        } except Exception as exc {
+            # sync or _deploy_code_server failed. Best-effort restore so existing
+            # app pods can still restart:
+            #   - If the code-server Deployment still exists (sync failed before
+            #     _deploy_code_server deleted it): scale back to 1.
+            #   - If the Deployment is gone (_deploy_code_server deleted it but
+            #     failed to recreate): call _deploy_code_server to recreate it
+            #     (it will serve whatever is currently on the PVC).
+            if code_server_was_running {
+                try {
+                    apps_v1.read_namespaced_deployment(code_server_name, namespace);
+                    apps_v1.patch_namespaced_deployment(
+                        code_server_name, namespace, {'spec': {'replicas': 1}}
+                    );
+                    if self.logger {
+                        self.logger.info(
+                            f"Restored '{code_server_name}' to 1 replica after failure"
+                        );
+                    }
+                } except ApiException as restore_exc {
+                    if restore_exc.status == 404 {
+                        try {
+                            self._deploy_code_server(
+                                app_name, namespace, apps_v1, core_v1
+                            );
+                            if self.logger {
+                                self.logger.info(
+                                    f"Recreated '{code_server_name}' after failure"
+                                );
+                            }
+                        } except Exception { }
+                    }
+                }
+            }
+            raise exc;
+        }
 
         # Init container fetches code from code-server via wget (no PVC mount needed)
         code_server_url = f"http://{app_name}-code-server:8080/code.tar.gz";

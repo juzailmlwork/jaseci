@@ -1756,6 +1756,198 @@ test "kubernetes target security policy dicts" {
     } in redis_from;
     assert redis_policy['spec']['ingress'][0]['ports'][0]['port'] == 6379;
 }
+
+# ---------------------------------------------------------------------------
+# code-server scale-to-zero before code-sync (mocked - no live cluster needed)
+# ---------------------------------------------------------------------------
+# Verifies that _build_volumes_config scales code-server to 0 and waits for
+# its pods to terminate before calling sync_code_to_pvc, then lets
+# _deploy_code_server recreate it at replicas=1.  Without this ordering the
+# RWO EBS volume stays attached to the old node and the sync pod gets a
+# Multi-Attach error.
+test "code server scaled to zero before sync on redeploy" {
+    scale_config = get_scale_config();
+    target_config = scale_config.get_kubernetes_config();
+    target_config['app_name'] = 'test-app';
+    target_config['namespace'] = 'test-ns';
+    logger = UtilityFactory.create_logger('standard');
+    deployment_target = DeploymentTargetFactory.create(
+        'kubernetes', target_config, logger
+    );
+
+    call_order: list[str] = [];
+
+    # apps_v1 mock: code-server deployment exists, track all patch calls by body
+    mock_apps_v1 = unittest.mock.MagicMock();
+    mock_apps_v1.read_namespaced_deployment.return_value = SimpleNamespace(
+        spec=SimpleNamespace(replicas=1)
+    );
+    mock_apps_v1.patch_namespaced_deployment.side_effect = (
+        lambda name , ns , body :
+            call_order.append(
+                'scale_to_zero'
+                    if body == {'spec': {'replicas': 0}}
+                    else 'scale_to_one'
+            )
+    );
+    mock_apps_v1.delete_namespaced_deployment.side_effect = (
+        lambda name , ns , **kw : call_order.append('delete_code_server')
+    );
+    mock_apps_v1.create_namespaced_deployment.side_effect = (
+        lambda namespace , body : call_order.append('create_code_server')
+    );
+
+    # core_v1 mock: no pods left after scale-to-zero (volume already released)
+    mock_core_v1 = unittest.mock.MagicMock();
+    mock_core_v1.list_namespaced_pod.return_value = SimpleNamespace(items=[]);
+    mock_core_v1.read_namespaced_service_account.side_effect = ApiException(status=404);
+    mock_core_v1.read_namespaced_service.side_effect = ApiException(status=404);
+
+    # --- success path ---
+    with unittest.mock.patch(
+        'jac_scale.targets.kubernetes.kubernetes_target.sync_code_to_pvc',
+        side_effect=lambda *a , **kw : call_order.append('sync_code_to_pvc')
+    ) {
+        deployment_target._build_volumes_config(
+            'test-app',
+            AppConfig(code_folder='/tmp', file_name='main.jac', build=False),
+            'test-ns',
+            mock_core_v1,
+            mock_apps_v1
+        );
+    }
+
+    # scale_to_zero must happen before sync
+    assert 'scale_to_zero' in call_order , "patch_namespaced_deployment (replicas=0) was never called";
+    assert 'sync_code_to_pvc' in call_order , "sync_code_to_pvc was never called";
+    assert call_order.index('scale_to_zero') < call_order.index('sync_code_to_pvc') , (
+        f"scale_to_zero must precede sync_code_to_pvc, got order: {call_order}"
+    );
+    # on success, code-server must NOT be restored (it will be recreated by _deploy_code_server)
+    assert 'scale_to_one' not in call_order , (
+        "code-server should not be scaled back to 1 on a successful sync"
+    );
+
+    # list_namespaced_pod must have been called with the correct label selector
+    mock_core_v1.list_namespaced_pod.assert_called_with(
+        'test-ns', label_selector='app=test-app-code-server'
+    );
+
+    # --- failure path A: sync fails, deployment still exists → scale back to 1 ---
+    call_order.clear();
+    mock_apps_v1.reset_mock();
+    mock_apps_v1.read_namespaced_deployment.return_value = SimpleNamespace(
+        spec=SimpleNamespace(replicas=1)
+    );
+    mock_apps_v1.patch_namespaced_deployment.side_effect = (
+        lambda name , ns , body :
+            call_order.append(
+                'scale_to_zero'
+                    if body == {'spec': {'replicas': 0}}
+                    else 'scale_to_one'
+            )
+    );
+
+    sync_raised = False;
+    with unittest.mock.patch(
+        'jac_scale.targets.kubernetes.kubernetes_target.sync_code_to_pvc',
+        side_effect=RuntimeError('simulated sync failure')
+    ) {
+        try {
+            deployment_target._build_volumes_config(
+                'test-app',
+                AppConfig(code_folder='/tmp', file_name='main.jac', build=False),
+                'test-ns',
+                mock_core_v1,
+                mock_apps_v1
+            );
+        } except RuntimeError {
+            sync_raised = True;
+        }
+    }
+
+    assert sync_raised , "sync failure should propagate to the caller";
+    assert 'scale_to_zero' in call_order;
+    assert 'scale_to_one' in call_order , (
+        "deployment still exists after sync failure — must scale back to 1"
+    );
+    assert call_order.index('scale_to_zero') < call_order.index('scale_to_one') , (
+        f"scale_to_zero must precede scale_to_one, got order: {call_order}"
+    );
+
+    # --- failure path B: _deploy_code_server fails after deleting old deployment
+    #     → deployment is 404 in recovery → must recreate via _deploy_code_server ---
+    call_order.clear();
+    mock_apps_v1.reset_mock();
+    mock_core_v1.reset_mock();
+    mock_core_v1.list_namespaced_pod.return_value = SimpleNamespace(items=[]);
+    mock_core_v1.read_namespaced_service_account.side_effect = ApiException(status=404);
+    mock_core_v1.read_namespaced_service.side_effect = ApiException(status=404);
+
+    # First read succeeds (scale-to-zero check); second read returns 404
+    # (recovery check after _deploy_code_server deleted the deployment)
+    read_call_count = [0];
+    def _make_read_side_effect -> Any {
+        def _side_effect(name: str, ns: str) -> Any {
+            read_call_count[0] += 1;
+            if read_call_count[0] <= 1 {
+                return SimpleNamespace(spec=SimpleNamespace(replicas=1));
+            }
+            e = ApiException();
+            e.status = 404;
+            raise e;
+        }
+        return _side_effect;
+    }
+    mock_apps_v1.read_namespaced_deployment.side_effect = _make_read_side_effect();
+    mock_apps_v1.patch_namespaced_deployment.side_effect = (
+        lambda name , ns , body :
+            call_order.append(
+                'scale_to_zero'
+                    if body == {'spec': {'replicas': 0}}
+                    else 'scale_to_one'
+            )
+    );
+    mock_apps_v1.create_namespaced_deployment.side_effect = (
+        lambda namespace , body : call_order.append('create_code_server')
+    );
+    mock_apps_v1.delete_namespaced_deployment.side_effect = (
+        lambda name , ns , **kw : call_order.append('delete_code_server')
+    );
+
+    deploy_raised = False;
+    with unittest.mock.patch(
+        'jac_scale.targets.kubernetes.kubernetes_target.sync_code_to_pvc',
+        side_effect=lambda *a , **kw : call_order.append('sync_code_to_pvc')
+    ) {
+        with unittest.mock.patch.object(
+            deployment_target,
+            '_deploy_code_server',
+            side_effect=RuntimeError('simulated _deploy_code_server failure')
+        ) {
+            try {
+                deployment_target._build_volumes_config(
+                    'test-app',
+                    AppConfig(code_folder='/tmp', file_name='main.jac', build=False),
+                    'test-ns',
+                    mock_core_v1,
+                    mock_apps_v1
+                );
+            } except RuntimeError {
+                deploy_raised = True;
+            }
+        }
+    }
+
+    assert deploy_raised , "_deploy_code_server failure should propagate to the caller";
+    assert 'scale_to_zero' in call_order;
+    assert 'sync_code_to_pvc' in call_order;
+    # deployment was 404 in recovery → recreate must have been attempted
+    assert 'create_code_server' in call_order , (
+        "when deployment is 404 after failure, code-server must be recreated"
+    );
+}
+
 # ---------------------------------------------------------------------------
 # Domain / TLS configuration tests (mocked - no live cluster required)
 # ---------------------------------------------------------------------------
