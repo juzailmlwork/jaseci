@@ -1870,8 +1870,8 @@ test "deploy with domain set stores domain in annotation not ingress host rule" 
     mock_networking_v1.replace_namespaced_ingress.side_effect = ApiException(status=404);
 
     mock_core_v1 = unittest.mock.MagicMock();
-    # Simulate basic-auth secret not yet existing
-    mock_core_v1.read_namespaced_secret.side_effect = ApiException(status=404);
+    # Simulate basic-auth secret not yet existing (replace returns 404, so create path is taken)
+    mock_core_v1.replace_namespaced_secret.side_effect = ApiException(status=404);
 
     ingress_deployer._deploy_ingress_resource(
         app_name="myapp",
@@ -1914,8 +1914,8 @@ test "redis ingress rule must not set host before TLS is enabled" {
     mock_networking_v1.replace_namespaced_ingress.side_effect = ApiException(status=404);
 
     mock_core_v1 = unittest.mock.MagicMock();
-    # Simulate basic-auth secret not yet existing
-    mock_core_v1.read_namespaced_secret.side_effect = ApiException(status=404);
+    # Simulate basic-auth secret not yet existing (replace returns 404, so create path is taken)
+    mock_core_v1.replace_namespaced_secret.side_effect = ApiException(status=404);
 
     ingress_deployer._deploy_ingress_resource(
         app_name="myapp",
