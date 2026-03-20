@@ -1777,24 +1777,28 @@ test "code server scaled to zero before sync on redeploy" {
 
     call_order: list[str] = [];
 
-    # apps_v1 mock: code-server deployment exists, track all patch calls by body
+    # apps_v1 mock: code-server deployment exists, track all patch calls by body.
+    # Use *args/**kwargs on all lambdas: JAC may compile some keyword-arg calls
+    # as positional, so fixed-arity lambdas would fail with "N args but M given".
     mock_apps_v1 = unittest.mock.MagicMock();
     mock_apps_v1.read_namespaced_deployment.return_value = SimpleNamespace(
         spec=SimpleNamespace(replicas=1)
     );
     mock_apps_v1.patch_namespaced_deployment.side_effect = (
-        lambda name , ns , body :
+        lambda *a , **kw :
             call_order.append(
                 'scale_to_zero'
-                    if body == {'spec': {'replicas': 0}}
+                    if (a[2] if len(a) > 2 else kw.get('body')) == {
+                        'spec': {'replicas': 0}
+                    }
                     else 'scale_to_one'
             )
     );
     mock_apps_v1.delete_namespaced_deployment.side_effect = (
-        lambda name , ns , **kw : call_order.append('delete_code_server')
+        lambda *a , **kw : call_order.append('delete_code_server')
     );
     mock_apps_v1.create_namespaced_deployment.side_effect = (
-        lambda namespace , body : call_order.append('create_code_server')
+        lambda *a , **kw : call_order.append('create_code_server')
     );
 
     # core_v1 mock: no pods left after scale-to-zero (volume already released)
@@ -1840,10 +1844,12 @@ test "code server scaled to zero before sync on redeploy" {
         spec=SimpleNamespace(replicas=1)
     );
     mock_apps_v1.patch_namespaced_deployment.side_effect = (
-        lambda name , ns , body :
+        lambda *a , **kw :
             call_order.append(
                 'scale_to_zero'
-                    if body == {'spec': {'replicas': 0}}
+                    if (a[2] if len(a) > 2 else kw.get('body')) == {
+                        'spec': {'replicas': 0}
+                    }
                     else 'scale_to_one'
             )
     );
@@ -1875,20 +1881,23 @@ test "code server scaled to zero before sync on redeploy" {
         f"scale_to_zero must precede scale_to_one, got order: {call_order}"
     );
 
-    # --- failure path B: _deploy_code_server fails after deleting old deployment
-    #     → deployment is 404 in recovery → must recreate via _deploy_code_server ---
+    # --- failure path B: _deploy_code_server fails → deployment is 404 in recovery
+    #     → recovery must call _deploy_code_server a second time to recreate it.
+    #
+    #     We use side_effect=[raise, raise] so both calls fail (recovery swallows the
+    #     second).  The key assertion is call_count == 2 (main + recovery). We cannot
+    #     assert 'create_code_server' here because _deploy_code_server is fully mocked
+    #     and never reaches the real create_namespaced_deployment call. ---
     call_order.clear();
     mock_apps_v1.reset_mock();
     mock_core_v1.reset_mock();
     mock_core_v1.list_namespaced_pod.return_value = SimpleNamespace(items=[]);
-    mock_core_v1.read_namespaced_service_account.side_effect = ApiException(status=404);
-    mock_core_v1.read_namespaced_service.side_effect = ApiException(status=404);
 
-    # First read succeeds (scale-to-zero check); second read returns 404
-    # (recovery check after _deploy_code_server deleted the deployment)
+    # First read_namespaced_deployment succeeds (scale-to-zero); second returns 404
+    # (recovery check: deployment was deleted inside the failing _deploy_code_server)
     read_call_count = [0];
     def _make_read_side_effect -> Any {
-        def _side_effect(name: str, ns: str) -> Any {
+        def _side_effect(*a: Any, **kw: Any) -> Any {
             read_call_count[0] += 1;
             if read_call_count[0] <= 1 {
                 return SimpleNamespace(spec=SimpleNamespace(replicas=1));
@@ -1901,18 +1910,14 @@ test "code server scaled to zero before sync on redeploy" {
     }
     mock_apps_v1.read_namespaced_deployment.side_effect = _make_read_side_effect();
     mock_apps_v1.patch_namespaced_deployment.side_effect = (
-        lambda name , ns , body :
+        lambda *a , **kw :
             call_order.append(
                 'scale_to_zero'
-                    if body == {'spec': {'replicas': 0}}
+                    if (a[2] if len(a) > 2 else kw.get('body')) == {
+                        'spec': {'replicas': 0}
+                    }
                     else 'scale_to_one'
             )
-    );
-    mock_apps_v1.create_namespaced_deployment.side_effect = (
-        lambda namespace , body : call_order.append('create_code_server')
-    );
-    mock_apps_v1.delete_namespaced_deployment.side_effect = (
-        lambda name , ns , **kw : call_order.append('delete_code_server')
     );
 
     deploy_raised = False;
@@ -1923,8 +1928,11 @@ test "code server scaled to zero before sync on redeploy" {
         with unittest.mock.patch.object(
             deployment_target,
             '_deploy_code_server',
-            side_effect=RuntimeError('simulated _deploy_code_server failure')
-        ) {
+            side_effect=[
+                RuntimeError('simulated _deploy_code_server failure'),
+                RuntimeError('recovery also fails — swallowed by except Exception {}')
+            ]
+        ) as mock_deploy {
             try {
                 deployment_target._build_volumes_config(
                     'test-app',
@@ -1942,9 +1950,9 @@ test "code server scaled to zero before sync on redeploy" {
     assert deploy_raised , "_deploy_code_server failure should propagate to the caller";
     assert 'scale_to_zero' in call_order;
     assert 'sync_code_to_pvc' in call_order;
-    # deployment was 404 in recovery → recreate must have been attempted
-    assert 'create_code_server' in call_order , (
-        "when deployment is 404 after failure, code-server must be recreated"
+    # recovery must have attempted to recreate code-server (second _deploy_code_server call)
+    assert mock_deploy.call_count == 2 , (
+        f"_deploy_code_server must be called twice (main + recovery), got {mock_deploy.call_count}"
     );
 }
 
